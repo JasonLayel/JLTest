@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+  <defs>
+    <radialGradient id="g1" cx="35%" cy="25%" r="90%">
+      <stop offset="0%" stop-color="#8a7a3d"/>
+      <stop offset="100%" stop-color="#1f1a10"/>
+    </radialGradient>
+    <linearGradient id="g2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffe98a" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#8a7a3d" stop-opacity="0.4"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#g1)"/>
+  <rect x="500" y="250" width="600" height="400" rx="200" fill="url(#g2)" opacity="0.85"/>
+  <text x="60" y="850" font-family="monospace" font-size="26" fill="#ffffff" opacity="0.35" letter-spacing="6">PLACEHOLDER 06 — REPLACE WITH YOUR RENDER</text>
+</svg>
