@@ -57,6 +57,10 @@
             <input type="range" id="estimate-input" min="5" max="60" step="5" value="15" aria-label="Time estimate in minutes">
             <div class="estimate-scale"><span>Easy · 5m</span><span>Hard · 1h</span></div>
           </div>
+          <div class="mode-toggle" id="mode-toggle" role="group" aria-label="Task mode">
+            <button type="button" class="chip active" data-mode="active">⚡ Active</button>
+            <button type="button" class="chip" data-mode="reset">🌊 Reset</button>
+          </div>
           <label class="daily-toggle">
             <input type="checkbox" id="daily-input"> 🔁 Every day
           </label>
@@ -70,6 +74,7 @@
 
       <div class="pick-cta">
         <div class="filter-row time-filter-row" id="time-filter" aria-label="How much time do you have?"></div>
+        <div class="filter-row time-filter-row" id="energy-filter" aria-label="How much energy do you have?"></div>
         <button id="pick-now-btn" class="btn btn-big">🎲 Pick for me</button>
       </div>
     </section>
@@ -136,6 +141,10 @@
       </label>
       <h3>Categories eligible for random picks</h3>
       <div id="rule-categories" class="rule-categories"></div>
+
+      <h2>Categories</h2>
+      <p class="help-text">Rename, recolor, add, or remove your umbrella categories. Each task also carries an energy mode: ⚡ Active (do, make, exert) or 🌊 Reset (restore, unwind, recover).</p>
+      <div id="category-manager" class="category-manager"></div>
     </section>
 
     <!-- HISTORY TAB -->

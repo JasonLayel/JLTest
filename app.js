@@ -9,24 +9,36 @@
   const GOAL_TASKS = 3; // daily goal: 3 tasks across 3 categories
   const STREAK_MILESTONES = [3, 5, 7, 14, 21, 30, 50, 100];
 
+  // Umbrella categories; each task additionally carries a mode: "active" | "reset".
   const DEFAULT_CATEGORIES = [
-    { id: "mental", name: "Mental Action", color: "#5b5bd6" },
-    { id: "contemplation", name: "Contemplation", color: "#9a5bd6" },
-    { id: "recreation", name: "Recreation", color: "#d65b9a" },
-    { id: "bodily", name: "Bodily Action", color: "#d68a2e" },
-    { id: "environmental", name: "Environmental Action", color: "#2e9e5b" },
-    { id: "pursuits", name: "Pursuits", color: "#2e8ad6" },
+    { id: "mind", name: "Mind", color: "#5b5bd6" },
+    { id: "body", name: "Body", color: "#d68a2e" },
+    { id: "space", name: "Space", color: "#2e9e5b" },
+    { id: "play", name: "Play", color: "#d65b9a" },
+    { id: "purpose", name: "Purpose", color: "#2e8ad6" },
   ];
 
+  // v1 categories → [new umbrella, default mode] (Contemplation was Mind's reset side).
+  const V1_MIGRATION = {
+    mental: ["mind", "active"],
+    contemplation: ["mind", "reset"],
+    bodily: ["body", "active"],
+    environmental: ["space", "active"],
+    recreation: ["play", "active"],
+    pursuits: ["purpose", "active"],
+  };
+
   const DEFAULT_STATE = {
+    version: 2,
     categories: DEFAULT_CATEGORIES,
-    tasks: [], // {id, title, categoryId, estimateMin, recurring, done, createdAt, completedAt}
+    tasks: [], // {id, title, categoryId, mode, estimateMin, recurring, done, createdAt, completedAt}
     history: [], // picks: {id, taskId, title, categoryId, at, source, status}
     settings: {
       scheduleEnabled: false,
       scheduleTimes: ["10:00", "13:00", "15:00"],
       firedToday: {}, // { "10:00": "2026-07-07" } last date each slot fired
       timeFilter: 0, // max minutes for picks; 0 = any
+      energyFilter: "", // "" = any, "active" | "reset"
       rules: {
         distinctCategories: true,
         distinctWindow: 3,
@@ -61,6 +73,8 @@
       // Merge over defaults so new fields added in future versions get sane values.
       const merged = structuredClone(DEFAULT_STATE);
       Object.assign(merged, parsed);
+      // The default version must not mask old data: absent means v1.
+      merged.version = parsed.version || 1;
       for (const key of ["settings", "stats", "companion"]) {
         merged[key] = Object.assign(structuredClone(DEFAULT_STATE[key]), parsed[key] || {});
       }
@@ -68,10 +82,42 @@
         structuredClone(DEFAULT_STATE.settings.rules),
         (parsed.settings && parsed.settings.rules) || {}
       );
-      return merged;
+      return migrate(merged);
     } catch {
       return structuredClone(DEFAULT_STATE);
     }
+  }
+
+  // v1 → v2: six flat categories become five umbrellas + per-task active/reset mode.
+  function migrate(s) {
+    if ((s.version || 1) >= 2) return s;
+    s.categories = structuredClone(DEFAULT_CATEGORIES);
+    for (const t of s.tasks || []) {
+      const m = V1_MIGRATION[t.categoryId];
+      if (m) {
+        t.categoryId = m[0];
+        if (!t.mode) t.mode = m[1];
+      }
+      if (!t.mode) t.mode = "active";
+    }
+    for (const h of s.history || []) {
+      const m = V1_MIGRATION[h.categoryId];
+      if (m) h.categoryId = m[0];
+    }
+    const ex = s.settings?.rules?.excludedCategoryIds;
+    if (ex) {
+      s.settings.rules.excludedCategoryIds = [
+        ...new Set(ex.map((id) => V1_MIGRATION[id]?.[0] || id)),
+      ];
+    }
+    for (const day of Object.values(s.stats?.dailyLog || {})) {
+      for (const e of day) {
+        const m = V1_MIGRATION[e.categoryId];
+        if (m) e.categoryId = m[0];
+      }
+    }
+    s.version = 2;
+    return s;
   }
 
   function save() {
@@ -81,6 +127,8 @@
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   const catById = (id) => state.categories.find((c) => c.id === id);
   const estimateOf = (t) => t.estimateMin || 15;
+  const modeOf = (t) => t.mode || "active";
+  const modeIcon = (m) => (m === "reset" ? "🌊" : "⚡");
 
   // Local (not UTC) YYYY-MM-DD, so "today" matches the user's clock.
   function localDate(d = new Date()) {
@@ -287,12 +335,13 @@
   // ---------- Picking logic ----------
 
   function eligibleTasks() {
-    const { rules, timeFilter } = state.settings;
+    const { rules, timeFilter, energyFilter } = state.settings;
     let pool = state.tasks.filter(
       (t) =>
         !t.done &&
         !rules.excludedCategoryIds.includes(t.categoryId) &&
-        (!timeFilter || estimateOf(t) <= timeFilter)
+        (!timeFilter || estimateOf(t) <= timeFilter) &&
+        (!energyFilter || modeOf(t) === energyFilter)
     );
 
     if (rules.distinctCategories) {
@@ -385,9 +434,11 @@
     renderCategoryOptions();
     renderFilters();
     renderTimeFilter();
+    renderEnergyFilter();
     renderTasks();
     renderSchedule();
     renderRules();
+    renderCategoryManager();
     renderHistory();
     renderPrincess();
   }
@@ -478,6 +529,30 @@
     }
   }
 
+  // Energy filter: pick only ⚡ active or 🌊 reset tasks.
+  function renderEnergyFilter() {
+    const row = $("#energy-filter");
+    row.innerHTML = "";
+    const options = [
+      ["", "Any energy"],
+      ["active", "⚡ Active"],
+      ["reset", "🌊 Reset"],
+    ];
+    for (const [mode, label] of options) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (state.settings.energyFilter === mode ? " active" : "");
+      if (state.settings.energyFilter === mode) b.style.background = "var(--primary)";
+      b.textContent = label;
+      b.addEventListener("click", () => {
+        state.settings.energyFilter = mode;
+        save();
+        renderEnergyFilter();
+      });
+      row.appendChild(b);
+    }
+  }
+
   function renderTasks() {
     const list = $("#task-list");
     list.innerHTML = "";
@@ -514,7 +589,8 @@
 
       const est = document.createElement("span");
       est.className = "task-est";
-      est.textContent = (t.recurring ? "🔁 " : "") + "⏱" + estimateOf(t) + "m";
+      est.textContent =
+        (t.recurring ? "🔁 " : "") + modeIcon(modeOf(t)) + " ⏱" + estimateOf(t) + "m";
 
       const badge = document.createElement("span");
       badge.className = "task-cat-badge";
@@ -588,6 +664,31 @@
     scale.innerHTML = "<span>Easy · 5m</span><span>Hard · 1h</span>";
     estField.append(estCaption, slider, scale);
 
+    let editMode = modeOf(t);
+    const modeWrap = document.createElement("div");
+    modeWrap.className = "mode-toggle";
+    for (const [mode, label] of [["active", "⚡ Active"], ["reset", "🌊 Reset"]]) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip";
+      b.textContent = label;
+      const paint = () => {
+        const on = editMode === mode;
+        b.classList.toggle("active", on);
+        b.style.background = on ? "var(--primary)" : "";
+      };
+      paint();
+      b.addEventListener("click", () => {
+        editMode = mode;
+        modeWrap.querySelectorAll(".chip").forEach((x) => {
+          x.classList.remove("active");
+          x.style.background = "";
+        });
+        paint();
+      });
+      modeWrap.appendChild(b);
+    }
+
     const daily = document.createElement("label");
     daily.className = "daily-toggle";
     const dailyCb = document.createElement("input");
@@ -617,6 +718,7 @@
       if (!v) return;
       t.title = v;
       t.categoryId = sel.value;
+      t.mode = editMode;
       t.estimateMin = Number(slider.value);
       t.recurring = dailyCb.checked;
       editingTaskId = null;
@@ -627,10 +729,13 @@
     const topRow = document.createElement("div");
     topRow.className = "editor-row";
     topRow.append(title, sel);
+    const midRow = document.createElement("div");
+    midRow.className = "editor-row";
+    midRow.append(modeWrap, daily);
     const bottomRow = document.createElement("div");
     bottomRow.className = "editor-row";
-    bottomRow.append(estField, daily, actions);
-    box.append(topRow, bottomRow);
+    bottomRow.append(estField, actions);
+    box.append(topRow, midRow, bottomRow);
     return box;
   }
 
@@ -701,6 +806,90 @@
       row.append(name, cb);
       wrap.appendChild(row);
     }
+  }
+
+  // Category manager on the Schedule tab: rename, recolor, add, delete.
+  function renderCategoryManager() {
+    const wrap = $("#category-manager");
+    wrap.innerHTML = "";
+    for (const c of state.categories) {
+      const row = document.createElement("div");
+      row.className = "category-row";
+
+      const color = document.createElement("input");
+      color.type = "color";
+      color.value = c.color;
+      color.setAttribute("aria-label", "Category color");
+      color.addEventListener("change", () => {
+        c.color = color.value;
+        save();
+        renderAll();
+      });
+
+      const name = document.createElement("input");
+      name.type = "text";
+      name.className = "edit-title";
+      name.value = c.name;
+      name.maxLength = 40;
+      name.setAttribute("aria-label", "Category name");
+      name.addEventListener("change", () => {
+        const v = name.value.trim();
+        if (!v) {
+          name.value = c.name;
+          return;
+        }
+        c.name = v;
+        save();
+        renderAll();
+      });
+
+      const count = state.tasks.filter((t) => t.categoryId === c.id).length;
+      const info = document.createElement("span");
+      info.className = "help-text category-count";
+      info.textContent = count + (count === 1 ? " task" : " tasks");
+
+      const del = document.createElement("button");
+      del.className = "task-delete";
+      del.textContent = "🗑";
+      del.setAttribute("aria-label", "Delete category");
+      del.addEventListener("click", () => {
+        if (count > 0) {
+          alert(`"${c.name}" still has ${count} task(s). Move or delete them first.`);
+          return;
+        }
+        if (state.categories.length <= 3) {
+          alert("Keep at least 3 categories — the daily goal needs 3 different ones.");
+          return;
+        }
+        if (!confirm(`Delete category "${c.name}"?`)) return;
+        state.categories = state.categories.filter((x) => x.id !== c.id);
+        state.settings.rules.excludedCategoryIds =
+          state.settings.rules.excludedCategoryIds.filter((id) => id !== c.id);
+        if (activeFilter === c.id) activeFilter = "all";
+        save();
+        renderAll();
+      });
+
+      row.append(color, name, info, del);
+      wrap.appendChild(row);
+    }
+
+    const add = document.createElement("button");
+    add.className = "btn btn-ghost";
+    add.textContent = "+ Add category";
+    add.addEventListener("click", () => {
+      const name = prompt("New category name:");
+      if (!name || !name.trim()) return;
+      const colors = ["#c2483e", "#3ea6a0", "#8a6ed6", "#b8a02e", "#d66b2e", "#4a7dbd"];
+      state.categories.push({
+        id: uid(),
+        name: name.trim().slice(0, 40),
+        color: colors[state.categories.length % colors.length],
+      });
+      save();
+      renderAll();
+    });
+    wrap.appendChild(add);
   }
 
   function renderHistory() {
@@ -791,11 +980,12 @@
 
   // ---------- Actions ----------
 
-  function addTask(title, categoryId, estimateMin, recurring) {
+  function addTask(title, categoryId, mode, estimateMin, recurring) {
     state.tasks.push({
       id: uid(),
       title,
       categoryId,
+      mode,
       estimateMin,
       recurring,
       done: false,
@@ -846,6 +1036,23 @@
 
   // ---------- Wiring ----------
 
+  // ⚡/🌊 segmented toggle in the add form.
+  let addMode = "active";
+  function renderAddMode() {
+    document.querySelectorAll("#mode-toggle .chip").forEach((b) => {
+      const on = b.dataset.mode === addMode;
+      b.classList.toggle("active", on);
+      b.style.background = on ? "var(--primary)" : "";
+    });
+  }
+  document.querySelectorAll("#mode-toggle .chip").forEach((b) => {
+    b.addEventListener("click", () => {
+      addMode = b.dataset.mode;
+      renderAddMode();
+    });
+  });
+  renderAddMode();
+
   $("#add-task-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const input = $("#task-input");
@@ -854,6 +1061,7 @@
     addTask(
       title,
       $("#category-select").value,
+      addMode,
       Number($("#estimate-input").value),
       $("#daily-input").checked
     );

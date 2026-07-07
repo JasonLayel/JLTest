@@ -46,7 +46,7 @@ window.COMPANION = (() => {
         "You again? Ugh. Fine. One (1) sentence of attention. That was it.",
         "I only chat with people who have streaks. Do you have a streak? Thought so.",
         "Somewhere out there, a task is crying because you keep ignoring it.",
-        "Is this what you do instead of your Bodily Action tasks? Explains a lot.",
+        "Is this what you do instead of your Body tasks? Explains a lot.",
         "A princess waits for no one. But apparently I wait for YOU. Insulting.",
       ],
       [
@@ -65,8 +65,8 @@ window.COMPANION = (() => {
         "You're like a stray cat that keeps coming back. ...I've started leaving food out.",
         "Don't tell anyone I said this, but watching you finish things is weirdly satisfying.",
         "I had a whole sassy line prepared and now I forgot it. This is YOUR fault.",
-        "What's a 'Pursuit' anyway? Show me. Do one. Right now. For the throne.",
-        "Today's royal decree: do something with that Contemplation category. It's dusty.",
+        "What's a 'Purpose' task anyway? Show me. Do one. Right now. For the throne.",
+        "Today's royal decree: log a 🌊 reset task. Your brain is dusty. I can hear it.",
         "You may ask me ONE question. ...No, not that one.",
       ],
       [
@@ -112,7 +112,7 @@ window.COMPANION = (() => {
         "My favorite notification is you.",
         "The kingdom runs itself these days. I mostly just look forward to this part.",
         "You know I believed in you before the streaks, right? ...Okay, slightly before.",
-        "Partner check-in: hydrated? Stretched? Emotionally stable? Complete a Bodily Action and report back.",
+        "Partner check-in: hydrated? Stretched? Emotionally stable? Complete a Body task and report back.",
         "I told the royal historian to write you into my chapter. Permanently.",
         "Whatever you pick today, I'm with you. Even if it's the laundry. ESPECIALLY the laundry.",
         "Remember when I called you loser-boy? I keep that memory somewhere safe. For laughing purposes. Affectionately.",

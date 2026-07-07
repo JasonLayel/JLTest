@@ -291,6 +291,51 @@ select, input[type="time"] {
   margin-left: auto;
 }
 
+/* ---------- Mode toggle (⚡ / 🌊) ---------- */
+.mode-toggle {
+  display: flex;
+  gap: 0.3rem;
+}
+.mode-toggle .chip.active { color: #fff; border-color: transparent; }
+
+/* ---------- Category manager ---------- */
+.category-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: flex-start;
+}
+
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.4rem 0.6rem;
+}
+
+.category-row input[type="color"] {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.category-row .edit-title { flex: 1; }
+
+.category-count {
+  margin: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .empty-note {
   color: var(--text-muted);
   text-align: center;
