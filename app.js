@@ -377,6 +377,7 @@
   const $ = (sel) => document.querySelector(sel);
 
   let activeFilter = "all";
+  let editingTaskId = null;
 
   function renderAll() {
     renderPickBanner();
@@ -489,6 +490,10 @@
     $("#empty-tasks").classList.toggle("hidden", tasks.length > 0);
 
     for (const t of tasks) {
+      if (t.id === editingTaskId) {
+        list.appendChild(buildTaskEditor(t));
+        continue;
+      }
       const cat = catById(t.categoryId);
       const item = document.createElement("div");
       item.className = "task-item" + (t.done ? " done" : "");
@@ -518,15 +523,115 @@
 
       meta.append(est, badge);
 
+      const edit = document.createElement("button");
+      edit.className = "task-edit";
+      edit.textContent = "✏️";
+      edit.setAttribute("aria-label", "Edit task");
+      edit.addEventListener("click", () => {
+        editingTaskId = t.id;
+        renderTasks();
+      });
+
       const del = document.createElement("button");
       del.className = "task-delete";
       del.textContent = "🗑";
       del.setAttribute("aria-label", "Delete task");
       del.addEventListener("click", () => deleteTask(t.id));
 
-      item.append(check, title, meta, del);
+      item.append(check, title, meta, edit, del);
       list.appendChild(item);
     }
+  }
+
+  // Inline editor for an existing task: title, category, effort, every-day.
+  function buildTaskEditor(t) {
+    const box = document.createElement("form");
+    box.className = "task-item task-editor";
+
+    const title = document.createElement("input");
+    title.type = "text";
+    title.className = "edit-title";
+    title.value = t.title;
+    title.maxLength = 200;
+    title.required = true;
+    title.setAttribute("aria-label", "Task title");
+
+    const sel = document.createElement("select");
+    sel.setAttribute("aria-label", "Category");
+    for (const c of state.categories) {
+      const opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = c.name;
+      opt.selected = c.id === t.categoryId;
+      sel.appendChild(opt);
+    }
+
+    const estField = document.createElement("div");
+    estField.className = "estimate-field";
+    const estCaption = document.createElement("label");
+    estCaption.className = "estimate-caption";
+    const estLabel = document.createElement("strong");
+    estCaption.append("Effort: ", estLabel);
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.min = "5";
+    slider.max = "60";
+    slider.step = "5";
+    slider.value = String(estimateOf(t));
+    slider.setAttribute("aria-label", "Time estimate in minutes");
+    const updateEstLabel = () =>
+      (estLabel.textContent = `${estimateWord(Number(slider.value))} · ${slider.value} min`);
+    slider.addEventListener("input", updateEstLabel);
+    updateEstLabel();
+    const scale = document.createElement("div");
+    scale.className = "estimate-scale";
+    scale.innerHTML = "<span>Easy · 5m</span><span>Hard · 1h</span>";
+    estField.append(estCaption, slider, scale);
+
+    const daily = document.createElement("label");
+    daily.className = "daily-toggle";
+    const dailyCb = document.createElement("input");
+    dailyCb.type = "checkbox";
+    dailyCb.checked = !!t.recurring;
+    daily.append(dailyCb, " 🔁 Every day");
+
+    const actions = document.createElement("div");
+    actions.className = "editor-actions";
+    const saveBtn = document.createElement("button");
+    saveBtn.type = "submit";
+    saveBtn.className = "btn btn-primary";
+    saveBtn.textContent = "Save";
+    const cancelBtn = document.createElement("button");
+    cancelBtn.type = "button";
+    cancelBtn.className = "btn btn-ghost";
+    cancelBtn.textContent = "Cancel";
+    cancelBtn.addEventListener("click", () => {
+      editingTaskId = null;
+      renderTasks();
+    });
+    actions.append(saveBtn, cancelBtn);
+
+    box.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const v = title.value.trim();
+      if (!v) return;
+      t.title = v;
+      t.categoryId = sel.value;
+      t.estimateMin = Number(slider.value);
+      t.recurring = dailyCb.checked;
+      editingTaskId = null;
+      save();
+      renderTasks();
+    });
+
+    const topRow = document.createElement("div");
+    topRow.className = "editor-row";
+    topRow.append(title, sel);
+    const bottomRow = document.createElement("div");
+    bottomRow.className = "editor-row";
+    bottomRow.append(estField, daily, actions);
+    box.append(topRow, bottomRow);
+    return box;
   }
 
   function renderSchedule() {
