@@ -32,10 +32,35 @@
   <main id="main">
     <!-- TASKS TAB -->
     <section id="tab-tasks" class="tab-panel">
+      <!-- Daily goal: 3 tasks across 3 categories -->
+      <div id="goal-bar" class="goal-bar">
+        <div class="goal-slots" id="goal-slots" title="Complete 3 tasks across 3 different categories">
+          <div class="goal-slot"></div>
+          <div class="goal-slot"></div>
+          <div class="goal-slot"></div>
+        </div>
+        <div class="goal-stats">
+          <span id="points-label" title="Total points">⭐ 0</span>
+          <span id="streak-label" title="Days in a row meeting the daily goal">🔥 0</span>
+        </div>
+      </div>
+
       <form id="add-task-form" class="add-task-form">
-        <input type="text" id="task-input" placeholder="Add a task…" autocomplete="off" required maxlength="200">
-        <select id="category-select" aria-label="Category"></select>
-        <button type="submit" class="btn btn-primary">Add</button>
+        <div class="add-task-main">
+          <input type="text" id="task-input" placeholder="Add a task…" autocomplete="off" required maxlength="200">
+          <select id="category-select" aria-label="Category"></select>
+          <button type="submit" class="btn btn-primary">Add</button>
+        </div>
+        <div class="add-task-extras">
+          <div class="estimate-field">
+            <label for="estimate-input" class="estimate-caption">Effort: <strong id="estimate-label">Medium · 15 min</strong></label>
+            <input type="range" id="estimate-input" min="5" max="60" step="5" value="15" aria-label="Time estimate in minutes">
+            <div class="estimate-scale"><span>Easy · 5m</span><span>Hard · 1h</span></div>
+          </div>
+          <label class="daily-toggle">
+            <input type="checkbox" id="daily-input"> 🔁 Every day
+          </label>
+        </div>
       </form>
 
       <div class="filter-row" id="category-filters"></div>
@@ -44,7 +69,31 @@
       <p id="empty-tasks" class="empty-note hidden">No tasks yet. Add a few above, then hit <strong>Pick for me</strong>!</p>
 
       <div class="pick-cta">
+        <div class="filter-row time-filter-row" id="time-filter" aria-label="How much time do you have?"></div>
         <button id="pick-now-btn" class="btn btn-big">🎲 Pick for me</button>
+      </div>
+    </section>
+
+    <!-- PRINCESS TAB -->
+    <section id="tab-princess" class="tab-panel hidden">
+      <div class="princess-scene">
+        <div id="speech-bubble" class="speech-bubble hidden"></div>
+        <div class="princess-stage">
+          <div id="princess-hearts" class="princess-hearts"></div>
+          <canvas id="princess-canvas" width="200" height="280" aria-label="Pixel-art princess companion"></canvas>
+        </div>
+        <div class="princess-name-row">
+          <span id="princess-name">Princess Elara</span>
+          <span id="princess-tier" class="princess-tier"></span>
+        </div>
+        <div class="affection-row">
+          <div class="affection-bar"><div id="affection-fill" class="affection-fill"></div></div>
+          <span id="affection-label" class="help-text"></span>
+        </div>
+        <div class="princess-actions">
+          <button id="talk-btn" class="btn btn-primary">💬 Talk to her</button>
+        </div>
+        <p class="help-text princess-hint">She warms up as you complete tasks, hit daily goals, and keep streaks. She notices when you disappear, too.</p>
       </div>
     </section>
 
@@ -100,10 +149,14 @@
 
   <nav class="tab-bar">
     <button class="tab-btn active" data-tab="tasks">📋 Tasks</button>
-    <button class="tab-btn" data-tab="schedule">⏰ Schedule &amp; Rules</button>
+    <button class="tab-btn" data-tab="princess">👑 Princess</button>
+    <button class="tab-btn" data-tab="schedule">⏰ Schedule</button>
     <button class="tab-btn" data-tab="history">📜 History</button>
   </nav>
 
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="companion.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
