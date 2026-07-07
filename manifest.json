@@ -1,0 +1,17 @@
+{
+  "name": "Random Task Picker",
+  "short_name": "TaskPicker",
+  "description": "A to-do list that randomly picks what you should do next.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#14141c",
+  "theme_color": "#5b5bd6",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

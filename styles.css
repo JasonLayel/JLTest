@@ -1,0 +1,405 @@
+:root {
+  --bg: #f6f6fa;
+  --surface: #ffffff;
+  --text: #1c1c28;
+  --text-muted: #6b6b80;
+  --border: #e2e2ec;
+  --primary: #5b5bd6;
+  --primary-contrast: #ffffff;
+  --success: #2e9e5b;
+  --danger: #d64545;
+  --shadow: 0 1px 3px rgba(20, 20, 40, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #14141c;
+    --surface: #1e1e2a;
+    --text: #ececf4;
+    --text-muted: #9a9ab0;
+    --border: #33334a;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  padding-bottom: 4.5rem; /* room for tab bar */
+}
+
+.app-header {
+  text-align: center;
+  padding: 1rem 1rem 0.25rem;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.tagline {
+  margin: 0.15rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+}
+
+h2 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
+h3 { font-size: 0.95rem; margin: 1rem 0 0.4rem; }
+
+.hidden { display: none !important; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  font: inherit;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.btn:hover { filter: brightness(0.96); }
+.btn:active { filter: brightness(0.9); }
+
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-contrast);
+}
+
+.btn-success {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.btn-ghost {
+  background: transparent;
+}
+
+.btn-big {
+  font-size: 1.15rem;
+  padding: 0.9rem 1.6rem;
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-contrast);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+/* ---------- Pick banner ---------- */
+.pick-banner {
+  max-width: 640px;
+  margin: 0.75rem auto 0;
+  padding: 1rem;
+  border-radius: 14px;
+  background: var(--primary);
+  color: #fff;
+  text-align: center;
+  box-shadow: var(--shadow);
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+@media (min-width: 680px) {
+  .pick-banner { margin-left: auto; margin-right: auto; }
+}
+
+.pick-banner-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+.pick-banner-task {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 0.3rem 0;
+}
+
+.pick-banner-category {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  margin-bottom: 0.6rem;
+}
+
+.pick-banner-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.pick-banner .btn-ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ---------- Add task form ---------- */
+.add-task-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.add-task-form input[type="text"] {
+  flex: 1 1 200px;
+  font: inherit;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+select, input[type="time"] {
+  font: inherit;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* ---------- Category filter chips ---------- */
+.filter-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin: 0.75rem 0;
+}
+
+.chip {
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.chip.active {
+  color: #fff;
+  border-color: transparent;
+}
+
+/* ---------- Task list ---------- */
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.6rem 0.75rem;
+  box-shadow: var(--shadow);
+}
+
+.task-item.done .task-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.task-check {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--success);
+}
+
+.task-title {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.task-cat-badge {
+  font-size: 0.68rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  color: #fff;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.task-delete {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.2rem 0.4rem;
+  flex-shrink: 0;
+}
+.task-delete:hover { color: var(--danger); }
+
+.empty-note {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.pick-cta {
+  text-align: center;
+  margin: 1.25rem 0;
+}
+
+/* ---------- Schedule tab ---------- */
+.help-text {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+.toggle-row input[type="checkbox"] {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+}
+
+.schedule-times {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.75rem 0;
+}
+
+.schedule-time-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.45rem 0.75rem;
+}
+
+.schedule-time-item .time-label {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.add-time-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.notif-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.9rem 0;
+  flex-wrap: wrap;
+}
+
+.rule-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* ---------- History ---------- */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.history-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.history-when {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.history-task {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.history-source {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ---------- Tab bar ---------- */
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tab-btn {
+  flex: 1;
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.8rem 0.25rem;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.tab-btn.active {
+  color: var(--primary);
+  font-weight: 700;
+}

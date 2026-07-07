@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#5b5bd6">
+  <meta name="description" content="A to-do list that randomly picks what you should do next.">
+  <title>Random Task Picker</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1>🎲 Random Task Picker</h1>
+    <p class="tagline">Add tasks. Let chance decide.</p>
+  </header>
+
+  <!-- Current pick banner -->
+  <div id="pick-banner" class="pick-banner hidden" aria-live="polite">
+    <div class="pick-banner-label" id="pick-banner-label">Your task right now</div>
+    <div class="pick-banner-task" id="pick-banner-task"></div>
+    <div class="pick-banner-category" id="pick-banner-category"></div>
+    <div class="pick-banner-actions">
+      <button id="pick-done-btn" class="btn btn-success">✓ Done</button>
+      <button id="pick-reroll-btn" class="btn btn-ghost">↻ Re-roll</button>
+      <button id="pick-dismiss-btn" class="btn btn-ghost">✕ Dismiss</button>
+    </div>
+  </div>
+
+  <main id="main">
+    <!-- TASKS TAB -->
+    <section id="tab-tasks" class="tab-panel">
+      <form id="add-task-form" class="add-task-form">
+        <input type="text" id="task-input" placeholder="Add a task…" autocomplete="off" required maxlength="200">
+        <select id="category-select" aria-label="Category"></select>
+        <button type="submit" class="btn btn-primary">Add</button>
+      </form>
+
+      <div class="filter-row" id="category-filters"></div>
+
+      <div id="task-list" class="task-list"></div>
+      <p id="empty-tasks" class="empty-note hidden">No tasks yet. Add a few above, then hit <strong>Pick for me</strong>!</p>
+
+      <div class="pick-cta">
+        <button id="pick-now-btn" class="btn btn-big">🎲 Pick for me</button>
+      </div>
+    </section>
+
+    <!-- SCHEDULE TAB -->
+    <section id="tab-schedule" class="tab-panel hidden">
+      <h2>Automatic picks</h2>
+      <p class="help-text">At each scheduled time, the app will automatically pick a task for you and notify you (while the app is open or installed and running).</p>
+
+      <label class="toggle-row">
+        <span>Enable scheduled picks</span>
+        <input type="checkbox" id="schedule-enabled">
+      </label>
+
+      <div id="schedule-times" class="schedule-times"></div>
+
+      <form id="add-time-form" class="add-time-form">
+        <input type="time" id="time-input" required>
+        <button type="submit" class="btn btn-primary">Add time</button>
+      </form>
+
+      <div class="notif-row">
+        <button id="notif-btn" class="btn btn-ghost">🔔 Enable notifications</button>
+        <span id="notif-status" class="help-text"></span>
+      </div>
+
+      <h2>Rules</h2>
+      <label class="toggle-row">
+        <span>Recent picks must come from different categories</span>
+        <input type="checkbox" id="rule-distinct">
+      </label>
+      <label class="toggle-row" id="distinct-window-row">
+        <span>How many recent picks to spread across categories</span>
+        <select id="rule-distinct-window">
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+        </select>
+      </label>
+      <h3>Categories eligible for random picks</h3>
+      <div id="rule-categories" class="rule-categories"></div>
+    </section>
+
+    <!-- HISTORY TAB -->
+    <section id="tab-history" class="tab-panel hidden">
+      <h2>Pick history</h2>
+      <div id="history-list" class="history-list"></div>
+      <p id="empty-history" class="empty-note hidden">No picks yet.</p>
+      <button id="clear-history-btn" class="btn btn-ghost">Clear history</button>
+    </section>
+  </main>
+
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="tasks">📋 Tasks</button>
+    <button class="tab-btn" data-tab="schedule">⏰ Schedule &amp; Rules</button>
+    <button class="tab-btn" data-tab="history">📜 History</button>
+  </nav>
+
+  <script src="app.js"></script>
+</body>
+</html>
