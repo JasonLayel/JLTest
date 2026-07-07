@@ -238,26 +238,44 @@
     }
   }
 
-  // Show a companion line: in the bubble if the Princess tab is open,
-  // otherwise as a toast. `force` prioritizes this line over one already showing.
+  // Show a companion line: in the big bubble if the Princess tab is open,
+  // otherwise from the floating mini-princess in the corner.
   let bubbleTimer = null;
+  let miniBubbleTimer = null;
   function speak(kind, vars, force) {
     const c = state.companion;
     const text = COMPANION.line(kind, c.tier, c.recentLines, vars);
     if (!text) return;
     save();
+    const excited = kind === "goal" || kind === "streak";
     const onPrincessTab = !$("#tab-princess").classList.contains("hidden");
     if (onPrincessTab) {
       const bubble = $("#speech-bubble");
       bubble.textContent = text;
       bubble.classList.remove("hidden");
-      renderPrincess(kind === "goal" || kind === "streak" ? "proud" : null);
+      renderPrincess(excited ? "proud" : null);
       clearTimeout(bubbleTimer);
       bubbleTimer = setTimeout(() => renderPrincess(), 6000);
     } else {
-      toast("👑 " + text, force);
+      const bubble = $("#mini-bubble");
+      bubble.textContent = text;
+      bubble.classList.remove("hidden");
+      renderMiniPrincess(excited ? "proud" : null);
+      clearTimeout(miniBubbleTimer);
+      miniBubbleTimer = setTimeout(() => {
+        bubble.classList.add("hidden");
+        renderMiniPrincess();
+      }, 8000);
     }
   }
+
+  // She prods on her own every few minutes while the app is open.
+  const PROD_INTERVAL = 150000; // check every 2.5 min
+  setInterval(() => {
+    if (document.hidden) return;
+    if (!$("#mini-bubble").classList.contains("hidden")) return;
+    if (Math.random() < 0.5) speak("tap");
+  }, PROD_INTERVAL);
 
   let toastTimer = null;
   function toast(text, force) {
@@ -441,6 +459,7 @@
     renderCategoryManager();
     renderHistory();
     renderPrincess();
+    renderMiniPrincess();
   }
 
   function renderPickBanner() {
@@ -925,6 +944,16 @@
     }
   }
 
+  // The floating corner princess, hidden while her full tab is open.
+  function renderMiniPrincess(moodOverride) {
+    const c = state.companion;
+    const onPrincessTab = !$("#tab-princess").classList.contains("hidden");
+    const widget = $("#mini-princess");
+    widget.classList.toggle("hidden", onPrincessTab);
+    if (onPrincessTab) return;
+    COMPANION.draw($("#mini-canvas"), moodOverride || COMPANION.TIERS[c.tier].mood);
+  }
+
   function renderPrincess(moodOverride) {
     const c = state.companion;
     const tier = COMPANION.TIERS[c.tier];
@@ -1108,6 +1137,17 @@
     if (state.companion.tier >= 3) floatHearts(3);
   });
 
+  $("#mini-princess").addEventListener("click", () => {
+    // Tap while she's talking dismisses the bubble; otherwise she talks.
+    const bubble = $("#mini-bubble");
+    if (!bubble.classList.contains("hidden")) {
+      bubble.classList.add("hidden");
+      renderMiniPrincess();
+      return;
+    }
+    speak("tap", null, true);
+  });
+
   $("#princess-name").addEventListener("click", () => {
     const name = prompt("Rename your companion:", state.companion.name);
     if (name && name.trim()) {
@@ -1170,6 +1210,7 @@
         $("#speech-bubble").classList.add("hidden");
         renderPrincess();
       }
+      renderMiniPrincess();
     });
   });
 
@@ -1190,4 +1231,9 @@
   renderEstimateLabel();
   renderAll();
   checkSchedule();
+
+  // She pipes up shortly after launch (unless the welcome-back line beat her to it).
+  setTimeout(() => {
+    if ($("#mini-bubble").classList.contains("hidden")) speak("tap");
+  }, 4500);
 })();
