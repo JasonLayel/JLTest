@@ -247,7 +247,8 @@ select, input[type="time"] {
   flex-shrink: 0;
 }
 
-.task-delete {
+.task-delete,
+.task-edit {
   border: none;
   background: none;
   color: var(--text-muted);
@@ -257,6 +258,38 @@ select, input[type="time"] {
   flex-shrink: 0;
 }
 .task-delete:hover { color: var(--danger); }
+.task-edit:hover { color: var(--primary); }
+
+/* ---------- Inline task editor ---------- */
+.task-editor {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+  border-color: var(--primary);
+}
+
+.editor-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.edit-title {
+  flex: 1 1 180px;
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.editor-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-left: auto;
+}
 
 .empty-note {
   color: var(--text-muted);
