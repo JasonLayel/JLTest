@@ -1,6 +1,16 @@
 /* Service worker: caches the app shell so it works offline / as an installed PWA. */
-const CACHE = "random-task-picker-v8";
-const ASSETS = ["./", "index.html", "styles.css", "app.js", "companion.js", "manifest.json", "icon.svg"];
+const CACHE = "random-task-picker-v9";
+const ASSETS = [
+  "./",
+  "index.html",
+  "styles.css",
+  "app.js",
+  "companion.js",
+  "manifest.json",
+  "icon.svg",
+  "fonts/medievalsharp.woff2",
+  "fonts/geist-pixel.woff2",
+];
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
