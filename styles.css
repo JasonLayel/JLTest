@@ -1,3 +1,21 @@
+/* Bundled fonts (fonts/ in the repo) so they work offline as a PWA:
+ * MedievalSharp for royal headers/large elements, Geist Pixel for small
+ * accents and the princess's speech (matches her pixel-art sprite). */
+@font-face {
+  font-family: "MedievalSharp";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/medievalsharp.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist Pixel";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/geist-pixel.woff2") format("woff2");
+}
+
 /* Light is the default look; dark applies via data-theme (user setting). */
 :root {
   --bg: #fdf4f9;
@@ -10,6 +28,8 @@
   --success: #2e9e5b;
   --danger: #d64545;
   --shadow: 0 1px 3px rgba(60, 20, 45, 0.08);
+  --font-royal: "MedievalSharp", "Palatino Linotype", serif;
+  --font-pixel: "Geist Pixel", "Courier New", monospace;
 }
 
 :root[data-theme="dark"] {
@@ -43,13 +63,16 @@ body {
 
 .app-header h1 {
   margin: 0;
-  font-size: 1.4rem;
+  font-family: var(--font-royal);
+  font-size: 1.6rem;
+  font-weight: 400;
 }
 
 .tagline {
   margin: 0.15rem 0 0;
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-family: var(--font-pixel);
+  font-size: 0.78rem;
 }
 
 main {
@@ -58,8 +81,8 @@ main {
   padding: 0.75rem 1rem;
 }
 
-h2 { font-size: 1.05rem; margin: 1.25rem 0 0.5rem; }
-h3 { font-size: 0.95rem; margin: 1rem 0 0.4rem; }
+h2 { font-family: var(--font-royal); font-weight: 400; font-size: 1.25rem; margin: 1.25rem 0 0.5rem; }
+h3 { font-family: var(--font-royal); font-weight: 400; font-size: 1.1rem; margin: 1rem 0 0.4rem; }
 
 .hidden { display: none !important; }
 
@@ -94,7 +117,8 @@ h3 { font-size: 0.95rem; margin: 1rem 0 0.4rem; }
 }
 
 .btn-big {
-  font-size: 1.15rem;
+  font-family: var(--font-royal);
+  font-size: 1.3rem;
   padding: 0.9rem 1.6rem;
   background: var(--primary);
   border-color: var(--primary);
@@ -128,8 +152,9 @@ h3 { font-size: 0.95rem; margin: 1rem 0 0.4rem; }
 }
 
 .pick-banner-task {
-  font-size: 1.3rem;
-  font-weight: 700;
+  font-family: var(--font-royal);
+  font-size: 1.45rem;
+  font-weight: 400;
   margin: 0.3rem 0;
 }
 
@@ -509,8 +534,9 @@ select, input[type="time"] {
 .tab-btn {
   flex: 1;
   font: inherit;
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-family: var(--font-royal);
+  font-size: 1.05rem;
+  font-weight: 400;
   padding: 0.75rem 0.25rem;
   border: none;
   border-radius: 10px;
@@ -782,8 +808,9 @@ select, input[type="time"] {
 
 .princess-name-row {
   margin-top: 0.4rem;
-  font-weight: 700;
-  font-size: 1.05rem;
+  font-family: var(--font-royal);
+  font-weight: 400;
+  font-size: 1.25rem;
 }
 
 .princess-tier {
@@ -890,6 +917,35 @@ select, input[type="time"] {
 
 /* Main content shouldn't hide behind her on narrow screens */
 main { padding-bottom: 2.5rem; }
+
+/* ---------- Pixel font: small accents + the princess's voice ----------
+ * Matches her pixel-art sprite. Slight size bumps keep it legible. */
+.speech-bubble,
+.mini-bubble,
+.pose-caption,
+.scene-label,
+.toast,
+.chip,
+.task-cat-badge,
+.task-est,
+.help-text,
+.estimate-caption,
+.estimate-scale,
+.pick-banner-label,
+.pick-banner-category,
+.history-when,
+.history-source,
+.chronicle-verdict,
+.princess-tier,
+.empty-note {
+  font-family: var(--font-pixel);
+}
+
+.task-cat-badge { font-size: 0.72rem; }
+.task-est { font-size: 0.72rem; }
+.estimate-scale { font-size: 0.72rem; }
+.scene-label { font-size: 0.72rem; }
+.chronicle-verdict { font-weight: 400; }
 
 /* ---------- Confetti ---------- */
 .confetti {
