@@ -41,14 +41,20 @@
     <section id="tab-tasks" class="tab-panel">
       <!-- Daily goal: 3 tasks across 3 categories -->
       <div id="goal-bar" class="goal-bar">
-        <div class="goal-slots" id="goal-slots" title="Complete 3 tasks across 3 different categories">
-          <div class="goal-slot"></div>
-          <div class="goal-slot"></div>
-          <div class="goal-slot"></div>
+        <div class="goal-left">
+          <div class="goal-caption" id="goal-caption">Today's quest: 3 tasks · 3 categories</div>
+          <div class="goal-progress">
+            <div class="goal-slots" id="goal-slots" title="One circle per category you complete a task in today — fill all 3 for the daily goal">
+              <div class="goal-slot"></div>
+              <div class="goal-slot"></div>
+              <div class="goal-slot"></div>
+            </div>
+            <div class="goal-extras" id="goal-extras" title="Gems: extra tasks beyond the daily goal"></div>
+          </div>
         </div>
         <div class="goal-stats">
-          <span id="points-label" title="Total points">⭐ 0</span>
-          <span id="streak-label" title="Days in a row meeting the daily goal">🔥 0</span>
+          <span class="goal-stat" title="Total points"><span id="points-label">⭐ 0</span><small>points</small></span>
+          <span class="goal-stat" title="Days in a row meeting the daily goal"><span id="streak-label">🔥 0</span><small>day streak</small></span>
         </div>
       </div>
 

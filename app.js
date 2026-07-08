@@ -7,6 +7,9 @@
 
   const STORAGE_KEY = "randomTaskPicker.v1";
   const GOAL_TASKS = 3; // daily goal: 3 tasks across 3 categories
+  const OVER_TASKS = 6; // second-tier "Overachiever": double the goal in one day
+  const OVER_BONUS = 100;
+  const OVERTIME_MULT = 1.5; // tasks beyond a met goal earn royal-favor points
   const STREAK_MILESTONES = [3, 5, 7, 14, 21, 30, 50, 100];
 
   // Umbrella categories; each task additionally carries a mode: "active" | "reset".
@@ -52,6 +55,7 @@
       bestStreak: 0,
       dailyLog: {}, // { "2026-07-07": [{taskId, categoryId, points}] }
       goalAwarded: {}, // { "2026-07-07": true } goal bonus already granted
+      overAwarded: {}, // { "2026-07-07": true } overachiever bonus already granted
     },
     companion: {
       name: "Princess Elara",
@@ -192,7 +196,8 @@
   function recordCompletion(task) {
     const today = todayStr();
     const goalBefore = goalMetOn(today);
-    const pts = pointsFor(task);
+    // Royal favor: once the goal is met, every extra task pays 1.5×.
+    const pts = goalBefore ? Math.round(pointsFor(task) * OVERTIME_MULT) : pointsFor(task);
     if (!state.stats.dailyLog[today]) state.stats.dailyLog[today] = [];
     state.stats.dailyLog[today].push({
       taskId: task.id,
@@ -221,7 +226,19 @@
       }
       reacted = true;
     }
-    if (!reacted) speak("complete");
+    // Second tier: double the goal in one day.
+    if (!reacted && todaysLog().length >= OVER_TASKS && !state.stats.overAwarded[today]) {
+      state.stats.overAwarded[today] = true;
+      state.stats.totalPoints += OVER_BONUS;
+      addAffection(12);
+      confetti();
+      speak("overachieve", null, true);
+      reacted = true;
+    }
+    if (!reacted) {
+      speak("complete");
+      if (goalBefore) toast(`✨ Royal favor: +${pts} pts (1.5× beyond the quest)`);
+    }
     save();
   }
 
@@ -660,15 +677,46 @@
 
   function renderGoalBar() {
     const log = todaysLog();
-    // One slot per distinct category completed today (that's the goal that matters).
-    const cats = [...new Set(log.map((e) => e.categoryId))].slice(0, GOAL_TASKS);
+    const distinctCats = [...new Set(log.map((e) => e.categoryId))];
+    const cats = distinctCats.slice(0, GOAL_TASKS);
+    const met = goalMetOn(todayStr());
     const slots = document.querySelectorAll(".goal-slot");
     slots.forEach((slot, i) => {
       const cat = cats[i] ? catById(cats[i]) : null;
       slot.classList.toggle("filled", !!cat);
       slot.style.background = cat ? cat.color : "";
+      slot.title = cat ? `Category done: ${cat.name}` : "Complete a task in a new category";
     });
-    $("#goal-bar").classList.toggle("goal-met", goalMetOn(todayStr()));
+
+    // Extra tasks beyond the goal show up as gems.
+    const extras = $("#goal-extras");
+    extras.innerHTML = "";
+    const extraCount = Math.max(0, log.length - GOAL_TASKS);
+    for (let i = 0; i < Math.min(extraCount, 6); i++) {
+      const g = document.createElement("span");
+      g.className = "goal-gem";
+      g.textContent = "💎";
+      extras.appendChild(g);
+    }
+    if (extraCount > 6) {
+      const more = document.createElement("span");
+      more.className = "goal-gem-more";
+      more.textContent = "+" + (extraCount - 6);
+      extras.appendChild(more);
+    }
+
+    // Caption explains exactly what the circles want from you right now.
+    const caption = $("#goal-caption");
+    if (log.length >= OVER_TASKS) {
+      caption.textContent = "⚜️ OVERACHIEVER! The bards will sing of this day";
+    } else if (met) {
+      caption.textContent = `👑 Quest complete! Extras earn 1.5× pts — ${OVER_TASKS - log.length} more to Overachiever (+${OVER_BONUS})`;
+    } else {
+      caption.textContent = `Today's quest: ${log.length}/${GOAL_TASKS} tasks · ${Math.min(distinctCats.length, GOAL_TASKS)}/${GOAL_TASKS} categories`;
+    }
+
+    $("#goal-bar").classList.toggle("goal-met", met);
+    $("#goal-bar").classList.toggle("goal-over", log.length >= OVER_TASKS);
     $("#points-label").textContent = "⭐ " + state.stats.totalPoints;
     $("#streak-label").textContent = "🔥 " + currentStreak();
   }
@@ -1117,11 +1165,15 @@
       });
       const verdict = document.createElement("span");
       verdict.className = "chronicle-verdict";
-      verdict.textContent = met
-        ? keptStreak
-          ? "👑 Goal met · 🔥 streak alive"
-          : "👑 Goal met"
-        : `${entries.length}/${GOAL_TASKS} — goal missed`;
+      if (met) {
+        const parts = [];
+        if (entries.length >= OVER_TASKS) parts.push("⚜️ Overachiever");
+        parts.push("👑 Goal met");
+        if (keptStreak) parts.push("🔥 streak alive");
+        verdict.textContent = parts.join(" · ");
+      } else {
+        verdict.textContent = `${entries.length}/${GOAL_TASKS} — goal missed`;
+      }
       verdict.style.color = met ? "var(--success)" : "var(--text-muted)";
       head.append(when, verdict);
       card.appendChild(head);
@@ -1478,6 +1530,11 @@
       if (tab === "princess") {
         $("#speech-bubble").classList.add("hidden");
         renderPrincess();
+      }
+      if (tab === "history") {
+        // Chronicles reflect completions made since the last full render.
+        renderChronicles();
+        renderHistory();
       }
       renderMiniPrincess();
     });

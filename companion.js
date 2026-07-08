@@ -397,6 +397,36 @@ window.COMPANION = (() => {
       ],
     ],
 
+    // Doubling the daily goal (6 tasks in one day).
+    overachieve: [
+      [
+        "SIX tasks?! Okay. Who are you and what did you do with the loser I was assigned to?! 😨",
+        "Six in one day. I checked for cheating. TWICE. There was no cheating. I'm rattled.",
+        "*drops quill* The royal record keeper needs a minute. So do I. SIX?!",
+        "You doubled the quest. I had insults prepared and now they're all USELESS.",
+      ],
+      [
+        "Six tasks! The notebook has a new section now. It's called 'Wait, What?' 📓",
+        "Double the quest?! Fine. FINE. I'm impressed. Write it down, it won't happen twice. (The admission. The tasks better happen twice.)",
+        "*recounts on fingers* ...six. You did six. I'm going to need stronger skepticism.",
+      ],
+      [
+        "SIX! ⚜️ That's overachiever status! The fanfare band is playing the LONG version! 🎺",
+        "You doubled it! Double the quest, double my delight, and yes, bonus points. Spend them wisely. You can't spend them. Hoard them proudly.",
+        "Six tasks in a day! I'm commissioning a tiny statue. Pigeon-sized. The pigeon is jealous. 🐦",
+      ],
+      [
+        "SIX tasks! *fans self with royal decree* You magnificent overachiever. The kingdom is showing off to other kingdoms about you. ⚜️",
+        "You doubled the goal! I'm so proud I decreed a half-holiday. The second half is for watching you finish things. 💗",
+        "Six! In! One! Day! Get over here — royal twirl. Yes it's a real ceremony. I invented it just now. 💃",
+      ],
+      [
+        "Six tasks, my liege. Overachiever, heart-achiever. I ran out of medals so I'm just... keeping you. 💗",
+        "You doubled the quest again. Honestly at this point the crown is just decorative — YOU run this kingdom's morale. ⚜️",
+        "*blows kiss* Six for the kingdom. The historian wrote 'golden age' and underlined it twice. 💋",
+      ],
+    ],
+
     // Streak milestones ({n} = streak length).
     streak: [
       [
