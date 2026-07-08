@@ -14,8 +14,15 @@
 <body>
   <header class="app-header">
     <h1>👑 Petulant Princess Productivity</h1>
-    <p class="tagline">Add tasks. Let chance decide. Impress Her Royal Sassiness.</p>
+    <p class="tagline">Add tasks. Let her Royal Sassiness decide your fate.</p>
   </header>
+
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="tasks">📋 Tasks</button>
+    <button class="tab-btn" data-tab="princess">👑 Princess</button>
+    <button class="tab-btn" data-tab="history">📜 Chronicles</button>
+    <button class="tab-btn" data-tab="schedule">⚙️ Settings</button>
+  </nav>
 
   <!-- Current pick banner -->
   <div id="pick-banner" class="pick-banner hidden" aria-live="polite">
@@ -57,12 +64,15 @@
             <input type="range" id="estimate-input" min="5" max="60" step="5" value="15" aria-label="Time estimate in minutes">
             <div class="estimate-scale"><span>Easy · 5m</span><span>Hard · 1h</span></div>
           </div>
-          <div class="mode-toggle" id="mode-toggle" role="group" aria-label="Task mode">
-            <button type="button" class="chip active" data-mode="active">⚡ Active</button>
-            <button type="button" class="chip" data-mode="reset">🌊 Reset</button>
+          <div class="mode-toggle" id="mode-toggle" role="group" aria-label="Task mode"
+               title="⚡ Active = do, make, exert (workout, chores, focused work). 🌊 Reset = restore and unwind (stretching, reading, a walk).">
+            <button type="button" class="chip active" data-mode="active" title="⚡ Active: tasks that take effort — do, make, exert.">⚡ Active</button>
+            <button type="button" class="chip" data-mode="reset" title="🌊 Reset: tasks that restore you — unwind, recover, recharge.">🌊 Reset</button>
+            <button type="button" class="info-dot" id="mode-info" aria-label="What do Active and Reset mean?">?</button>
           </div>
-          <label class="daily-toggle">
+          <label class="daily-toggle" title="Every-day tasks automatically un-check themselves each morning so they're back on the list daily.">
             <input type="checkbox" id="daily-input"> 🔁 Every day
+            <button type="button" class="info-dot" id="daily-info" aria-label="What does Every day mean?">?</button>
           </label>
         </div>
       </form>
@@ -70,12 +80,12 @@
       <div class="filter-row" id="category-filters"></div>
 
       <div id="task-list" class="task-list"></div>
-      <p id="empty-tasks" class="empty-note hidden">No tasks yet. Add a few above, then hit <strong>Pick for me</strong>!</p>
+      <p id="empty-tasks" class="empty-note hidden">No tasks yet. Add a few above, then hit <strong>Ask Princess</strong>!</p>
 
       <div class="pick-cta">
         <div class="filter-row time-filter-row" id="time-filter" aria-label="How much time do you have?"></div>
         <div class="filter-row time-filter-row" id="energy-filter" aria-label="How much energy do you have?"></div>
-        <button id="pick-now-btn" class="btn btn-big">🎲 Pick for me</button>
+        <button id="pick-now-btn" class="btn btn-big">👑 Ask Princess <span class="btn-sub">(pick for me)</span></button>
       </div>
     </section>
 
@@ -108,11 +118,11 @@
 
     <!-- SCHEDULE TAB -->
     <section id="tab-schedule" class="tab-panel hidden">
-      <h2>Automatic picks</h2>
-      <p class="help-text">At each scheduled time, the app will automatically pick a task for you and notify you (while the app is open or installed and running).</p>
+      <h2>📯 Royal Decrees</h2>
+      <p class="help-text">At each scheduled time, the Princess issues a Royal Decree — a task picked for you, announced with a trumpet fanfare (while the app is open or installed and running).</p>
 
       <label class="toggle-row">
-        <span>Enable scheduled picks</span>
+        <span>Enable Royal Decrees</span>
         <input type="checkbox" id="schedule-enabled">
       </label>
 
@@ -149,7 +159,7 @@
       <h2>Appearance &amp; Sound</h2>
       <div class="filter-row" id="theme-picker" aria-label="Color theme"></div>
       <label class="toggle-row">
-        <span>Princess voice (mimimi) 🔊</span>
+        <span>Sounds — voice, trumpets &amp; clicks 🔊</span>
         <input type="checkbox" id="sound-enabled">
       </label>
 
@@ -170,13 +180,6 @@
       <button id="clear-history-btn" class="btn btn-ghost">Clear pick history</button>
     </section>
   </main>
-
-  <nav class="tab-bar">
-    <button class="tab-btn active" data-tab="tasks">📋 Tasks</button>
-    <button class="tab-btn" data-tab="princess">👑 Princess</button>
-    <button class="tab-btn" data-tab="schedule">⏰ Schedule</button>
-    <button class="tab-btn" data-tab="history">📜 Chronicles</button>
-  </nav>
 
   <div id="toast" class="toast hidden"></div>
 
