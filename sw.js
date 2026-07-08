@@ -1,5 +1,5 @@
 /* Service worker: caches the app shell so it works offline / as an installed PWA. */
-const CACHE = "random-task-picker-v9";
+const CACHE = "random-task-picker-v10";
 const ASSETS = [
   "./",
   "index.html",
