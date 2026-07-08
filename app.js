@@ -39,6 +39,8 @@
       firedToday: {}, // { "10:00": "2026-07-07" } last date each slot fired
       timeFilter: 0, // max minutes for picks; 0 = any
       energyFilter: "", // "" = any, "active" | "reset"
+      theme: "light", // "light" | "dark" | "auto"
+      soundEnabled: true, // princess voice blips
       rules: {
         distinctCategories: true,
         distinctWindow: 3,
@@ -185,7 +187,12 @@
     const goalBefore = goalMetOn(today);
     const pts = pointsFor(task);
     if (!state.stats.dailyLog[today]) state.stats.dailyLog[today] = [];
-    state.stats.dailyLog[today].push({ taskId: task.id, categoryId: task.categoryId, points: pts });
+    state.stats.dailyLog[today].push({
+      taskId: task.id,
+      title: task.title, // kept so Chronicles survives task deletion
+      categoryId: task.categoryId,
+      points: pts,
+    });
     state.stats.totalPoints += pts;
     addAffection(2);
 
@@ -224,6 +231,70 @@
     addAffection(-2);
   }
 
+  // ---------- Theme ----------
+
+  function applyTheme() {
+    const pref = state.settings.theme;
+    const dark =
+      pref === "dark" ||
+      (pref === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+    document.documentElement.dataset.theme = dark ? "dark" : "light";
+  }
+
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", applyTheme);
+
+  function renderThemePicker() {
+    const row = $("#theme-picker");
+    row.innerHTML = "";
+    for (const [value, label] of [["light", "☀️ Light"], ["dark", "🌙 Dark"], ["auto", "🖥️ System"]]) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "chip" + (state.settings.theme === value ? " active" : "");
+      if (state.settings.theme === value) b.style.background = "var(--primary)";
+      b.textContent = label;
+      b.addEventListener("click", () => {
+        state.settings.theme = value;
+        save();
+        applyTheme();
+        renderThemePicker();
+      });
+      row.appendChild(b);
+    }
+    $("#sound-enabled").checked = state.settings.soundEnabled;
+  }
+
+  // ---------- Princess voice (Animal Crossing-style "mimimimi") ----------
+
+  let audioCtx = null;
+  function sfxSpeak(textLength) {
+    if (!state.settings.soundEnabled) return;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const syllables = Math.max(3, Math.min(9, Math.round(textLength / 12)));
+      const t0 = audioCtx.currentTime;
+      let base = 640 + Math.random() * 120; // her register: high and a bit haughty
+      for (let i = 0; i < syllables; i++) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "triangle";
+        base += (Math.random() - 0.45) * 90; // wandering pitch, "mi-mi-mi"
+        const f = Math.max(480, Math.min(980, base));
+        const start = t0 + i * 0.085;
+        osc.frequency.setValueAtTime(f, start);
+        osc.frequency.exponentialRampToValueAtTime(f * 1.18, start + 0.05);
+        gain.gain.setValueAtTime(0, start);
+        gain.gain.linearRampToValueAtTime(0.09, start + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.07);
+        osc.connect(gain).connect(audioCtx.destination);
+        osc.start(start);
+        osc.stop(start + 0.08);
+      }
+    } catch {
+      /* audio unavailable or blocked before first gesture — she speaks silently */
+    }
+  }
+
   // ---------- Companion ----------
 
   function addAffection(delta) {
@@ -247,6 +318,7 @@
     const text = COMPANION.line(kind, c.tier, c.recentLines, vars);
     if (!text) return;
     save();
+    sfxSpeak(text.length);
     const excited = kind === "goal" || kind === "streak";
     const onPrincessTab = !$("#tab-princess").classList.contains("hidden");
     if (onPrincessTab) {
@@ -269,13 +341,22 @@
     }
   }
 
-  // She prods on her own every few minutes while the app is open.
-  const PROD_INTERVAL = 150000; // check every 2.5 min
+  // She prods on her own occasionally (not often) while the app is open.
+  const PROD_INTERVAL = 300000; // check every 5 min
   setInterval(() => {
     if (document.hidden) return;
     if (!$("#mini-bubble").classList.contains("hidden")) return;
-    if (Math.random() < 0.5) speak("tap");
+    if (Math.random() < 0.35) speak("tap");
   }, PROD_INTERVAL);
+
+  // Her idle pose changes now and then (per render batch + this timer).
+  let currentPose = COMPANION.randomPose();
+  setInterval(() => {
+    if (document.hidden) return;
+    currentPose = COMPANION.randomPose();
+    renderPrincess();
+    renderMiniPrincess();
+  }, 210000);
 
   let toastTimer = null;
   function toast(text, force) {
@@ -317,10 +398,11 @@
 
   // ---------- Day rollover (recurring tasks, affection decay, welcome-back) ----------
 
+  // Returns true when a new day was processed so callers can re-render.
   function dayRollover() {
     const today = todayStr();
     const last = state.companion.lastOpenDate;
-    if (last === today) return;
+    if (last === today) return false;
 
     // Recurring tasks completed on a previous day come back.
     for (const t of state.tasks) {
@@ -348,6 +430,7 @@
 
     state.companion.lastOpenDate = today;
     save();
+    return true;
   }
 
   // ---------- Picking logic ----------
@@ -404,7 +487,9 @@
   // ---------- Scheduled picks ----------
 
   function checkSchedule() {
-    dayRollover();
+    // If midnight passed while the app was open, recurring tasks just came
+    // back and goal/streak reset — refresh the UI so the list shows it.
+    if (dayRollover()) renderAll();
     const s = state.settings;
     if (!s.scheduleEnabled) return;
     const now = new Date();
@@ -457,7 +542,9 @@
     renderSchedule();
     renderRules();
     renderCategoryManager();
+    renderChronicles();
     renderHistory();
+    renderThemePicker();
     renderPrincess();
     renderMiniPrincess();
   }
@@ -911,6 +998,60 @@
     wrap.appendChild(add);
   }
 
+  // Chronicles: one card per day — completions, goal verdict, streak survival.
+  function renderChronicles() {
+    const list = $("#chronicle-list");
+    list.innerHTML = "";
+    const dates = Object.keys(state.stats.dailyLog).sort().reverse().slice(0, 60);
+    $("#empty-chronicles").classList.toggle("hidden", dates.length > 0);
+
+    for (const d of dates) {
+      const entries = state.stats.dailyLog[d];
+      const met = goalMetOn(d);
+      const keptStreak = met && goalMetOn(shiftDate(d, -1));
+
+      const card = document.createElement("div");
+      card.className = "chronicle-card";
+
+      const head = document.createElement("div");
+      head.className = "chronicle-head";
+      const when = document.createElement("strong");
+      const [y, m, day] = d.split("-").map(Number);
+      when.textContent = new Date(y, m - 1, day).toLocaleDateString([], {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
+      });
+      const verdict = document.createElement("span");
+      verdict.className = "chronicle-verdict";
+      verdict.textContent = met
+        ? keptStreak
+          ? "👑 Goal met · 🔥 streak alive"
+          : "👑 Goal met"
+        : `${entries.length}/${GOAL_TASKS} — goal missed`;
+      verdict.style.color = met ? "var(--success)" : "var(--text-muted)";
+      head.append(when, verdict);
+      card.appendChild(head);
+
+      for (const e of entries) {
+        const cat = catById(e.categoryId);
+        const row = document.createElement("div");
+        row.className = "chronicle-task";
+        const title = document.createElement("span");
+        title.className = "history-task";
+        const task = state.tasks.find((t) => t.id === e.taskId);
+        title.textContent = "✓ " + (e.title || task?.title || "(a mysterious deed)");
+        const badge = document.createElement("span");
+        badge.className = "task-cat-badge";
+        badge.textContent = cat?.name ?? "?";
+        badge.style.background = cat?.color ?? "#888";
+        row.append(title, badge);
+        card.appendChild(row);
+      }
+      list.appendChild(card);
+    }
+  }
+
   function renderHistory() {
     const list = $("#history-list");
     list.innerHTML = "";
@@ -944,21 +1085,40 @@
     }
   }
 
+  // Mood priority: explicit override (celebrations) > idle pose > affection tier.
+  function idleMood() {
+    return currentPose.mood || COMPANION.TIERS[state.companion.tier].mood;
+  }
+
   // The floating corner princess, hidden while her full tab is open.
   function renderMiniPrincess(moodOverride) {
-    const c = state.companion;
     const onPrincessTab = !$("#tab-princess").classList.contains("hidden");
     const widget = $("#mini-princess");
     widget.classList.toggle("hidden", onPrincessTab);
     if (onPrincessTab) return;
-    COMPANION.draw($("#mini-canvas"), moodOverride || COMPANION.TIERS[c.tier].mood);
+    widget.title = `${state.companion.name} — ${currentPose.label}`;
+    COMPANION.draw($("#mini-canvas"), moodOverride || idleMood());
   }
 
   function renderPrincess(moodOverride) {
     const c = state.companion;
     const tier = COMPANION.TIERS[c.tier];
     const canvas = $("#princess-canvas");
-    COMPANION.draw(canvas, moodOverride || tier.mood);
+    COMPANION.draw(canvas, moodOverride || idleMood());
+
+    // Today's scene: image art when available, placeholder gradient until then.
+    const scene = COMPANION.sceneForDate(todayStr());
+    const backdrop = $("#scene-backdrop");
+    if (scene.image) {
+      backdrop.style.background = `url("${scene.image}") center / cover`;
+      $("#scene-emoji").textContent = "";
+    } else {
+      backdrop.style.background =
+        `linear-gradient(180deg, ${scene.sky[0]}, ${scene.sky[1]} 68%, ${scene.ground} 68%)`;
+      $("#scene-emoji").textContent = scene.emoji;
+    }
+    $("#scene-label").textContent = scene.name;
+    $("#pose-caption").textContent = moodOverride ? "— celebrating! —" : `*${currentPose.label}*`;
 
     $("#princess-name").textContent = c.name;
     $("#princess-tier").textContent = tier.name;
@@ -1179,6 +1339,12 @@
     Notification.requestPermission().then(renderSchedule);
   });
 
+  $("#sound-enabled").addEventListener("change", (e) => {
+    state.settings.soundEnabled = e.target.checked;
+    save();
+    if (e.target.checked) sfxSpeak(30); // let her clear her throat
+  });
+
   $("#rule-distinct").addEventListener("change", (e) => {
     state.settings.rules.distinctCategories = e.target.checked;
     save();
@@ -1227,6 +1393,7 @@
     navigator.serviceWorker.register("sw.js").catch(() => {});
   }
 
+  applyTheme();
   dayRollover();
   renderEstimateLabel();
   renderAll();
