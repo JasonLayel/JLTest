@@ -65,6 +65,90 @@ window.COMPANION = (() => {
     return POSES[Math.floor(Math.random() * POSES.length)];
   }
 
+  // ---------------- Scene & pose flavor lines ----------------
+  // Occasionally swapped in for idle chatter so she reacts to where she is
+  // and what she's doing. Keyed by scene/pose id.
+
+  const SCENE_LINES = {
+    beach: [
+      "Uh, yeah I'm at the beach. Get over it. 🏖️",
+      "Royal beach day. The ocean understands me. You could learn from the ocean.",
+      "I'd say 'wish you were here' but the sand is judgmental and so am I.",
+    ],
+    bedroom: [
+      "You're in my CHAMBERS. Knock next time. There's no door. Find one.",
+      "I was this close to a world-class nap and then your face appeared.",
+    ],
+    garden: [
+      "The roses bloomed for me today. What have YOU done for me today? 🌸",
+      "Garden day. Even the butterflies have better follow-through than you.",
+    ],
+    throne: [
+      "You stand before the throne. State your business. Is it tasks? It better be tasks. 👑",
+      "Throne room day. I'm feeling extra official, so consider everything I say a decree.",
+    ],
+    library: [
+      "Shhh. It's library day. Whisper your productivity to me. 📚",
+      "I'm reading a book about people who finish what they start. Fiction, obviously.",
+    ],
+    kitchen: [
+      "The royal bakers let me frost things today. The kingdom may not survive. 🧁",
+      "I'm in the kitchen 'supervising.' Supervising means eating. Don't tell the chef.",
+    ],
+    balcony: [
+      "Moonlit balcony. Very romantic. Very wasted on you. 🌙",
+      "I count stars out here. There are more stars than your completed tasks. By a lot.",
+    ],
+    hotspring: [
+      "Hot springs day. I'm relaxing. YOU should be working. The system works. ♨️",
+      "The steam is great for royal skin. The judgment is great for your motivation.",
+    ],
+    market: [
+      "Village market day! I pointed at things and the royal purse wept. 🎪",
+      "A merchant tried to overcharge me. ME. He's a jester now. Career change.",
+    ],
+    meadow: [
+      "Butterfly meadow. One landed on my crown. Nature recognizes rank. 🦋",
+      "It's meadow day. I'm frolicking. Regally. There's a technique to it.",
+    ],
+  };
+
+  const POSE_LINES = {
+    phone: [
+      "Sorry, I'm in my doomscroll era. 📱",
+      "*scrolling* One sec, someone is wrong on the royal internet.",
+      "Don't judge me — my phone has a little kingdom in it and it NEEDS me.",
+    ],
+    hair: [
+      "*twirls hair* What? I'm thinking. This is what thinking looks like.",
+      "The hair twirl is strategic. It distracts from the fact I'm doing nothing.",
+    ],
+    nap: [
+      "*half asleep* Five more minutes... decree it... 💤",
+      "I was NOT napping. I was inspecting my eyelids. For quality.",
+    ],
+    music: [
+      "*one earbud out* Hm? Speak quickly, this is my favorite song. 🎧",
+      "I'm listening to royalty-core. It's just trumpets. It slaps.",
+    ],
+    tv: [
+      "Shh — royal TV. The peasant in this drama is about to get promoted. 📺",
+      "Don't stand in front of the TV. You're not THAT interesting.",
+    ],
+    nails: [
+      "Careful, wet nails. If you make me smudge these there will be consequences. 💅",
+      "This shade is called 'Unimpressed Pink.' Named after my feelings about your streak.",
+    ],
+    snack: [
+      "*mouth full of pastry* Whmf? I said WHMF. 🍰",
+      "The tarts are for royalty. You may watch me eat them. It's an honor, actually.",
+    ],
+    daydream: [
+      "*staring into the distance* I was somewhere better. Now I'm here. With you. ☁️",
+      "I was daydreaming about a kingdom where everyone finishes their tasks. Wild fantasy stuff.",
+    ],
+  };
+
   // ---------------- Dialogue pools ----------------
   // {n} in streak lines is replaced with the streak number.
   // Some lines carry emojis and *action* beats — deliberately not all of them.
@@ -95,6 +179,23 @@ window.COMPANION = (() => {
         "Somewhere out there, a task is crying because you keep ignoring it. 😭",
         "Is this what you do instead of your Body tasks? Explains a lot.",
         "*eye roll* A princess waits for no one. But apparently I wait for YOU. Insulting.",
+        "Need some... special motivation? Sucks for you.",
+        "I asked the royal oracle about your future. She laughed. Oracles shouldn't laugh.",
+        "*files one (1) nail* That's how long you held my interest. One nail.",
+        "You have the energy of an unsent letter. Sitting there. Doing nothing. Forever.",
+        "Do you want a medal for showing up? They don't make medals that small.",
+        "I've knighted BREAD with more ceremony than you deserve right now. 🍞",
+        "Task list's over there. I'm over here. One of us is worth your time and it's neither until you finish something.",
+        "*sips tea without offering you any* Mm. What? You've earned nothing. ☕",
+        "My horoscope said I'd meet someone disappointing today. Anyway, hi.",
+        "You hover like a fruit fly with commitment issues. Land on a task or leave. 🪰",
+        "The dungeon has an opening. It's a metaphor. The dungeon is your to-do list. Get in.",
+        "If procrastination were a kingdom you'd be its beloved king. Tragically, it isn't, and you're not.",
+        "*stares* I'm trying to see the potential everyone keeps mentioning. Squinting doesn't help.",
+        "Talk is free. Checkboxes cost effort. You're clearly shopping in the free section.",
+        "I named a pigeon after you. It also refuses to do anything useful. 🐦",
+        "Every minute you spend here, a task grows one day older and one day sadder.",
+        "Royal decree: stop poking me and poke a checkbox instead.",
       ],
       [
         "Oh — it's you. I was just... not thinking about you. At all.",
@@ -115,6 +216,15 @@ window.COMPANION = (() => {
         "What's a 'Purpose' task anyway? Show me. Do one. Right now. For the throne. 👑",
         "Today's royal decree: log a 🌊 reset task. Your brain is dusty. I can hear it.",
         "*pretends to read* You may ask me ONE question. ...No, not that one.",
+        "I mentioned you at the royal brunch. Neutrally! With only ONE eye roll. Growth.",
+        "The pigeon I named after you did a trick yesterday. Raising the bar. Your move. 🐦",
+        "You're at the 'noticed but not celebrated' stage. There are worse stages. You were IN them.",
+        "*bookmark snaps shut* Fine, I'm listening. You have until I get bored. Starting now.",
+        "I drew a tiny chart of your progress. It's less humiliating than last month's chart.",
+        "Careful. Keep completing things and I might develop... expectations. 😯",
+        "Royal gossip: the checkbox says you two are 'going steady.' I need details.",
+        "Some days you almost impress me. Today could be one. No pressure. (Pressure.)",
+        "I un-crumpled the report about you. It sits flat on the desk now. That's status.",
       ],
       [
         "Hey, you! I was hoping you'd stop by. 😊",
@@ -189,6 +299,12 @@ window.COMPANION = (() => {
         "*pointedly looks away* I'm not proud of you. Your posture just improved. Coincidence.",
         "One down. The princess demands three. The princess is patient-ish. ⏳",
         "Hm. Note taken, loser-b— ...note taken.",
+        "The royal scribe asked if this was a typo. I said no. He fainted.",
+        "*checks the checkbox twice* Huh. It's real. Somebody fetch my surprised face.",
+        "You did a thing! Low bar, sure, but you cleared it without tripping. Progress?",
+        "Congratulations on doing the bare minimum. It suits you. Do it again.",
+        "One task. The pigeon named after you remains unimpressed. Barely. 🐦",
+        "I'd say 'keep it up' but historically that's where things fall apart for you.",
       ],
       [
         "Oh! You finished something. I was just about to watch, too. 👀",
@@ -201,6 +317,10 @@ window.COMPANION = (() => {
         "That's the second-most impressive thing I've seen today. First was my reflection. 💁",
         "Was that... momentum? From YOU? Wild times in the kingdom.",
         "Acceptable! Which is princess-speak for 'quietly pleased.'",
+        "One more like that and I'll consider raising an eyebrow. The good eyebrow.",
+        "The royal notebook says that's four this week. The notebook doesn't lie. I checked. Twice.",
+        "Solid. Efficient. Suspicious. Who's coaching you?",
+        "*small nod* Logged, noted, and filed under 'huh, okay then.'",
       ],
       [
         "Nice one! I knew you had it in you. (I gambled royal funds on it.) 🎲",
@@ -363,6 +483,10 @@ window.COMPANION = (() => {
         "The dice have spoken. Try not to embarrass them. 🎲",
         "That one. Go. Impress me. (You won't.) (Prove me wrong.) (Please.)",
         "*points lazily* Rolled! If you reroll this I'm telling the houseplant.",
+        "By royal decree: THAT one. Yes, that one. Don't make the decree repeat itself. 📯",
+        "Fate has chosen. Fate is me. I chose randomly. Fate works in lazy ways.",
+        "There's your task. Reroll it and I'm adding 'coward' to your royal file.",
+        "You asked, I picked. This is the most functional our relationship has ever been.",
       ],
       [
         "Ooh, good roll. I'd do that one. If I weren't royalty. Which I am. So you do it. 👑",
@@ -385,18 +509,30 @@ window.COMPANION = (() => {
 
   // Pick a line from pool[kind][tier], avoiding recently used lines.
   // recent: array of strings (mutated in place, caller persists it).
-  function line(kind, tier, recent, vars) {
-    const pools = POOLS[kind];
-    if (!pools) return "";
-    let pool = pools[Math.min(tier, pools.length - 1)];
-    // Fall back to nearest lower tier with content (levelup tier 0 is empty).
-    for (let t = tier; t >= 0 && (!pool || pool.length === 0); t--) pool = pools[t];
-    if (!pool || pool.length === 0) return "";
+  // ctx {sceneId, poseId}: idle chatter sometimes references her scene or pose.
+  function line(kind, tier, recent, vars, ctx) {
+    let pool = null;
+    // ~30% of idle chatter is about where she is / what she's doing right now.
+    if (kind === "tap" && ctx && Math.random() < 0.3) {
+      const flavor = [
+        ...(SCENE_LINES[ctx.sceneId] || []),
+        ...(POSE_LINES[ctx.poseId] || []),
+      ].filter((l) => !recent.includes(l));
+      if (flavor.length > 0) pool = flavor;
+    }
+    if (!pool) {
+      const pools = POOLS[kind];
+      if (!pools) return "";
+      pool = pools[Math.min(tier, pools.length - 1)];
+      // Fall back to nearest lower tier with content (levelup tier 0 is empty).
+      for (let t = tier; t >= 0 && (!pool || pool.length === 0); t--) pool = pools[t];
+      if (!pool || pool.length === 0) return "";
+    }
     let candidates = pool.filter((l) => !recent.includes(l));
     if (candidates.length === 0) candidates = pool;
     let text = candidates[Math.floor(Math.random() * candidates.length)];
     recent.push(text);
-    while (recent.length > 40) recent.shift();
+    while (recent.length > 70) recent.shift();
     if (vars) for (const k in vars) text = text.replaceAll("{" + k + "}", vars[k]);
     return text;
   }

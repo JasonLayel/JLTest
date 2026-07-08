@@ -13,7 +13,7 @@
   const DEFAULT_CATEGORIES = [
     { id: "mind", name: "Mind", color: "#5b5bd6" },
     { id: "body", name: "Body", color: "#d68a2e" },
-    { id: "space", name: "Space", color: "#2e9e5b" },
+    { id: "space", name: "Environment", color: "#2e9e5b" },
     { id: "play", name: "Play", color: "#d65b9a" },
     { id: "purpose", name: "Purpose", color: "#2e8ad6" },
   ];
@@ -29,7 +29,7 @@
   };
 
   const DEFAULT_STATE = {
-    version: 2,
+    version: 3,
     categories: DEFAULT_CATEGORIES,
     tasks: [], // {id, title, categoryId, mode, estimateMin, recurring, done, createdAt, completedAt}
     history: [], // picks: {id, taskId, title, categoryId, at, source, status}
@@ -92,33 +92,40 @@
 
   // v1 → v2: six flat categories become five umbrellas + per-task active/reset mode.
   function migrate(s) {
-    if ((s.version || 1) >= 2) return s;
-    s.categories = structuredClone(DEFAULT_CATEGORIES);
-    for (const t of s.tasks || []) {
-      const m = V1_MIGRATION[t.categoryId];
-      if (m) {
-        t.categoryId = m[0];
-        if (!t.mode) t.mode = m[1];
+    if ((s.version || 1) < 2) {
+      s.categories = structuredClone(DEFAULT_CATEGORIES);
+      for (const t of s.tasks || []) {
+        const m = V1_MIGRATION[t.categoryId];
+        if (m) {
+          t.categoryId = m[0];
+          if (!t.mode) t.mode = m[1];
+        }
+        if (!t.mode) t.mode = "active";
       }
-      if (!t.mode) t.mode = "active";
-    }
-    for (const h of s.history || []) {
-      const m = V1_MIGRATION[h.categoryId];
-      if (m) h.categoryId = m[0];
-    }
-    const ex = s.settings?.rules?.excludedCategoryIds;
-    if (ex) {
-      s.settings.rules.excludedCategoryIds = [
-        ...new Set(ex.map((id) => V1_MIGRATION[id]?.[0] || id)),
-      ];
-    }
-    for (const day of Object.values(s.stats?.dailyLog || {})) {
-      for (const e of day) {
-        const m = V1_MIGRATION[e.categoryId];
-        if (m) e.categoryId = m[0];
+      for (const h of s.history || []) {
+        const m = V1_MIGRATION[h.categoryId];
+        if (m) h.categoryId = m[0];
       }
+      const ex = s.settings?.rules?.excludedCategoryIds;
+      if (ex) {
+        s.settings.rules.excludedCategoryIds = [
+          ...new Set(ex.map((id) => V1_MIGRATION[id]?.[0] || id)),
+        ];
+      }
+      for (const day of Object.values(s.stats?.dailyLog || {})) {
+        for (const e of day) {
+          const m = V1_MIGRATION[e.categoryId];
+          if (m) e.categoryId = m[0];
+        }
+      }
+      s.version = 2;
     }
-    s.version = 2;
+    // v2 → v3: "Space" reads better as "Environment" (skip if user renamed it).
+    if (s.version < 3) {
+      const space = (s.categories || []).find((c) => c.id === "space");
+      if (space && space.name === "Space") space.name = "Environment";
+      s.version = 3;
+    }
     return s;
   }
 
@@ -295,6 +302,89 @@
     }
   }
 
+  function getAudio() {
+    if (!state.settings.soundEnabled) return null;
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    } catch {
+      return null;
+    }
+  }
+
+  // Royal Decree fanfare: "doot doo DOOO" 🎺
+  function sfxTrumpet() {
+    const ctx = getAudio();
+    if (!ctx) return;
+    const t0 = ctx.currentTime;
+    // [freq, start, duration] — G4, G4, C5 like a herald's call.
+    const notes = [
+      [392, 0, 0.16],
+      [392, 0.2, 0.16],
+      [523.25, 0.42, 0.55],
+    ];
+    for (const [f, at, dur] of notes) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth"; // brassy
+      osc.frequency.setValueAtTime(f, t0 + at);
+      gain.gain.setValueAtTime(0, t0 + at);
+      gain.gain.linearRampToValueAtTime(0.12, t0 + at + 0.02);
+      gain.gain.setValueAtTime(0.12, t0 + at + dur * 0.7);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + at + dur);
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 2200; // soften the saw into something trumpet-ish
+      osc.connect(filter).connect(gain).connect(ctx.destination);
+      osc.start(t0 + at);
+      osc.stop(t0 + at + dur + 0.05);
+    }
+  }
+
+  // Soft "pop" blip for button taps; a brighter sparkle for checking tasks off.
+  function sfxClick(kind) {
+    const ctx = getAudio();
+    if (!ctx) return;
+    const t0 = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    if (kind === "check") {
+      osc.frequency.setValueAtTime(660, t0);
+      osc.frequency.exponentialRampToValueAtTime(1320, t0 + 0.09); // upward "ding!"
+    } else {
+      const f = 500 + Math.random() * 80;
+      osc.frequency.setValueAtTime(f, t0);
+      osc.frequency.exponentialRampToValueAtTime(f * 0.7, t0 + 0.06);
+    }
+    gain.gain.setValueAtTime(0, t0);
+    gain.gain.linearRampToValueAtTime(kind === "check" ? 0.08 : 0.05, t0 + 0.008);
+    gain.gain.exponentialRampToValueAtTime(0.001, t0 + (kind === "check" ? 0.12 : 0.07));
+    osc.connect(gain).connect(ctx.destination);
+    osc.start(t0);
+    osc.stop(t0 + 0.14);
+  }
+
+  // One delegated listener covers every button/chip/checkbox, present or future.
+  document.addEventListener(
+    "pointerdown",
+    (e) => {
+      const el = e.target;
+      if (el.closest?.("button, .chip")) sfxClick();
+    },
+    { capture: true, passive: true }
+  );
+  document.addEventListener(
+    "change",
+    (e) => {
+      if (e.target.matches?.('input[type="checkbox"]')) {
+        sfxClick(e.target.checked ? "check" : "click");
+      }
+    },
+    true
+  );
+
   // ---------- Companion ----------
 
   function addAffection(delta) {
@@ -315,7 +405,9 @@
   let miniBubbleTimer = null;
   function speak(kind, vars, force) {
     const c = state.companion;
-    const text = COMPANION.line(kind, c.tier, c.recentLines, vars);
+    // Scene/pose context lets her comment on where she is / what she's doing.
+    const ctx = { sceneId: COMPANION.sceneForDate(todayStr()).id, poseId: currentPose.id };
+    const text = COMPANION.line(kind, c.tier, c.recentLines, vars, ctx);
     if (!text) return;
     save();
     sfxSpeak(text.length);
@@ -502,7 +594,8 @@
         const entry = pickRandom("scheduled");
         save();
         if (entry) {
-          notify("🎲 Time for a task!", `${entry.title} — ${catById(entry.categoryId)?.name ?? ""}`);
+          sfxTrumpet();
+          notify("📯 A Royal Decree!", `${entry.title} — ${catById(entry.categoryId)?.name ?? ""}`);
           renderAll();
         }
         break; // at most one auto-pick per check
@@ -558,7 +651,7 @@
     }
     banner.classList.remove("hidden");
     $("#pick-banner-label").textContent =
-      entry.source === "scheduled" ? "⏰ Scheduled pick" : "Your task right now";
+      entry.source === "scheduled" ? "📯 Royal Decree" : "Your task right now";
     $("#pick-banner-task").textContent = entry.title;
     const task = state.tasks.find((t) => t.id === entry.taskId);
     const est = task ? ` · ⏱ ${estimateOf(task)} min` : "";
@@ -1259,6 +1352,16 @@
   });
 
   $("#estimate-input").addEventListener("input", renderEstimateLabel);
+
+  // "?" hints — tooltips exist on hover, but these work on touch screens too.
+  $("#mode-info").addEventListener("click", (e) => {
+    e.preventDefault();
+    toast("⚡ Active = do, make, exert (workout, chores, focused work). 🌊 Reset = restore & unwind (stretch, read, take a walk).", true);
+  });
+  $("#daily-info").addEventListener("click", (e) => {
+    e.preventDefault();
+    toast("🔁 Every-day tasks un-check themselves each morning, so they're back on your list daily.", true);
+  });
 
   $("#pick-now-btn").addEventListener("click", () => {
     const entry = pickRandom("manual");
