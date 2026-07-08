@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#5b5bd6">
-  <meta name="description" content="A to-do list that randomly picks what you should do next.">
-  <title>Random Task Picker</title>
+  <meta name="theme-color" content="#e8489b">
+  <meta name="description" content="A sassy princess picks your next task. Impress her.">
+  <title>Petulant Princess Productivity</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icon.svg">
@@ -13,8 +13,8 @@
 </head>
 <body>
   <header class="app-header">
-    <h1>🎲 Random Task Picker</h1>
-    <p class="tagline">Add tasks. Let chance decide.</p>
+    <h1>👑 Petulant Princess Productivity</h1>
+    <p class="tagline">Add tasks. Let chance decide. Impress Her Royal Sassiness.</p>
   </header>
 
   <!-- Current pick banner -->
@@ -84,9 +84,13 @@
       <div class="princess-scene">
         <div id="speech-bubble" class="speech-bubble hidden"></div>
         <div class="princess-stage">
+          <div id="scene-backdrop" class="scene-backdrop"></div>
+          <span id="scene-emoji" class="scene-emoji"></span>
+          <span id="scene-label" class="scene-label"></span>
           <div id="princess-hearts" class="princess-hearts"></div>
           <canvas id="princess-canvas" width="200" height="280" aria-label="Pixel-art princess companion"></canvas>
         </div>
+        <p id="pose-caption" class="pose-caption"></p>
         <div class="princess-name-row">
           <span id="princess-name">Princess Elara</span>
           <span id="princess-tier" class="princess-tier"></span>
@@ -142,17 +146,28 @@
       <h3>Categories eligible for random picks</h3>
       <div id="rule-categories" class="rule-categories"></div>
 
+      <h2>Appearance &amp; Sound</h2>
+      <div class="filter-row" id="theme-picker" aria-label="Color theme"></div>
+      <label class="toggle-row">
+        <span>Princess voice (mimimi) 🔊</span>
+        <input type="checkbox" id="sound-enabled">
+      </label>
+
       <h2>Categories</h2>
       <p class="help-text">Rename, recolor, add, or remove your umbrella categories. Each task also carries an energy mode: ⚡ Active (do, make, exert) or 🌊 Reset (restore, unwind, recover).</p>
       <div id="category-manager" class="category-manager"></div>
     </section>
 
-    <!-- HISTORY TAB -->
+    <!-- CHRONICLES TAB -->
     <section id="tab-history" class="tab-panel hidden">
-      <h2>Pick history</h2>
+      <h2>Chronicles</h2>
+      <p class="help-text">The royal record: what you accomplished each day, whether the daily goal (3 tasks, 3 categories) was met, and whether the streak survived.</p>
+      <div id="chronicle-list" class="history-list"></div>
+      <p id="empty-chronicles" class="empty-note hidden">No deeds recorded yet. The historian is napping.</p>
+      <h2>Recent picks</h2>
       <div id="history-list" class="history-list"></div>
       <p id="empty-history" class="empty-note hidden">No picks yet.</p>
-      <button id="clear-history-btn" class="btn btn-ghost">Clear history</button>
+      <button id="clear-history-btn" class="btn btn-ghost">Clear pick history</button>
     </section>
   </main>
 
@@ -160,7 +175,7 @@
     <button class="tab-btn active" data-tab="tasks">📋 Tasks</button>
     <button class="tab-btn" data-tab="princess">👑 Princess</button>
     <button class="tab-btn" data-tab="schedule">⏰ Schedule</button>
-    <button class="tab-btn" data-tab="history">📜 History</button>
+    <button class="tab-btn" data-tab="history">📜 Chronicles</button>
   </nav>
 
   <div id="toast" class="toast hidden"></div>

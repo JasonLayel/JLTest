@@ -1,25 +1,25 @@
+/* Light is the default look; dark applies via data-theme (user setting). */
 :root {
-  --bg: #f6f6fa;
+  --bg: #fdf4f9;
   --surface: #ffffff;
-  --text: #1c1c28;
-  --text-muted: #6b6b80;
-  --border: #e2e2ec;
-  --primary: #5b5bd6;
+  --text: #241a22;
+  --text-muted: #77687a;
+  --border: #f0dcea;
+  --primary: #e8489b;
   --primary-contrast: #ffffff;
   --success: #2e9e5b;
   --danger: #d64545;
-  --shadow: 0 1px 3px rgba(20, 20, 40, 0.08);
+  --shadow: 0 1px 3px rgba(60, 20, 45, 0.08);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #14141c;
-    --surface: #1e1e2a;
-    --text: #ececf4;
-    --text-muted: #9a9ab0;
-    --border: #33334a;
-    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  }
+:root[data-theme="dark"] {
+  --bg: #171219;
+  --surface: #221a26;
+  --text: #f4ecf2;
+  --text-muted: #a898a8;
+  --border: #453548;
+  --primary: #f05aac;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 * { box-sizing: border-box; }
@@ -454,6 +454,38 @@ select, input[type="time"] {
   flex-shrink: 0;
 }
 
+/* ---------- Chronicles ---------- */
+.chronicle-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
+  box-shadow: var(--shadow);
+}
+
+.chronicle-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.chronicle-verdict {
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chronicle-task {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  padding: 0.15rem 0;
+}
+
 /* ---------- Tab bar ---------- */
 .tab-bar {
   position: fixed;
@@ -606,12 +638,58 @@ select, input[type="time"] {
 .princess-stage {
   position: relative;
   display: inline-block;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+/* Scene backdrop behind her (placeholder gradient until artwork lands) */
+.scene-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.scene-emoji {
+  position: absolute;
+  top: 8%;
+  left: 8%;
+  font-size: 2.2rem;
+  opacity: 0.55;
+  z-index: 1;
+}
+
+.scene-label {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
 }
 
 #princess-canvas {
+  position: relative;
+  z-index: 1;
   image-rendering: pixelated;
-  background: linear-gradient(180deg, transparent 78%, rgba(200, 107, 184, 0.15) 78%);
-  border-radius: 12px;
+  animation: mini-idle 2.8s ease-in-out infinite;
+}
+
+@media (min-width: 768px) {
+  #princess-canvas { width: 300px; height: auto; }
+}
+
+.pose-caption {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
 }
 
 .princess-hearts {
@@ -739,14 +817,23 @@ select, input[type="time"] {
 .mini-princess.hidden { display: none; }
 
 #mini-canvas {
+  width: 66px;
+  height: auto;
   image-rendering: pixelated;
   filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
-  animation: mini-idle 3.2s ease-in-out infinite;
+  animation: mini-idle 2.6s ease-in-out infinite;
+}
+
+/* Much bigger and livelier on desktop screens */
+@media (min-width: 768px) {
+  #mini-canvas { width: 220px; }
+  .mini-princess { right: 1.4rem; }
+  .mini-bubble { font-size: 0.95rem; max-width: 300px; }
 }
 
 @keyframes mini-idle {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-3px); }
+  50% { transform: translateY(-8px); }
 }
 
 .mini-bubble {

@@ -1,4 +1,4 @@
-# 🎲 Random Task Picker
+# 👑 Petulant Princess Productivity
 
 A to-do list with randomization built in. Add tasks across categories, then let
 the app decide what you should do next — either on demand or automatically at

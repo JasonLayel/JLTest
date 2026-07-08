@@ -1,11 +1,11 @@
 {
-  "name": "Random Task Picker",
-  "short_name": "TaskPicker",
-  "description": "A to-do list that randomly picks what you should do next.",
+  "name": "Petulant Princess Productivity",
+  "short_name": "Princess\u00b3",
+  "description": "A sassy princess picks your next task. Impress her.",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#14141c",
-  "theme_color": "#5b5bd6",
+  "theme_color": "#e8489b",
   "icons": [
     {
       "src": "icon.svg",
