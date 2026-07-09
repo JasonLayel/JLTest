@@ -1368,6 +1368,60 @@
     renderAll();
   }
 
+  // ---------- Backup: export / import the whole kingdom ----------
+
+  function exportBackup() {
+    const payload = {
+      app: "petulant-princess-productivity",
+      exportedAt: new Date().toISOString(),
+      state,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `princess-backup-${todayStr()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    $("#backup-status").textContent =
+      `Backup saved (${state.tasks.length} tasks, ${state.stats.totalPoints} points). Keep it somewhere safe.`;
+    toast("💾 The royal scribe has copied everything down.");
+  }
+
+  function importBackup(file) {
+    const status = $("#backup-status");
+    file
+      .text()
+      .then((text) => {
+        const parsed = JSON.parse(text);
+        // Accept both the wrapped export format and a raw state object.
+        const incoming = parsed.app === "petulant-princess-productivity" ? parsed.state : parsed;
+        if (!incoming || !Array.isArray(incoming.tasks) || !incoming.settings) {
+          throw new Error("not a kingdom");
+        }
+        const summary =
+          `${incoming.tasks.length} tasks, ${incoming.stats?.totalPoints ?? 0} points, ` +
+          `affection ${incoming.companion?.affection ?? 0}` +
+          (parsed.exportedAt ? `, saved ${parsed.exportedAt.slice(0, 10)}` : "");
+        if (
+          !confirm(
+            `Restore this backup? (${summary})\n\nThis REPLACES everything currently in this browser.`
+          )
+        ) {
+          status.textContent = "Restore cancelled — nothing changed.";
+          return;
+        }
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(incoming));
+        // Reload so load()/migrate() bring an older backup up to the current version.
+        location.reload();
+      })
+      .catch(() => {
+        status.textContent =
+          "That file doesn't look like a princess backup — nothing was changed.";
+      });
+  }
+
   // ---------- Wiring ----------
 
   // ⚡/🌊 segmented toggle in the add form.
@@ -1492,6 +1546,14 @@
 
   $("#notif-btn").addEventListener("click", () => {
     Notification.requestPermission().then(renderSchedule);
+  });
+
+  $("#export-btn").addEventListener("click", exportBackup);
+  $("#import-btn").addEventListener("click", () => $("#import-file").click());
+  $("#import-file").addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    e.target.value = ""; // allow re-selecting the same file
+    if (file) importBackup(file);
   });
 
   $("#sound-enabled").addEventListener("change", (e) => {
