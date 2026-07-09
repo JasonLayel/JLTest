@@ -57,6 +57,9 @@
       goalAwarded: {}, // { "2026-07-07": true } goal bonus already granted
       overAwarded: {}, // { "2026-07-07": true } overachiever bonus already granted
     },
+    meta: {
+      modifiedAt: null, // ISO timestamp of the last local change (drives sync LWW)
+    },
     companion: {
       name: "Princess Elara",
       affection: 0,
@@ -81,7 +84,7 @@
       Object.assign(merged, parsed);
       // The default version must not mask old data: absent means v1.
       merged.version = parsed.version || 1;
-      for (const key of ["settings", "stats", "companion"]) {
+      for (const key of ["settings", "stats", "companion", "meta"]) {
         merged[key] = Object.assign(structuredClone(DEFAULT_STATE[key]), parsed[key] || {});
       }
       merged.settings.rules = Object.assign(
@@ -134,7 +137,9 @@
   }
 
   function save() {
+    state.meta.modifiedAt = new Date().toISOString();
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    queueCloudPush();
   }
 
   const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
@@ -1368,6 +1373,83 @@
     renderAll();
   }
 
+  // ---------- Cloud sync (via the CLOUD adapter in sync.js) ----------
+
+  const cloudReady = typeof CLOUD !== "undefined" && CLOUD.init();
+  let pushTimer = null;
+  let lastSyncNote = "";
+
+  // Debounced: rapid-fire saves (checking several boxes) become one write.
+  function queueCloudPush() {
+    if (!cloudReady || !CLOUD.user()) return;
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(doCloudPush, 1500);
+  }
+
+  function doCloudPush() {
+    if (!cloudReady || !CLOUD.user()) return;
+    CLOUD.push(JSON.stringify(state), state.meta.modifiedAt)
+      .then(() => setSyncStatus("Synced " + new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })))
+      .catch(() => setSyncStatus("Sync paused (offline?) — will retry on your next change"));
+  }
+
+  // A newer state arrived from another device: adopt it wholesale.
+  function adoptRemoteState(json) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(JSON.parse(json)));
+    } catch {
+      return;
+    }
+    state = load(); // re-run merge/migrate so old-version backups upgrade
+    applyTheme();
+    renderAll();
+    setSyncStatus("Updated from your other device ✓");
+  }
+
+  function setSyncStatus(text) {
+    lastSyncNote = text;
+    const el = $("#sync-status");
+    if (el) el.textContent = text;
+  }
+
+  function renderSyncUI() {
+    const u = cloudReady ? CLOUD.user() : null;
+    $("#sync-signed-out").classList.toggle("hidden", !!u || !cloudReady);
+    $("#sync-signed-in").classList.toggle("hidden", !u);
+    if (!cloudReady) {
+      setSyncStatus("Cloud sync isn't available right now (offline or blocked).");
+      return;
+    }
+    if (u) $("#sync-email").textContent = u.email || u.displayName || "royal subject";
+    $("#sync-status").textContent = lastSyncNote;
+  }
+
+  if (cloudReady) {
+    CLOUD.onUser(async (u) => {
+      renderSyncUI();
+      if (!u) return;
+      // First reconcile after sign-in: newer side wins, then both match.
+      try {
+        const remote = await CLOUD.pull();
+        const localAt = state.meta.modifiedAt || "";
+        if (remote && remote.state && (remote.modifiedAt || "") > localAt) {
+          adoptRemoteState(remote.state);
+        } else {
+          doCloudPush();
+        }
+      } catch {
+        setSyncStatus("Signed in — first sync will happen on your next change.");
+      }
+    });
+
+    CLOUD.onRemote((data) => {
+      // Ignore echoes of our own writes and anything older than local.
+      if (!data || !data.state) return;
+      if ((data.modifiedAt || "") <= (state.meta.modifiedAt || "")) return;
+      adoptRemoteState(data.state);
+    });
+  }
+
   // ---------- Backup: export / import the whole kingdom ----------
 
   function exportBackup() {
@@ -1548,6 +1630,19 @@
     Notification.requestPermission().then(renderSchedule);
   });
 
+  $("#sync-signin").addEventListener("click", () => {
+    if (!cloudReady) return;
+    setSyncStatus("Opening Google sign-in…");
+    CLOUD.signIn().catch(() => setSyncStatus("Sign-in didn't complete — try again."));
+  });
+  $("#sync-signout").addEventListener("click", () => {
+    CLOUD.signOut().then(() => setSyncStatus("Signed out — this device is local-only now."));
+  });
+  $("#sync-now").addEventListener("click", () => {
+    setSyncStatus("Syncing…");
+    doCloudPush();
+  });
+
   $("#export-btn").addEventListener("click", exportBackup);
   $("#import-btn").addEventListener("click", () => $("#import-file").click());
   $("#import-file").addEventListener("change", (e) => {
@@ -1619,6 +1714,7 @@
   dayRollover();
   renderEstimateLabel();
   renderAll();
+  renderSyncUI();
   checkSchedule();
 
   // She pipes up shortly after launch (unless the welcome-back line beat her to it).

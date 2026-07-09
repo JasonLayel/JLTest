@@ -169,6 +169,20 @@
         <input type="checkbox" id="sound-enabled">
       </label>
 
+      <h2>☁️ Cloud Sync</h2>
+      <p class="help-text">Sign in with Google and your kingdom follows you between phone and PC — tasks, points, streaks, and the Princess's opinion of you, all synced automatically.</p>
+      <div id="sync-signed-out">
+        <button id="sync-signin" class="btn btn-primary">🔑 Sign in with Google</button>
+      </div>
+      <div id="sync-signed-in" class="hidden">
+        <p class="help-text">Signed in as <strong id="sync-email"></strong></p>
+        <div class="notif-row">
+          <button id="sync-now" class="btn btn-ghost">🔄 Sync now</button>
+          <button id="sync-signout" class="btn btn-ghost">Sign out</button>
+        </div>
+      </div>
+      <p class="help-text" id="sync-status"></p>
+
       <h2>💾 Your Kingdom's Data</h2>
       <p class="help-text">Everything — tasks, points, streaks, Chronicles, and the Princess's feelings about you — lives only in this browser. Download a backup now and then so a cleared cache can't erase the kingdom. A backup file can also carry your kingdom between phone and PC.</p>
       <div class="notif-row">
@@ -204,7 +218,11 @@
     <canvas id="mini-canvas" width="60" height="84" aria-label="Your companion"></canvas>
   </div>
 
+  <script src="lib/firebase-app-compat.js"></script>
+  <script src="lib/firebase-auth-compat.js"></script>
+  <script src="lib/firebase-firestore-compat.js"></script>
   <script src="companion.js"></script>
+  <script src="sync.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
