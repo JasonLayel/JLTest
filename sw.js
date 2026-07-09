@@ -1,15 +1,19 @@
 /* Service worker: caches the app shell so it works offline / as an installed PWA. */
-const CACHE = "random-task-picker-v11";
+const CACHE = "random-task-picker-v12";
 const ASSETS = [
   "./",
   "index.html",
   "styles.css",
   "app.js",
   "companion.js",
+  "sync.js",
   "manifest.json",
   "icon.svg",
   "fonts/medievalsharp.woff2",
   "fonts/geist-pixel.woff2",
+  "lib/firebase-app-compat.js",
+  "lib/firebase-auth-compat.js",
+  "lib/firebase-firestore-compat.js",
 ];
 
 self.addEventListener("install", (e) => {
@@ -32,6 +36,8 @@ self.addEventListener("activate", (e) => {
 // from two different versions).
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
+  // Leave cross-origin traffic (Firestore/auth channels) to the network.
+  if (new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith(
     fetch(e.request, { cache: "no-cache" })
       .then((res) => {
