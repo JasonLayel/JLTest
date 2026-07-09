@@ -1630,10 +1630,24 @@
     Notification.requestPermission().then(renderSchedule);
   });
 
+  // Map Firebase auth error codes to instructions a human can act on.
+  function signInErrorText(e) {
+    const code = (e && e.code) || "";
+    if (code === "auth/unauthorized-domain")
+      return "This domain isn't authorized: in Firebase, go to Authentication → Settings → Authorized domains and add jasonlayel.github.io.";
+    if (code === "auth/operation-not-allowed")
+      return "Google sign-in isn't enabled: in Firebase, go to Authentication → Sign-in method and enable Google.";
+    if (code === "auth/configuration-not-found")
+      return "Authentication isn't set up yet: in Firebase, open Build → Authentication and click Get started, then enable Google.";
+    if (code === "auth/network-request-failed")
+      return "Network problem reaching Google — check your connection and try again.";
+    return "Sign-in failed" + (code ? ` (${code})` : e && e.message ? ` (${e.message})` : "") + " — tell Claude this code.";
+  }
+
   $("#sync-signin").addEventListener("click", () => {
     if (!cloudReady) return;
     setSyncStatus("Opening Google sign-in…");
-    CLOUD.signIn().catch(() => setSyncStatus("Sign-in didn't complete — try again."));
+    CLOUD.signIn().catch((e) => setSyncStatus(signInErrorText(e)));
   });
   $("#sync-signout").addEventListener("click", () => {
     CLOUD.signOut().then(() => setSyncStatus("Signed out — this device is local-only now."));
