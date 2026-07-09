@@ -1424,18 +1424,44 @@
     $("#sync-status").textContent = lastSyncNote;
   }
 
+  // How much a state is "worth": tasks, history, points, affection. A fresh
+  // install scores 0. Timestamps alone must never let an empty kingdom
+  // overwrite a real one — a new device is always "newer" but has nothing.
+  function substance(s) {
+    return (
+      (s?.tasks?.length || 0) +
+      Object.keys(s?.stats?.dailyLog || {}).length +
+      (s?.stats?.totalPoints || 0) +
+      (s?.companion?.affection || 0)
+    );
+  }
+
   if (cloudReady) {
     CLOUD.onUser(async (u) => {
       renderSyncUI();
       if (!u) return;
-      // First reconcile after sign-in: newer side wins, then both match.
+      // First reconcile after sign-in.
       try {
         const remote = await CLOUD.pull();
-        const localAt = state.meta.modifiedAt || "";
-        if (remote && remote.state && (remote.modifiedAt || "") > localAt) {
-          adoptRemoteState(remote.state);
+        let incoming = null;
+        try {
+          incoming = remote && remote.state ? JSON.parse(remote.state) : null;
+        } catch {}
+        const localHas = substance(state) > 0;
+        const remoteHas = substance(incoming) > 0;
+        if (remoteHas && !localHas) {
+          adoptRemoteState(remote.state); // fresh device joins: take the cloud
+        } else if (localHas && !remoteHas) {
+          doCloudPush(); // cloud is empty or damaged: seed it from here
+        } else if (localHas && remoteHas) {
+          // Both sides are real kingdoms: the newer one wins.
+          if ((remote.modifiedAt || "") > (state.meta.modifiedAt || "")) {
+            adoptRemoteState(remote.state);
+          } else {
+            doCloudPush();
+          }
         } else {
-          doCloudPush();
+          doCloudPush(); // both empty — nothing to lose either way
         }
       } catch {
         setSyncStatus("Signed in — first sync will happen on your next change.");
@@ -1446,6 +1472,14 @@
       // Ignore echoes of our own writes and anything older than local.
       if (!data || !data.state) return;
       if ((data.modifiedAt || "") <= (state.meta.modifiedAt || "")) return;
+      let incoming = null;
+      try {
+        incoming = JSON.parse(data.state);
+      } catch {
+        return;
+      }
+      // Same safety rule live: an empty kingdom never overwrites a real one.
+      if (substance(incoming) === 0 && substance(state) > 0) return;
       adoptRemoteState(data.state);
     });
   }
