@@ -510,6 +510,100 @@ select, input[type="time"] {
   padding: 0.15rem 0;
 }
 
+/* ---------- Achievements ---------- */
+.achievement-count {
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 0.4rem;
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.achievement-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.55rem 0.7rem;
+  opacity: 0.75;
+}
+
+.achievement-card.earned {
+  opacity: 1;
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
+}
+
+.achievement-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-royal);
+  font-size: 1rem;
+}
+.achievement-head strong { font-weight: 400; }
+
+.achievement-emoji { font-size: 1.15rem; }
+.achievement-card:not(.earned) .achievement-emoji { filter: grayscale(1); opacity: 0.7; }
+
+.achievement-desc {
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 0.2rem 0 0.35rem;
+}
+
+.achievement-bar {
+  height: 0.4rem;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.achievement-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e5548f, #c86bb8);
+  transition: width 0.4s ease;
+}
+
+.achievement-status {
+  font-family: var(--font-pixel);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+.achievement-card.earned .achievement-status { color: var(--success); }
+
+/* ---------- Gifts ---------- */
+.gift-caption { margin-bottom: 0.3rem; }
+
+.gift-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.gift-btn {
+  font-size: 1.2rem;
+  padding: 0.45rem 0.8rem;
+}
+.gift-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.gift-cost {
+  font-family: var(--font-pixel);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  display: block;
+}
+
 /* ---------- Tab bar ----------
  * Sits at the top under the header, same width as the content column so
  * everything lines up vertically. Sticky so it stays reachable on scroll. */
