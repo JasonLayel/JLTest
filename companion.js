@@ -427,6 +427,66 @@ window.COMPANION = (() => {
       ],
     ],
 
+    // Earning a long-term achievement ({name} = achievement name).
+    achievement: [
+      [
+        "'{name}'?! The historian just made that official. I'm... reviewing my files on you. 📁",
+        "Achievement: {name}. Fine. FINE. It goes on the wall. The small wall.",
+        "*squints at the royal ledger* '{name}.' Verified. Suspiciously legitimate.",
+        "You earned '{name}.' The pigeon and I are having an emergency meeting about your improvement. 🐦",
+      ],
+      [
+        "'{name}' — earned! I may have practiced saying 'congratulations.' It goes: congratulations. 📜",
+        "The historian added '{name}' to your page. Your page has entries now. Plural!",
+        "Achievement unlocked: {name}. I'd act indifferent but the notebook betrayed me hours ago.",
+      ],
+      [
+        "'{name}'!! Banner day! Literally — I ordered a banner! 🎉",
+        "Achievement: {name}! The fanfare band is doing their thing! Doot doo DOOO! 🎺",
+        "'{name}' is YOURS. I told the whole court. The court is thrilled. The court is a houseplant and a pigeon. 🪴",
+      ],
+      [
+        "'{name}'! I'm framing this one. Right next to my portrait. That's prime wall space. 🖼️",
+        "You earned '{name}' and I earned the right to say I always believed in you. (Backdated. Officially.) 💗",
+        "Achievement: {name}! *proud princess noises* That's a real sound. I just made it.",
+      ],
+      [
+        "'{name}', my liege. Another page in our golden age. The historian is running out of gold ink. ✨",
+        "*blows kiss* '{name}' — of course it's yours. Everything I bet on you keeps paying out. 💋",
+        "Achievement: {name}. One day they'll write ballads about you. I've started three. 💗",
+      ],
+    ],
+
+    // Receiving a gift ({gift} = gift name).
+    gift: [
+      [
+        "A {gift}? For ME? ...it's acceptable. Put it with the others. There are no others. Don't look at me. 😳",
+        "*takes the {gift} slowly* Is this a bribe? Because it's working. Marginally.",
+        "Hmph. A {gift}. You DO know how to address royalty after all.",
+        "I didn't ask for a {gift}. ...I'm keeping it forever. That's unrelated.",
+      ],
+      [
+        "Oh! A {gift}! I mean — *composes herself* — a reasonable tribute. Accepted. 😌",
+        "A {gift}, for me? The notebook is getting a whole PARAGRAPH tonight.",
+        "*holds the {gift} up to the light* Acceptable quality. Excellent choice of recipient.",
+      ],
+      [
+        "A {gift}!! You remembered royalty loves tribute! Because I say it constantly! It works! 🎁",
+        "For me?! A {gift}! Okay you're officially my favorite non-houseplant. 🪴",
+        "*delighted gasp* A {gift}! I'm going to show literally everyone. Both of them.",
+      ],
+      [
+        "A {gift}... you keep DOING these things and my composure keeps filing complaints. 💗",
+        "*clutches the {gift}* This is going in the treasury. The GOOD treasury. The one with my favorite things.",
+        "You brought me a {gift}. I bought you nothing. Royalty! The system is flawless and I adore you. 😊",
+      ],
+      [
+        "A {gift}, my love— MY LIEGE. *accepts it with completely steady hands* It's perfect. 💗",
+        "*blows kiss* A {gift} from you outranks a crown from anyone else. That's just math. 💋",
+        "You didn't have to. You did anyway. That's the whole reason the historian titled this era 'golden.' ✨",
+      ],
+    ],
+
     // Streak milestones ({n} = streak length).
     streak: [
       [

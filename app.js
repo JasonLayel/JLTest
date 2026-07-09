@@ -32,7 +32,7 @@
   };
 
   const DEFAULT_STATE = {
-    version: 3,
+    version: 4,
     categories: DEFAULT_CATEGORIES,
     tasks: [], // {id, title, categoryId, mode, estimateMin, recurring, done, createdAt, completedAt}
     history: [], // picks: {id, taskId, title, categoryId, at, source, status}
@@ -56,6 +56,9 @@
       dailyLog: {}, // { "2026-07-07": [{taskId, categoryId, points}] }
       goalAwarded: {}, // { "2026-07-07": true } goal bonus already granted
       overAwarded: {}, // { "2026-07-07": true } overachiever bonus already granted
+      lifetimePoints: 0, // total ever earned (spending gifts doesn't reduce this)
+      achievements: {}, // { achievementId: "2026-07-09" } date earned
+      loginStreak: { count: 0, lastDate: null }, // consecutive days opening the app
     },
     meta: {
       modifiedAt: null, // ISO timestamp of the last local change (drives sync LWW)
@@ -133,6 +136,11 @@
       if (space && space.name === "Space") space.name = "Environment";
       s.version = 3;
     }
+    // v3 → v4: lifetime points start from whatever was already earned.
+    if (s.version < 4) {
+      if (!s.stats.lifetimePoints) s.stats.lifetimePoints = s.stats.totalPoints || 0;
+      s.version = 4;
+    }
     return s;
   }
 
@@ -198,6 +206,78 @@
     return 10 + estimateOf(task); // harder tasks are worth more
   }
 
+  // All earning goes through here so lifetimePoints (achievement fuel,
+  // never reduced by spending) stays in step with the spendable balance.
+  function earnPoints(n) {
+    state.stats.totalPoints += n;
+    state.stats.lifetimePoints += n;
+  }
+
+  // ---------- Achievements ----------
+
+  // Long-term goals. progress() returns [current, target]; earned when
+  // current >= target. Rewards pay out once, recorded in stats.achievements.
+  function totalCompletions() {
+    return Object.values(state.stats.dailyLog).reduce((n, day) => n + day.length, 0);
+  }
+  function categoryCompletions(catId) {
+    return Object.values(state.stats.dailyLog).reduce(
+      (n, day) => n + day.filter((e) => e.categoryId === catId).length,
+      0
+    );
+  }
+  function overachieverDays() {
+    return Object.keys(state.stats.overAwarded).length;
+  }
+  function goalDays() {
+    return Object.keys(state.stats.goalAwarded).length;
+  }
+
+  const ACHIEVEMENTS = [
+    { id: "deed1", emoji: "🌱", name: "A Single Deed", desc: "Complete your first task", reward: 25, progress: () => [totalCompletions(), 1] },
+    { id: "deed10", emoji: "📜", name: "Getting Somewhere", desc: "Complete 10 tasks", reward: 50, progress: () => [totalCompletions(), 10] },
+    { id: "deed50", emoji: "⚔️", name: "Royal Workhorse", desc: "Complete 50 tasks", reward: 100, progress: () => [totalCompletions(), 50] },
+    { id: "deed100", emoji: "🏰", name: "Pillar of the Kingdom", desc: "Complete 100 tasks", reward: 200, progress: () => [totalCompletions(), 100] },
+    { id: "deed250", emoji: "🐉", name: "Dragon-Tier Diligence", desc: "Complete 250 tasks", reward: 400, progress: () => [totalCompletions(), 250] },
+    { id: "cat-mind", emoji: "🧠", name: "Scholar of the Realm", desc: "Complete 25 Mind tasks", reward: 75, progress: () => [categoryCompletions("mind"), 25] },
+    { id: "cat-body", emoji: "💪", name: "Knight in Training", desc: "Complete 25 Body tasks", reward: 75, progress: () => [categoryCompletions("body"), 25] },
+    { id: "cat-space", emoji: "🧹", name: "Keeper of the Castle", desc: "Complete 25 Environment tasks", reward: 75, progress: () => [categoryCompletions("space"), 25] },
+    { id: "cat-play", emoji: "🎭", name: "Court Jester", desc: "Complete 25 Play tasks", reward: 75, progress: () => [categoryCompletions("play"), 25] },
+    { id: "cat-purpose", emoji: "🧭", name: "Destined for More", desc: "Complete 25 Purpose tasks", reward: 75, progress: () => [categoryCompletions("purpose"), 25] },
+    { id: "streak3", emoji: "🔥", name: "Kindling", desc: "3-day goal streak", reward: 50, progress: () => [state.stats.bestStreak, 3] },
+    { id: "streak7", emoji: "🕯️", name: "A Full Royal Week", desc: "7-day goal streak", reward: 100, progress: () => [state.stats.bestStreak, 7] },
+    { id: "streak14", emoji: "🎆", name: "Fortnight of Fire", desc: "14-day goal streak", reward: 200, progress: () => [state.stats.bestStreak, 14] },
+    { id: "streak30", emoji: "☀️", name: "Eternal Flame", desc: "30-day goal streak", reward: 400, progress: () => [state.stats.bestStreak, 30] },
+    { id: "login10", emoji: "🚪", name: "Loyal Subject", desc: "Open the app 10 days in a row", reward: 75, progress: () => [state.stats.loginStreak.count, 10] },
+    { id: "login30", emoji: "🗝️", name: "Practically Family", desc: "Open the app 30 days in a row", reward: 200, progress: () => [state.stats.loginStreak.count, 30] },
+    { id: "over1", emoji: "⚜️", name: "Above & Beyond", desc: "Have an Overachiever day (6 tasks)", reward: 50, progress: () => [overachieverDays(), 1] },
+    { id: "over5", emoji: "🏅", name: "Serial Overachiever", desc: "5 Overachiever days", reward: 150, progress: () => [overachieverDays(), 5] },
+    { id: "crowned10", emoji: "👑", name: "Ten Crowned Days", desc: "Meet the daily goal 10 times", reward: 100, progress: () => [goalDays(), 10] },
+    { id: "rich", emoji: "💰", name: "Royal Treasury", desc: "Earn 1,000 lifetime points", reward: 100, progress: () => [state.stats.lifetimePoints, 1000] },
+  ];
+
+  // Award anything newly earned. Called after completions and day rollover.
+  function checkAchievements() {
+    let newly = null;
+    for (const a of ACHIEVEMENTS) {
+      if (state.stats.achievements[a.id]) continue;
+      const [cur, target] = a.progress();
+      if (cur >= target) {
+        state.stats.achievements[a.id] = todayStr();
+        earnPoints(a.reward);
+        newly = a;
+      }
+    }
+    if (newly) {
+      // If several unlocked at once, celebrate the last (biggest) one.
+      toast(`🏆 Achievement: ${newly.emoji} ${newly.name} (+${newly.reward} pts)`, true);
+      speak("achievement", { name: newly.name }, true);
+      save();
+      renderGoalBar();
+      renderAchievements();
+    }
+  }
+
   function recordCompletion(task) {
     const today = todayStr();
     const goalBefore = goalMetOn(today);
@@ -210,7 +290,7 @@
       categoryId: task.categoryId,
       points: pts,
     });
-    state.stats.totalPoints += pts;
+    earnPoints(pts);
     addAffection(2);
 
     let reacted = false;
@@ -219,7 +299,7 @@
       state.stats.bestStreak = Math.max(state.stats.bestStreak, streak);
       if (!state.stats.goalAwarded[today]) {
         state.stats.goalAwarded[today] = true;
-        state.stats.totalPoints += 50;
+        earnPoints(50);
         addAffection(8);
       }
       confetti();
@@ -234,7 +314,7 @@
     // Second tier: double the goal in one day.
     if (!reacted && todaysLog().length >= OVER_TASKS && !state.stats.overAwarded[today]) {
       state.stats.overAwarded[today] = true;
-      state.stats.totalPoints += OVER_BONUS;
+      earnPoints(OVER_BONUS);
       addAffection(12);
       confetti();
       speak("overachieve", null, true);
@@ -245,6 +325,7 @@
       if (goalBefore) toast(`✨ Royal favor: +${pts} pts (1.5× beyond the quest)`);
     }
     save();
+    checkAchievements();
   }
 
   // Un-checking a task completed today takes its entry (and points) back.
@@ -258,6 +339,41 @@
     log.splice(i, 1);
     if (log.length === 0) delete state.stats.dailyLog[today];
     addAffection(-2);
+  }
+
+  // ---------- Gifts (the first way to SPEND points) ----------
+
+  const GIFTS = [
+    { id: "pastry", emoji: "🍰", name: "royal pastry", cost: 40, affection: 4 },
+    { id: "bouquet", emoji: "💐", name: "bouquet", cost: 100, affection: 10 },
+    { id: "tiara", emoji: "💎", name: "spare tiara", cost: 250, affection: 25 },
+  ];
+
+  function buyGift(gift) {
+    if (state.stats.totalPoints < gift.cost) return;
+    state.stats.totalPoints -= gift.cost; // lifetimePoints untouched
+    addAffection(gift.affection);
+    save();
+    speak("gift", { gift: gift.name }, true);
+    floatHearts(4);
+    renderGoalBar();
+    renderGifts();
+    renderPrincess();
+  }
+
+  function renderGifts() {
+    const row = $("#gift-row");
+    if (!row) return;
+    row.innerHTML = "";
+    for (const g of GIFTS) {
+      const b = document.createElement("button");
+      b.className = "btn btn-ghost gift-btn";
+      b.innerHTML = `${g.emoji} <span class="gift-cost">⭐${g.cost}</span>`;
+      b.title = `Give her a ${g.name} (${g.cost} points)`;
+      b.disabled = state.stats.totalPoints < g.cost;
+      b.addEventListener("click", () => buyGift(g));
+      row.appendChild(b);
+    }
   }
 
   // ---------- Theme ----------
@@ -518,6 +634,11 @@
     const last = state.companion.lastOpenDate;
     if (last === today) return false;
 
+    // Consecutive-day login streak (any open counts, tasks or not).
+    const ls = state.stats.loginStreak;
+    ls.count = ls.lastDate && daysBetween(ls.lastDate, today) === 1 ? ls.count + 1 : 1;
+    ls.lastDate = today;
+
     // Recurring tasks completed on a previous day come back.
     for (const t of state.tasks) {
       if (t.recurring && t.done && t.completedAt && localDate(new Date(t.completedAt)) < today) {
@@ -544,6 +665,7 @@
 
     state.companion.lastOpenDate = today;
     save();
+    checkAchievements(); // login streaks can unlock on a plain open
     return true;
   }
 
@@ -658,6 +780,8 @@
     renderRules();
     renderCategoryManager();
     renderChronicles();
+    renderAchievements();
+    renderGifts();
     renderHistory();
     renderThemePicker();
     renderPrincess();
@@ -1142,6 +1266,44 @@
       renderAll();
     });
     wrap.appendChild(add);
+  }
+
+  // Achievements grid on the Chronicles tab: earned + in-progress.
+  function renderAchievements() {
+    const grid = $("#achievement-grid");
+    if (!grid) return;
+    grid.innerHTML = "";
+    let earnedCount = 0;
+    for (const a of ACHIEVEMENTS) {
+      const earnedOn = state.stats.achievements[a.id];
+      if (earnedOn) earnedCount++;
+      const [cur, target] = a.progress();
+      const card = document.createElement("div");
+      card.className = "achievement-card" + (earnedOn ? " earned" : "");
+
+      const head = document.createElement("div");
+      head.className = "achievement-head";
+      head.innerHTML = `<span class="achievement-emoji">${a.emoji}</span><strong>${a.name}</strong>`;
+
+      const desc = document.createElement("div");
+      desc.className = "achievement-desc";
+      desc.textContent = a.desc + ` · +${a.reward} pts`;
+
+      const bar = document.createElement("div");
+      bar.className = "achievement-bar";
+      const fill = document.createElement("div");
+      fill.className = "achievement-fill";
+      fill.style.width = Math.min(100, Math.round((cur / target) * 100)) + "%";
+      bar.appendChild(fill);
+
+      const status = document.createElement("div");
+      status.className = "achievement-status";
+      status.textContent = earnedOn ? `🏆 Earned ${earnedOn}` : `${Math.min(cur, target)} / ${target}`;
+
+      card.append(head, desc, bar, status);
+      grid.appendChild(card);
+    }
+    $("#achievement-count").textContent = `${earnedCount} / ${ACHIEVEMENTS.length} earned`;
   }
 
   // Chronicles: one card per day — completions, goal verdict, streak survival.
@@ -1739,6 +1901,7 @@
       if (tab === "history") {
         // Chronicles reflect completions made since the last full render.
         renderChronicles();
+        renderAchievements();
         renderHistory();
       }
       renderMiniPrincess();
