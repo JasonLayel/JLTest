@@ -1,5 +1,5 @@
 /* Service worker: caches the app shell so it works offline / as an installed PWA. */
-const CACHE = "random-task-picker-v13";
+const CACHE = "random-task-picker-v14";
 const ASSETS = [
   "./",
   "index.html",
@@ -9,6 +9,9 @@ const ASSETS = [
   "sync.js",
   "manifest.json",
   "icon.svg",
+  "icons/icon-192.png",
+  "icons/icon-512.png",
+  "icons/apple-touch-icon.png",
   "fonts/medievalsharp.woff2",
   "fonts/geist-pixel.woff2",
   "lib/firebase-app-compat.js",
