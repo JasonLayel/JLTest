@@ -341,6 +341,91 @@
     addAffection(-2);
   }
 
+  // ---------- Task suggestions ----------
+  // Common to-dos per umbrella category; each carries a sensible mode and
+  // time estimate so "Suggest one" fills the whole form, not just the title.
+
+  const SUGGESTIONS = {
+    mind: [
+      { t: "Read for 20 min", m: "reset", e: 20 },
+      { t: "Journal for 10 min", m: "reset", e: 10 },
+      { t: "Meditate", m: "reset", e: 10 },
+      { t: "Practice a language for 15 min", m: "active", e: 15 },
+      { t: "Do a crossword or puzzle", m: "reset", e: 15 },
+      { t: "Watch a documentary episode", m: "reset", e: 45 },
+      { t: "Plan tomorrow in 5 minutes", m: "active", e: 5 },
+      { t: "Write down 3 things you're grateful for", m: "reset", e: 5 },
+      { t: "Learn one new thing and explain it out loud", m: "active", e: 20 },
+      { t: "Brain-dump everything on your mind", m: "reset", e: 10 },
+    ],
+    body: [
+      { t: "Quick workout", m: "active", e: 20 },
+      { t: "Stretch for 10 min", m: "reset", e: 10 },
+      { t: "Take a 20-min walk", m: "active", e: 20 },
+      { t: "Do 3 sets of push-ups", m: "active", e: 10 },
+      { t: "Yoga session", m: "reset", e: 25 },
+      { t: "Go for a bike ride", m: "active", e: 45 },
+      { t: "Foam roll / massage sore muscles", m: "reset", e: 10 },
+      { t: "Dance to three songs", m: "active", e: 10 },
+      { t: "Take a hot bath or long shower", m: "reset", e: 25 },
+      { t: "Prep water bottles for the day", m: "active", e: 5 },
+    ],
+    space: [
+      { t: "Vacuum the floors", m: "active", e: 20 },
+      { t: "Do the dishes", m: "active", e: 15 },
+      { t: "Start a load of laundry", m: "active", e: 10 },
+      { t: "Declutter your desk", m: "active", e: 15 },
+      { t: "Take out the trash & recycling", m: "active", e: 5 },
+      { t: "Wipe down kitchen counters", m: "active", e: 10 },
+      { t: "Make the bed properly", m: "active", e: 5 },
+      { t: "Water the plants", m: "reset", e: 5 },
+      { t: "Clean the bathroom", m: "active", e: 25 },
+      { t: "Organize one drawer or shelf", m: "active", e: 15 },
+    ],
+    play: [
+      { t: "Play an instrument for 20 min", m: "active", e: 20 },
+      { t: "Guilt-free video games", m: "reset", e: 45 },
+      { t: "Sketch or doodle something", m: "reset", e: 15 },
+      { t: "Call a friend just to chat", m: "reset", e: 20 },
+      { t: "Listen to a full album", m: "reset", e: 45 },
+      { t: "Work on a jigsaw or puzzle", m: "reset", e: 20 },
+      { t: "Watch an episode of something fun", m: "reset", e: 30 },
+      { t: "Try a new recipe for fun", m: "active", e: 45 },
+      { t: "Take photos on a short walk", m: "active", e: 20 },
+      { t: "Do something silly for 10 minutes", m: "reset", e: 10 },
+    ],
+    purpose: [
+      { t: "Meal prep", m: "active", e: 45 },
+      { t: "Review the budget", m: "active", e: 20 },
+      { t: "Get the inbox to zero", m: "active", e: 15 },
+      { t: "Work on the side project for 30 min", m: "active", e: 30 },
+      { t: "Update resume or portfolio", m: "active", e: 30 },
+      { t: "Plan the week ahead", m: "active", e: 15 },
+      { t: "Practice a career skill for 20 min", m: "active", e: 20 },
+      { t: "Schedule that appointment you've been avoiding", m: "active", e: 5 },
+      { t: "Do 15 minutes of financial admin", m: "active", e: 15 },
+      { t: "Write down one long-term goal and the next step", m: "reset", e: 10 },
+    ],
+  };
+
+  function suggestTask() {
+    const catId = $("#category-select").value;
+    // User-created categories have no pool — borrow from all of them.
+    const pool = SUGGESTIONS[catId] || Object.values(SUGGESTIONS).flat();
+    const input = $("#task-input");
+    let pick = pool[Math.floor(Math.random() * pool.length)];
+    // Don't "suggest" the thing already in the box.
+    if (pool.length > 1 && pick.t === input.value.trim()) {
+      pick = pool[(pool.indexOf(pick) + 1) % pool.length];
+    }
+    input.value = pick.t;
+    addMode = pick.m;
+    renderAddMode();
+    $("#estimate-input").value = String(pick.e);
+    renderEstimateLabel();
+    input.focus();
+  }
+
   // ---------- Gifts (the first way to SPEND points) ----------
 
   const GIFTS = [
@@ -1736,6 +1821,8 @@
   });
 
   $("#estimate-input").addEventListener("input", renderEstimateLabel);
+
+  $("#suggest-btn").addEventListener("click", suggestTask);
 
   // "?" hints — tooltips exist on hover, but these work on touch screens too.
   $("#mode-info").addEventListener("click", (e) => {
