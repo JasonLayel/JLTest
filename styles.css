@@ -281,6 +281,22 @@ select, input[type="time"] {
   padding: 0.2rem 0.4rem;
   flex-shrink: 0;
 }
+
+/* On narrow screens the badges were squeezing titles into a sliver:
+ * give the title the full first row, drop the meta to a second row. */
+@media (max-width: 560px) {
+  .task-item:not(.task-editor) {
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
+    align-items: center;
+    row-gap: 0.15rem;
+  }
+  .task-item:not(.task-editor) .task-check { grid-column: 1; grid-row: 1; }
+  .task-item:not(.task-editor) .task-title { grid-column: 2; grid-row: 1; }
+  .task-item:not(.task-editor) .task-edit { grid-column: 3; grid-row: 1; }
+  .task-item:not(.task-editor) .task-delete { grid-column: 4; grid-row: 1; }
+  .task-item:not(.task-editor) .task-meta { grid-column: 2 / -1; grid-row: 2; justify-self: start; }
+}
 .task-delete:hover { color: var(--danger); }
 .task-edit:hover { color: var(--primary); }
 
