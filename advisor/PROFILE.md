@@ -1,33 +1,71 @@
-# Artist Profile — Jason
+# Artist Profile — Jason Layel
 
-The advisor reads this file at the start of every session. Fill in the TODOs
-once; update whenever something changes. Short answers are fine.
+The advisor reads this file at the start of every session. Last updated
+2026-07-11 from Jason's LinkedIn, portfolio links, and direct notes.
 
-## Skills
+## Identity in one line
 
-- **3D rendering** — TODO: software (Blender? Maya? 3ds Max? C4D?), renderer
-  (Cycles? Octane? Redshift?), strongest area (modeling / materials /
-  lighting / environments / characters?)
-- **Graphics / digital** — TODO: tools (Photoshop? Illustrator? Procreate?),
-  typical output (illustration? design? textures?)
-- **Traditional art** — TODO: media (pencil? ink? oil? watercolor?), subjects
-  you enjoy most
-- Years of experience, roughly: TODO
-- Skill you'd rate yourself strongest in: TODO
-- Skill you most want to improve: TODO
+Professional architectural visualization lead (day job) with a hobby practice
+in 3D art and traditional drawing/painting — not a hobbyist, a specialist
+with 10+ years of professional viz experience looking for side income and
+creative growth outside the day job.
 
-## Situation & goals
+## Career
 
-- Hours per week available for art side-income: TODO
-- Monthly extra-income target to feel "this is working": TODO (e.g. $200/mo)
-- Tolerance for being on camera / on social media: TODO (none / faceless
-  content OK / fine with it)
-- Existing presence: TODO (portfolio URL, ArtStation, Instagram, store —
-  or "none yet")
-- Hardware worth noting (GPU, tablet, scanner for traditional work): TODO
+- **Current:** Design Visualization Specialist at **MG2 Design** (architecture
+  firm, ~450 employees), Washington DC, hybrid. Title undersells it: he is
+  the **sole leader of the visualization department for the entire firm**.
+  At MG2 8+ years total (Associate II 2018–2021 → Associate III 2021–2022 →
+  viz specialist 2022–present). Salary: **$92K**.
+- **Prior:** Project Manager, Illustrate My Design LLC, Alexandria VA,
+  2014–2018.
+- **Education:** M.Arch, University of Virginia (2009–2012), focus on
+  physical model building, 3D modeling, rendering/visualization. B.Arch,
+  University of Florida (2005–2009), high honors.
+- Trained architect → strong drafting, spatial design, and presentation
+  fundamentals underneath the viz skills.
 
-## Constraints & preferences
+## Tools
 
-- Things you refuse to do (e.g. client revisions hell, NSFW commissions,
-  daily posting): TODO
-- Anything already tried that didn't work: TODO
+- **Favorites (uses most, recommend around these):** Unreal Engine 5,
+  Blender, 3ds Max, D5 Render, Twinmotion, DaVinci Resolve,
+  Photoshop/Affinity.
+- **Also professionally fluent:** SketchUp, Rhino, Revit, AutoCAD,
+  Grasshopper, V-Ray, Maxwell, Illustrator. Video editing. Hand drafting,
+  sketching, physical model making.
+- Real-time viz (UE5 / Twinmotion / D5) is the standout, in-demand skill.
+
+## Traditional art
+
+Drawing and painting as a hobby practice; posts it alongside 3D on
+ArtStation. Just started an Instagram (@juice.served) specifically to post
+hobby drawing/painting work.
+
+## Online presence
+
+| Where | URL | State |
+| --- | --- | --- |
+| ArtStation | artstation.com/jasonlayel | **Most active outlet.** Side/hobby work: mix of 3D visualization + traditional art. Home base. |
+| Instagram | @juice.served | Brand new, intended for hobby drawing/painting posts. |
+| Wix portfolio | jasonlayel.wixsite.com/portfolio | "Most current" site but needs updating. |
+| X | x.com/jasonlayel | Heavy lurker, never posts. Audience-ready but dormant. |
+| Behance | behance.net/jasonlayel | Old work only. Effectively archived. |
+| LinkedIn | linkedin.com/in/jasonlayel | Day-career only, currently inactive. |
+
+## Income history from side work
+
+- **Upwork (2 years):** up to **$4K/year** side cash — mostly 3D rendering
+  with random graphics work mixed in. Real traction, but modest; stopped
+  after 2 years. Proven active-income fallback.
+- **TeePublic t-shirt graphics:** tried, "okay but never got traction," and
+  the profile was mysteriously deactivated. Treat generic print-on-demand
+  merch as a failed experiment — do not re-recommend without a strong reason.
+
+## Open questions (ask when decision-relevant, max 2–3 at a time)
+
+- Hours per week realistically available for side work: TODO
+- Monthly side-income target that would feel like success: TODO
+- Comfort with being on camera / voice-over for tutorial content: TODO
+- Hardware (GPU for UE5 renders at home?, tablet, scanner): TODO
+- Does MG2's employment agreement restrict moonlighting or freelance archviz?
+  (Important before recommending client work in his own industry.) TODO

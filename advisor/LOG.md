@@ -8,6 +8,16 @@ what happened, what it changes.
 
 ---
 
+## 2026-07-11 — Profile filled in from Jason's career details
+
+Jason provided LinkedIn screenshots, all platform links, salary, preferred
+tools, and side-income history. PROFILE.md rewritten with real data; agent
+prompt re-tuned from "generic artist" to "professional archviz lead with
+real-time engine specialty." Two prior experiments recorded: Upwork (worked,
+~$4K/yr peak, dormant) and TeePublic tees (failed, account deactivated).
+Remaining unknowns: hours/week, income target, on-camera comfort, home
+hardware, MG2 moonlighting policy.
+
 ## 2026-07-10 — Advisor created
 
 Initial setup. Agent, profile, playbook, and log created. No experiments run
