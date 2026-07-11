@@ -1,50 +1,47 @@
-# Jason Layel — Portfolio
+# 👑 Petulant Princess Productivity
 
-A clean, dark, image-first portfolio for 3D renderings and motion work.
-Pure HTML/CSS/JS — no build step, no dependencies. Deploy anywhere
-(GitHub Pages, Netlify, Vercel, any static host).
+A to-do list with randomization built in. Add tasks across categories, then let
+the app decide what you should do next — either on demand or automatically at
+scheduled times.
 
-## Adding or removing work
+Runs entirely in the browser (PC or mobile) with no server or build step: all
+data is stored locally on your device. It's a progressive web app, so on a
+phone you can use "Add to Home Screen" to install it like a native app, and it
+works offline.
 
-Everything lives in **`works.js`** — you never touch the HTML.
+## Features
 
-1. Drop your image (`.jpg`, `.png`, `.webp`) or video (`.mp4`) into `media/`
-2. Add an entry to the top of the `WORKS` list in `works.js`:
+- **Tasks by category** — default categories: Mental Action, Contemplation,
+  Recreation, Bodily Action, Environmental Action, and Pursuits.
+- **🎲 Pick for me** — randomly chooses an open task, respecting your rules.
+- **Scheduled picks** — set times (defaults: 10:00 AM, 1:00 PM, 3:00 PM) and the
+  app auto-picks a task and sends a browser notification. Scheduled picks fire
+  while the app is open in a tab or running as an installed PWA (a purely local
+  app can't wake your device when it's fully closed).
+- **Rules**
+  - *Different categories*: require that the last N picks (configurable, 2–6)
+    all come from different categories.
+  - *Eligible categories*: exclude specific categories from random picks.
+- **History** — a log of every pick, its source (manual 🎲 or scheduled ⏰),
+  and how it was resolved (done ✓ / dismissed ✕).
 
-```js
-{
-  type: "image",                 // or "video"
-  src: "media/my-render.jpg",
-  title: "My Render",
-  detail: "Blender · Cycles · 2026",   // optional
-  span: "wide",                        // optional: "wide" or "tall"
-},
-```
+## Running it
 
-3. To remove a piece, delete its entry. Done.
+Serve the folder with any static file server and open it in a browser:
 
-Videos: set `type: "video"`, point `src` at your `.mp4`, and add a
-`poster` still image. Videos play muted on hover in the grid and with
-full controls in the lightbox.
-
-> The current `media/placeholder-*.svg` files and the
-> `media/placeholder-loop.mp4` path are stand-ins — replace them with
-> your real work.
-
-## Customizing text
-
-Name, tagline, contact email, and footer are in the `SITE` object at the
-bottom of `works.js`.
-
-## Local preview
-
-```
+```sh
 python3 -m http.server 8000
+# then visit http://localhost:8000
 ```
 
-Then open http://localhost:8000
+Or host it on any static host (GitHub Pages works great) and open the URL on
+your phone or PC. Notifications and PWA install require HTTPS (or localhost).
 
-## Deploying to GitHub Pages
+## Files
 
-Repo → Settings → Pages → deploy from branch → select your branch, root
-folder. The site is live at `https://<user>.github.io/<repo>/` in ~1 min.
+| File | Purpose |
+| --- | --- |
+| `index.html` | App layout: tasks, schedule & rules, history tabs |
+| `app.js` | All logic: state, picking, rules, scheduling, rendering |
+| `styles.css` | Responsive, mobile-first styling with dark mode |
+| `manifest.json`, `icon.svg`, `sw.js` | PWA install + offline support |
