@@ -1,0 +1,1129 @@
+/* Bundled fonts (fonts/ in the repo) so they work offline as a PWA:
+ * MedievalSharp for royal headers/large elements, Geist Pixel for small
+ * accents and the princess's speech (matches her pixel-art sprite). */
+@font-face {
+  font-family: "MedievalSharp";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/medievalsharp.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Geist Pixel";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/geist-pixel.woff2") format("woff2");
+}
+
+/* Light is the default look; dark applies via data-theme (user setting). */
+:root {
+  --bg: #fdf4f9;
+  --surface: #ffffff;
+  --text: #241a22;
+  --text-muted: #77687a;
+  --border: #f0dcea;
+  --primary: #e8489b;
+  --primary-contrast: #ffffff;
+  --success: #2e9e5b;
+  --danger: #d64545;
+  --shadow: 0 1px 3px rgba(60, 20, 45, 0.08);
+  --font-royal: "MedievalSharp", "Palatino Linotype", serif;
+  --font-pixel: "Geist Pixel", "Courier New", monospace;
+}
+
+:root[data-theme="dark"] {
+  --bg: #171219;
+  --surface: #221a26;
+  --text: #f4ecf2;
+  --text-muted: #a898a8;
+  --border: #453548;
+  --primary: #f05aac;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+.app-header {
+  text-align: center;
+  padding: 1rem 1rem 0.25rem;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-family: var(--font-royal);
+  font-size: 1.6rem;
+  font-weight: 400;
+}
+
+.tagline {
+  margin: 0.15rem 0 0;
+  color: var(--text-muted);
+  font-family: var(--font-pixel);
+  font-size: 0.78rem;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+}
+
+h2 { font-family: var(--font-royal); font-weight: 400; font-size: 1.25rem; margin: 1.25rem 0 0.5rem; }
+h3 { font-family: var(--font-royal); font-weight: 400; font-size: 1.1rem; margin: 1rem 0 0.4rem; }
+
+.hidden { display: none !important; }
+
+/* ---------- Buttons ---------- */
+.btn {
+  font: inherit;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 0.5rem 0.9rem;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.btn:hover { filter: brightness(0.96); }
+.btn:active { filter: brightness(0.9); }
+
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-contrast);
+}
+
+.btn-success {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+
+.btn-ghost {
+  background: transparent;
+}
+
+.btn-big {
+  font-family: var(--font-royal);
+  font-size: 1.3rem;
+  padding: 0.9rem 1.6rem;
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-contrast);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+
+/* ---------- Pick banner ---------- */
+.pick-banner {
+  max-width: 640px;
+  margin: 0.75rem auto 0;
+  padding: 1rem;
+  border-radius: 14px;
+  background: var(--primary);
+  color: #fff;
+  text-align: center;
+  box-shadow: var(--shadow);
+  margin-left: 1rem;
+  margin-right: 1rem;
+}
+@media (min-width: 680px) {
+  .pick-banner { margin-left: auto; margin-right: auto; }
+}
+
+.pick-banner-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  opacity: 0.85;
+}
+
+.pick-banner-task {
+  font-family: var(--font-royal);
+  font-size: 1.45rem;
+  font-weight: 400;
+  margin: 0.3rem 0;
+}
+
+.pick-banner-category {
+  font-size: 0.85rem;
+  opacity: 0.9;
+  margin-bottom: 0.6rem;
+}
+
+.pick-banner-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.pick-banner .btn-ghost {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* ---------- Add task form ---------- */
+.add-task-form {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.add-task-form input[type="text"] {
+  flex: 1 1 200px;
+  font: inherit;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+select, input[type="time"] {
+  font: inherit;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* ---------- Category filter chips ---------- */
+.filter-row {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin: 0.75rem 0;
+}
+
+.chip {
+  font: inherit;
+  font-size: 0.78rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.chip.active {
+  color: #fff;
+  border-color: transparent;
+}
+
+/* ---------- Task list ---------- */
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.6rem 0.75rem;
+  box-shadow: var(--shadow);
+}
+
+.task-item.done .task-title {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+
+.task-check {
+  width: 1.2rem;
+  height: 1.2rem;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: var(--success);
+}
+
+.task-title {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.task-cat-badge {
+  font-size: 0.68rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  color: #fff;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.task-delete,
+.task-edit {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.2rem 0.4rem;
+  flex-shrink: 0;
+}
+.task-delete:hover { color: var(--danger); }
+.task-edit:hover { color: var(--primary); }
+
+/* ---------- Inline task editor ---------- */
+.task-editor {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.6rem;
+  border-color: var(--primary);
+}
+
+.editor-row {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.edit-title {
+  flex: 1 1 180px;
+  font: inherit;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.editor-actions {
+  display: flex;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+/* ---------- Mode toggle (⚡ / 🌊) ---------- */
+.mode-toggle {
+  display: flex;
+  gap: 0.3rem;
+}
+.mode-toggle .chip.active { color: #fff; border-color: transparent; }
+
+/* ---------- Category manager ---------- */
+.category-manager {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  align-items: flex-start;
+}
+
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.4rem 0.6rem;
+}
+
+.category-row input[type="color"] {
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.category-row .edit-title { flex: 1; }
+
+.category-count {
+  margin: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.empty-note {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 1.5rem 0;
+}
+
+.pick-cta {
+  text-align: center;
+  margin: 1.25rem 0;
+}
+
+/* ---------- Schedule tab ---------- */
+.help-text {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.65rem 0.85rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+.toggle-row input[type="checkbox"] {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+}
+
+.schedule-times {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 0.75rem 0;
+}
+
+.schedule-time-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.45rem 0.75rem;
+}
+
+.schedule-time-item .time-label {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.add-time-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.notif-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0.9rem 0;
+  flex-wrap: wrap;
+}
+
+.rule-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* ---------- History ---------- */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.history-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.history-when {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.history-task {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.history-source {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* ---------- Chronicles ---------- */
+.chronicle-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.6rem 0.8rem;
+  box-shadow: var(--shadow);
+}
+
+.chronicle-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.chronicle-verdict {
+  font-size: 0.78rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chronicle-task {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  padding: 0.15rem 0;
+}
+
+/* ---------- Achievements ---------- */
+.achievement-count {
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 0.4rem;
+}
+
+.achievement-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.achievement-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.55rem 0.7rem;
+  opacity: 0.75;
+}
+
+.achievement-card.earned {
+  opacity: 1;
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
+}
+
+.achievement-head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--font-royal);
+  font-size: 1rem;
+}
+.achievement-head strong { font-weight: 400; }
+
+.achievement-emoji { font-size: 1.15rem; }
+.achievement-card:not(.earned) .achievement-emoji { filter: grayscale(1); opacity: 0.7; }
+
+.achievement-desc {
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin: 0.2rem 0 0.35rem;
+}
+
+.achievement-bar {
+  height: 0.4rem;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.achievement-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e5548f, #c86bb8);
+  transition: width 0.4s ease;
+}
+
+.achievement-status {
+  font-family: var(--font-pixel);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+.achievement-card.earned .achievement-status { color: var(--success); }
+
+/* ---------- Gifts ---------- */
+.gift-caption { margin-bottom: 0.3rem; }
+
+.gift-row {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.gift-btn {
+  font-size: 1.2rem;
+  padding: 0.45rem 0.8rem;
+}
+.gift-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.gift-cost {
+  font-family: var(--font-pixel);
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+/* ---------- Tab bar ----------
+ * Sits at the top under the header, same width as the content column so
+ * everything lines up vertically. Sticky so it stays reachable on scroll. */
+.tab-bar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  gap: 0.25rem;
+  max-width: 640px;
+  margin: 0.5rem auto 0;
+  padding: 0.3rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+}
+@media (max-width: 679px) {
+  .tab-bar { margin-left: 1rem; margin-right: 1rem; }
+}
+
+.tab-btn {
+  flex: 1;
+  font: inherit;
+  font-family: var(--font-royal);
+  font-size: 1.05rem;
+  font-weight: 400;
+  padding: 0.75rem 0.25rem;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+@media (max-width: 420px) {
+  .tab-btn { font-size: 0.78rem; padding: 0.7rem 0.1rem; }
+}
+
+.tab-btn.active {
+  color: var(--primary-contrast);
+  background: var(--primary);
+  font-weight: 700;
+}
+
+/* ---------- Daily goal bar ---------- */
+.goal-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.55rem 0.8rem;
+  margin-bottom: 0.75rem;
+  box-shadow: var(--shadow);
+}
+
+.goal-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.goal-caption {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+.goal-bar.goal-met .goal-caption { color: var(--success); }
+
+.goal-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.goal-slots {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.goal-slot {
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  border: 2px dashed var(--border);
+  transition: background 0.3s, border-color 0.3s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.goal-slot.filled {
+  border-style: solid;
+  border-color: transparent;
+  transform: scale(1.08);
+}
+
+/* A checkmark makes "filled" read as "done", not just "colored". */
+.goal-slot.filled::after {
+  content: "✓";
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.goal-extras {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.goal-gem {
+  font-size: 0.85rem;
+  animation: gem-pop 0.35s ease;
+}
+
+.goal-gem-more {
+  font-family: var(--font-pixel);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+@keyframes gem-pop {
+  0% { transform: scale(0); }
+  70% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+
+.goal-bar.goal-met .goal-slots { animation: goal-pulse 0.6s ease; }
+.goal-bar.goal-over { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary), var(--shadow); }
+@keyframes goal-pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+.goal-stats {
+  display: flex;
+  gap: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.goal-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.goal-stat small {
+  font-size: 0.6rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* ---------- Add-task extras (estimate + daily) ---------- */
+.add-task-form { flex-direction: column; }
+
+.add-task-main {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.add-task-main input[type="text"] { flex: 1 1 200px; }
+
+.add-task-extras {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+.estimate-field { flex: 1 1 220px; }
+
+.estimate-caption {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.estimate-caption strong { color: var(--text); }
+
+.estimate-field input[type="range"] {
+  width: 100%;
+  margin: 0.25rem 0 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.estimate-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.daily-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.daily-toggle input { accent-color: var(--primary); }
+
+/* Tap-friendly "?" hints (hover titles don't exist on mobile) */
+.info-dot {
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: help;
+  flex-shrink: 0;
+  align-self: center;
+}
+.info-dot:hover { color: var(--primary); border-color: var(--primary); }
+
+.btn-sub {
+  font-size: 0.75em;
+  font-weight: 400;
+  opacity: 0.85;
+}
+
+.task-meta {
+  display: flex;
+  gap: 0.3rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.task-est {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.time-filter-row { justify-content: center; margin-bottom: 0.6rem; }
+
+/* ---------- Princess ---------- */
+.princess-scene {
+  text-align: center;
+  padding-top: 0.5rem;
+}
+
+.princess-stage {
+  position: relative;
+  display: inline-block;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+/* Scene backdrop behind her (placeholder gradient until artwork lands) */
+.scene-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-size: cover;
+  background-position: center;
+}
+
+.scene-emoji {
+  position: absolute;
+  top: 8%;
+  left: 8%;
+  font-size: 2.2rem;
+  opacity: 0.55;
+  z-index: 1;
+}
+
+.scene-label {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+}
+
+#princess-canvas {
+  position: relative;
+  z-index: 1;
+  image-rendering: pixelated;
+  animation: mini-idle 2.8s ease-in-out infinite;
+}
+
+@media (min-width: 768px) {
+  #princess-canvas { width: 300px; height: auto; }
+}
+
+.pose-caption {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.princess-hearts {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.float-heart {
+  position: absolute;
+  bottom: 10%;
+  font-size: 0.9rem;
+  animation: float-up 2.4s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes float-up {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateY(-140px) scale(1.15); opacity: 0; }
+}
+
+.speech-bubble {
+  position: relative;
+  max-width: 420px;
+  margin: 0 auto 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.7rem 0.9rem;
+  box-shadow: var(--shadow);
+  animation: bubble-pop 0.18s ease-out;
+}
+
+.speech-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 8px 8px 0;
+  border-style: solid;
+  border-color: var(--border) transparent transparent;
+}
+
+@keyframes bubble-pop {
+  from { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.princess-name-row {
+  margin-top: 0.4rem;
+  font-family: var(--font-royal);
+  font-weight: 400;
+  font-size: 1.25rem;
+}
+
+.princess-tier {
+  display: inline-block;
+  margin-left: 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  vertical-align: middle;
+}
+
+.affection-row {
+  max-width: 300px;
+  margin: 0.5rem auto;
+}
+
+.affection-bar {
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.affection-fill {
+  height: 100%;
+  width: 0;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e5548f, #c86bb8);
+  transition: width 0.5s ease;
+}
+
+.princess-actions { margin: 0.75rem 0 0.25rem; }
+.princess-hint { max-width: 420px; margin-left: auto; margin-right: auto; }
+
+/* ---------- Toast ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 1.5rem;
+  max-width: min(420px, calc(100vw - 2rem));
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.6rem 0.9rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18);
+  font-size: 0.88rem;
+  z-index: 40;
+  animation: bubble-pop 0.18s ease-out;
+}
+
+/* ---------- Floating mini-princess ---------- */
+.mini-princess {
+  position: fixed;
+  right: 0.6rem;
+  bottom: 0.9rem;
+  z-index: 30;
+  display: flex;
+  align-items: flex-end;
+  gap: 0.4rem;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mini-princess.hidden { display: none; }
+
+#mini-canvas {
+  width: 66px;
+  height: auto;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.25));
+  animation: mini-idle 2.6s ease-in-out infinite;
+}
+
+/* Much bigger and livelier on desktop screens */
+@media (min-width: 768px) {
+  #mini-canvas { width: 220px; }
+  .mini-princess { right: 1.4rem; }
+  .mini-bubble { font-size: 0.95rem; max-width: 300px; }
+}
+
+@keyframes mini-idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.mini-bubble {
+  max-width: min(240px, 60vw);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  border-bottom-right-radius: 3px;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.82rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  animation: bubble-pop 0.18s ease-out;
+  margin-bottom: 0.9rem;
+}
+
+/* Main content shouldn't hide behind her on narrow screens */
+main { padding-bottom: 2.5rem; }
+
+/* ---------- Pixel font: small accents + the princess's voice ----------
+ * Matches her pixel-art sprite. Slight size bumps keep it legible. */
+.speech-bubble,
+.mini-bubble,
+.pose-caption,
+.scene-label,
+.toast,
+.chip,
+.task-cat-badge,
+.task-est,
+.help-text,
+.estimate-caption,
+.estimate-scale,
+.pick-banner-label,
+.pick-banner-category,
+.history-when,
+.history-source,
+.chronicle-verdict,
+.princess-tier,
+.empty-note,
+.task-title,
+.history-task,
+.goal-caption,
+.goal-stat small {
+  font-family: var(--font-pixel);
+}
+
+.task-cat-badge { font-size: 0.72rem; }
+.task-est { font-size: 0.72rem; }
+.estimate-scale { font-size: 0.72rem; }
+.scene-label { font-size: 0.72rem; }
+.chronicle-verdict { font-weight: 400; }
+
+/* ---------- Confetti ---------- */
+.confetti {
+  position: fixed;
+  top: -12px;
+  width: 8px;
+  height: 12px;
+  z-index: 50;
+  pointer-events: none;
+  animation: confetti-fall linear forwards;
+}
+
+@keyframes confetti-fall {
+  to { transform: translateY(105vh) rotate(720deg); }
+}

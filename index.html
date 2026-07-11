@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#e8489b">
+  <meta name="description" content="A sassy princess picks your next task. Impress her.">
+  <title>Petulant Princess Productivity</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1>👑 Petulant Princess Productivity</h1>
+    <p class="tagline">Add tasks. Let her Royal Sassiness decide your fate.</p>
+  </header>
+
+  <nav class="tab-bar">
+    <button class="tab-btn active" data-tab="tasks">📋 Tasks</button>
+    <button class="tab-btn" data-tab="princess">👑 Princess</button>
+    <button class="tab-btn" data-tab="history">📜 Chronicles</button>
+    <button class="tab-btn" data-tab="schedule">⚙️ Settings</button>
+  </nav>
+
+  <!-- Current pick banner -->
+  <div id="pick-banner" class="pick-banner hidden" aria-live="polite">
+    <div class="pick-banner-label" id="pick-banner-label">Your task right now</div>
+    <div class="pick-banner-task" id="pick-banner-task"></div>
+    <div class="pick-banner-category" id="pick-banner-category"></div>
+    <div class="pick-banner-actions">
+      <button id="pick-done-btn" class="btn btn-success">✓ Done</button>
+      <button id="pick-reroll-btn" class="btn btn-ghost">↻ Re-roll</button>
+      <button id="pick-dismiss-btn" class="btn btn-ghost">✕ Dismiss</button>
+    </div>
+  </div>
+
+  <main id="main">
+    <!-- TASKS TAB -->
+    <section id="tab-tasks" class="tab-panel">
+      <!-- Daily goal: 3 tasks across 3 categories -->
+      <div id="goal-bar" class="goal-bar">
+        <div class="goal-left">
+          <div class="goal-caption" id="goal-caption">Today's quest: 3 tasks · 3 categories</div>
+          <div class="goal-progress">
+            <div class="goal-slots" id="goal-slots" title="One circle per category you complete a task in today — fill all 3 for the daily goal">
+              <div class="goal-slot"></div>
+              <div class="goal-slot"></div>
+              <div class="goal-slot"></div>
+            </div>
+            <div class="goal-extras" id="goal-extras" title="Gems: extra tasks beyond the daily goal"></div>
+          </div>
+        </div>
+        <div class="goal-stats">
+          <span class="goal-stat" title="Total points"><span id="points-label">⭐ 0</span><small>points</small></span>
+          <span class="goal-stat" title="Days in a row meeting the daily goal"><span id="streak-label">🔥 0</span><small>day streak</small></span>
+        </div>
+      </div>
+
+      <form id="add-task-form" class="add-task-form">
+        <div class="add-task-main">
+          <input type="text" id="task-input" placeholder="Add a task…" autocomplete="off" required maxlength="200">
+          <select id="category-select" aria-label="Category"></select>
+          <button type="submit" class="btn btn-primary">Add</button>
+        </div>
+        <div class="add-task-extras">
+          <div class="estimate-field">
+            <label for="estimate-input" class="estimate-caption">Effort: <strong id="estimate-label">Medium · 15 min</strong></label>
+            <input type="range" id="estimate-input" min="5" max="60" step="5" value="15" aria-label="Time estimate in minutes">
+            <div class="estimate-scale"><span>Easy · 5m</span><span>Hard · 1h</span></div>
+          </div>
+          <div class="mode-toggle" id="mode-toggle" role="group" aria-label="Task mode"
+               title="⚡ Active = do, make, exert (workout, chores, focused work). 🌊 Reset = restore and unwind (stretching, reading, a walk).">
+            <button type="button" class="chip active" data-mode="active" title="⚡ Active: tasks that take effort — do, make, exert.">⚡ Active</button>
+            <button type="button" class="chip" data-mode="reset" title="🌊 Reset: tasks that restore you — unwind, recover, recharge.">🌊 Reset</button>
+            <button type="button" class="info-dot" id="mode-info" aria-label="What do Active and Reset mean?">?</button>
+          </div>
+          <label class="daily-toggle" title="Every-day tasks automatically un-check themselves each morning so they're back on the list daily.">
+            <input type="checkbox" id="daily-input"> 🔁 Every day
+            <button type="button" class="info-dot" id="daily-info" aria-label="What does Every day mean?">?</button>
+          </label>
+        </div>
+      </form>
+
+      <div class="filter-row" id="category-filters"></div>
+
+      <div id="task-list" class="task-list"></div>
+      <p id="empty-tasks" class="empty-note hidden">No tasks yet. Add a few above, then hit <strong>Ask Princess</strong>!</p>
+
+      <div class="pick-cta">
+        <div class="filter-row time-filter-row" id="time-filter" aria-label="How much time do you have?"></div>
+        <div class="filter-row time-filter-row" id="energy-filter" aria-label="How much energy do you have?"></div>
+        <button id="pick-now-btn" class="btn btn-big">👑 Ask Princess <span class="btn-sub">(pick for me)</span></button>
+      </div>
+    </section>
+
+    <!-- PRINCESS TAB -->
+    <section id="tab-princess" class="tab-panel hidden">
+      <div class="princess-scene">
+        <div id="speech-bubble" class="speech-bubble hidden"></div>
+        <div class="princess-stage">
+          <div id="scene-backdrop" class="scene-backdrop"></div>
+          <span id="scene-emoji" class="scene-emoji"></span>
+          <span id="scene-label" class="scene-label"></span>
+          <div id="princess-hearts" class="princess-hearts"></div>
+          <canvas id="princess-canvas" width="200" height="280" aria-label="Pixel-art princess companion"></canvas>
+        </div>
+        <p id="pose-caption" class="pose-caption"></p>
+        <div class="princess-name-row">
+          <span id="princess-name">Princess Elara</span>
+          <span id="princess-tier" class="princess-tier"></span>
+        </div>
+        <div class="affection-row">
+          <div class="affection-bar"><div id="affection-fill" class="affection-fill"></div></div>
+          <span id="affection-label" class="help-text"></span>
+        </div>
+        <div class="princess-actions">
+          <button id="talk-btn" class="btn btn-primary">💬 Talk to her</button>
+        </div>
+        <p class="help-text gift-caption">Spend points on a gift — royalty loves tribute:</p>
+        <div id="gift-row" class="gift-row"></div>
+        <p class="help-text princess-hint">She warms up as you complete tasks, hit daily goals, and keep streaks. She notices when you disappear, too.</p>
+      </div>
+    </section>
+
+    <!-- SCHEDULE TAB -->
+    <section id="tab-schedule" class="tab-panel hidden">
+      <h2>📯 Royal Decrees</h2>
+      <p class="help-text">At each scheduled time, the Princess issues a Royal Decree — a task picked for you, announced with a trumpet fanfare (while the app is open or installed and running).</p>
+
+      <label class="toggle-row">
+        <span>Enable Royal Decrees</span>
+        <input type="checkbox" id="schedule-enabled">
+      </label>
+
+      <div id="schedule-times" class="schedule-times"></div>
+
+      <form id="add-time-form" class="add-time-form">
+        <input type="time" id="time-input" required>
+        <button type="submit" class="btn btn-primary">Add time</button>
+      </form>
+
+      <div class="notif-row">
+        <button id="notif-btn" class="btn btn-ghost">🔔 Enable notifications</button>
+        <span id="notif-status" class="help-text"></span>
+      </div>
+
+      <h2>Rules</h2>
+      <label class="toggle-row">
+        <span>Recent picks must come from different categories</span>
+        <input type="checkbox" id="rule-distinct">
+      </label>
+      <label class="toggle-row" id="distinct-window-row">
+        <span>How many recent picks to spread across categories</span>
+        <select id="rule-distinct-window">
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+          <option value="6">6</option>
+        </select>
+      </label>
+      <h3>Categories eligible for random picks</h3>
+      <div id="rule-categories" class="rule-categories"></div>
+
+      <h2>Appearance &amp; Sound</h2>
+      <div class="filter-row" id="theme-picker" aria-label="Color theme"></div>
+      <label class="toggle-row">
+        <span>Sounds — voice, trumpets &amp; clicks 🔊</span>
+        <input type="checkbox" id="sound-enabled">
+      </label>
+
+      <h2>☁️ Cloud Sync</h2>
+      <p class="help-text">Sign in with Google and your kingdom follows you between phone and PC — tasks, points, streaks, and the Princess's opinion of you, all synced automatically.</p>
+      <div id="sync-signed-out">
+        <button id="sync-signin" class="btn btn-primary">🔑 Sign in with Google</button>
+      </div>
+      <div id="sync-signed-in" class="hidden">
+        <p class="help-text">Signed in as <strong id="sync-email"></strong></p>
+        <div class="notif-row">
+          <button id="sync-now" class="btn btn-ghost">🔄 Sync now</button>
+          <button id="sync-signout" class="btn btn-ghost">Sign out</button>
+        </div>
+      </div>
+      <p class="help-text" id="sync-status"></p>
+
+      <h2>💾 Your Kingdom's Data</h2>
+      <p class="help-text">Everything — tasks, points, streaks, Chronicles, and the Princess's feelings about you — lives only in this browser. Download a backup now and then so a cleared cache can't erase the kingdom. A backup file can also carry your kingdom between phone and PC.</p>
+      <div class="notif-row">
+        <button id="export-btn" class="btn btn-primary">💾 Download backup</button>
+        <button id="import-btn" class="btn btn-ghost">📥 Restore from backup</button>
+        <input type="file" id="import-file" accept=".json,application/json" hidden>
+      </div>
+      <p class="help-text" id="backup-status"></p>
+
+      <h2>Categories</h2>
+      <p class="help-text">Rename, recolor, add, or remove your umbrella categories. Each task also carries an energy mode: ⚡ Active (do, make, exert) or 🌊 Reset (restore, unwind, recover).</p>
+      <div id="category-manager" class="category-manager"></div>
+    </section>
+
+    <!-- CHRONICLES TAB -->
+    <section id="tab-history" class="tab-panel hidden">
+      <h2>🏆 Royal Achievements <span id="achievement-count" class="achievement-count"></span></h2>
+      <p class="help-text">Long-term deeds the historian is tracking. Each pays out points when earned.</p>
+      <div id="achievement-grid" class="achievement-grid"></div>
+
+      <h2>Chronicles</h2>
+      <p class="help-text">The royal record: what you accomplished each day, whether the daily goal (3 tasks, 3 categories) was met, and whether the streak survived.</p>
+      <div id="chronicle-list" class="history-list"></div>
+      <p id="empty-chronicles" class="empty-note hidden">No deeds recorded yet. The historian is napping.</p>
+      <h2>Recent picks</h2>
+      <div id="history-list" class="history-list"></div>
+      <p id="empty-history" class="empty-note hidden">No picks yet.</p>
+      <button id="clear-history-btn" class="btn btn-ghost">Clear pick history</button>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- Floating mini-princess: present on every tab -->
+  <div id="mini-princess" class="mini-princess" title="Princess Elara">
+    <div id="mini-bubble" class="mini-bubble hidden"></div>
+    <canvas id="mini-canvas" width="60" height="84" aria-label="Your companion"></canvas>
+  </div>
+
+  <script src="lib/firebase-app-compat.js"></script>
+  <script src="lib/firebase-auth-compat.js"></script>
+  <script src="lib/firebase-firestore-compat.js"></script>
+  <script src="companion.js"></script>
+  <script src="sync.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
