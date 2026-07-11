@@ -27,16 +27,16 @@ window.COMPANION = (() => {
   // image: set to "art/scenes/<id>.png" when artwork is ready.
 
   const SCENES = [
-    { id: "beach", name: "Royal Beach Day", emoji: "🏖️", sky: ["#7fd4f7", "#c8ecff"], ground: "#f7e3b0", image: null },
-    { id: "bedroom", name: "Her Chambers", emoji: "🛏️", sky: ["#eddcf8", "#f9eeff"], ground: "#d9b9ec", image: null },
-    { id: "garden", name: "Castle Garden", emoji: "🌸", sky: ["#c2e9ff", "#eaf8da"], ground: "#90cf80", image: null },
-    { id: "throne", name: "Throne Room", emoji: "👑", sky: ["#f6dfdf", "#f1d0d0"], ground: "#caaa6b", image: null },
-    { id: "library", name: "Royal Library", emoji: "📚", sky: ["#e9ddc9", "#f6efe1"], ground: "#a97d51", image: null },
-    { id: "kitchen", name: "Palace Kitchen", emoji: "🧁", sky: ["#fff1e1", "#ffe5ed"], ground: "#e1b991", image: null },
-    { id: "balcony", name: "Moonlit Balcony", emoji: "🌙", sky: ["#2b2b5b", "#4b4b8b"], ground: "#3b3b6b", image: null },
-    { id: "hotspring", name: "Hot Springs", emoji: "♨️", sky: ["#d0efe9", "#e9f8f5"], ground: "#89c5b9", image: null },
-    { id: "market", name: "Village Market", emoji: "🎪", sky: ["#ffe9c9", "#fff5dd"], ground: "#d9a979", image: null },
-    { id: "meadow", name: "Butterfly Meadow", emoji: "🦋", sky: ["#c9e9ff", "#e9ffd9"], ground: "#99d989", image: null },
+    { id: "beach", name: "Royal Beach Day", emoji: "🏖️", sky: ["#7fd4f7", "#c8ecff"], ground: "#f7e3b0", image: "art/scenes/beach.png" },
+    { id: "bedroom", name: "Her Chambers", emoji: "🛏️", sky: ["#eddcf8", "#f9eeff"], ground: "#d9b9ec", image: "art/scenes/bedroom.png" },
+    { id: "garden", name: "Castle Garden", emoji: "🌸", sky: ["#c2e9ff", "#eaf8da"], ground: "#90cf80", image: "art/scenes/garden.png" },
+    { id: "throne", name: "Throne Room", emoji: "👑", sky: ["#f6dfdf", "#f1d0d0"], ground: "#caaa6b", image: "art/scenes/throne.png" },
+    { id: "library", name: "Royal Library", emoji: "📚", sky: ["#e9ddc9", "#f6efe1"], ground: "#a97d51", image: "art/scenes/library.png" },
+    { id: "kitchen", name: "Palace Kitchen", emoji: "🧁", sky: ["#fff1e1", "#ffe5ed"], ground: "#e1b991", image: "art/scenes/kitchen.png" },
+    { id: "balcony", name: "Moonlit Balcony", emoji: "🌙", sky: ["#2b2b5b", "#4b4b8b"], ground: "#3b3b6b", image: "art/scenes/balcony.png" },
+    { id: "hotspring", name: "Hot Springs", emoji: "♨️", sky: ["#d0efe9", "#e9f8f5"], ground: "#89c5b9", image: "art/scenes/hotspring.png" },
+    { id: "market", name: "Village Market", emoji: "🎪", sky: ["#ffe9c9", "#fff5dd"], ground: "#d9a979", image: "art/scenes/market.png" },
+    { id: "meadow", name: "Butterfly Meadow", emoji: "🦋", sky: ["#c9e9ff", "#e9ffd9"], ground: "#99d989", image: "art/scenes/meadow.png" },
   ];
 
   // Stable scene per calendar day: she "goes somewhere" each morning.
@@ -51,14 +51,14 @@ window.COMPANION = (() => {
   // image: set to "art/poses/<id>.png" when artwork is ready.
 
   const POSES = [
-    { id: "phone", label: "scrolling her phone 📱", mood: "unimpressed", image: null },
-    { id: "hair", label: "twirling her hair 💫", mood: "neutral", image: null },
-    { id: "nap", label: "napping 💤", mood: "proud", image: null },
-    { id: "music", label: "listening to music 🎧", mood: "smile", image: null },
-    { id: "tv", label: "watching royal TV 📺", mood: "neutral", image: null },
-    { id: "nails", label: "painting her nails 💅", mood: "unimpressed", image: null },
-    { id: "snack", label: "nibbling royal pastries 🍰", mood: "happy", image: null },
-    { id: "daydream", label: "daydreaming ☁️", mood: "smile", image: null },
+    { id: "phone", label: "scrolling her phone 📱", mood: "unimpressed", image: "art/poses/phone.png" },
+    { id: "hair", label: "twirling her hair 💫", mood: "neutral", image: "art/poses/hair.png" },
+    { id: "nap", label: "napping 💤", mood: "proud", image: "art/poses/nap.png" },
+    { id: "music", label: "listening to music 🎧", mood: "smile", image: "art/poses/music.png" },
+    { id: "tv", label: "watching royal TV 📺", mood: "neutral", image: "art/poses/tv.png" },
+    { id: "nails", label: "painting her nails 💅", mood: "unimpressed", image: "art/poses/nails.png" },
+    { id: "snack", label: "nibbling royal pastries 🍰", mood: "happy", image: "art/poses/snack.png" },
+    { id: "daydream", label: "daydreaming ☁️", mood: "smile", image: "art/poses/daydream.png" },
   ];
 
   function randomPose() {
@@ -906,7 +906,37 @@ window.COMPANION = (() => {
     ],
   };
 
-  function draw(canvas, mood) {
+  // Pose artwork cache; a failed load falls back to the sprite forever after.
+  const IMG_CACHE = {};
+  function drawImagePose(canvas, src) {
+    let img = IMG_CACHE[src];
+    if (img === false) return false; // known-broken path
+    if (!img) {
+      img = IMG_CACHE[src] = new Image();
+      img.src = src;
+      img.onerror = () => (IMG_CACHE[src] = false);
+    }
+    if (!img.complete || !img.naturalWidth) {
+      // Not ready yet: draw the sprite now, repaint with art when it lands.
+      if (!img.dataset?.hooked) {
+        img.addEventListener("load", () => {
+          const ctx = canvas.getContext("2d");
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        }, { once: true });
+      }
+      return false;
+    }
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    return true;
+  }
+
+  function draw(canvas, mood, image) {
+    if (image && drawImagePose(canvas, image)) return;
     const rows = BASE.length;
     const cols = BASE[0].length;
     const px = Math.floor(Math.min(canvas.width / cols, canvas.height / rows));

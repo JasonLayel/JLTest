@@ -1709,14 +1709,15 @@
     widget.classList.toggle("hidden", onPrincessTab);
     if (onPrincessTab) return;
     widget.title = `${state.companion.name} — ${currentPose.label}`;
-    COMPANION.draw($("#mini-canvas"), moodOverride || idleMood());
+    // Pose artwork when idle; celebrations show the sprite's expression.
+    COMPANION.draw($("#mini-canvas"), moodOverride || idleMood(), moodOverride ? null : currentPose.image);
   }
 
   function renderPrincess(moodOverride) {
     const c = state.companion;
     const tier = COMPANION.TIERS[c.tier];
     const canvas = $("#princess-canvas");
-    COMPANION.draw(canvas, moodOverride || idleMood());
+    COMPANION.draw(canvas, moodOverride || idleMood(), moodOverride ? null : currentPose.image);
 
     // Today's scene: image art when available, placeholder gradient until then.
     const scene = COMPANION.sceneForDate(todayStr());
