@@ -8,6 +8,17 @@ what happened, what it changes.
 
 ---
 
+## 2026-07-11 — Portfolio rebuild declared standing priority #1
+
+Jason flagged: portfolio is in rough shape and a priority (serves career
+jumps + side work), and he can't confidently use MG2 renderings/animations
+because the show/post rules are unclear. Agent updated with a portfolio-
+rebuild mandate: written-permission-first framework for day-job work, no
+workarounds, and a dual/triple-purpose strategy for personal pieces
+(portfolio + marketplace product + content). Next concrete step recorded in
+PLAYBOOK: email MG2 principal/HR for the portfolio policy, then run an
+inventory/audit session with the advisor.
+
 ## 2026-07-11 — Profile filled in from Jason's career details
 
 Jason provided LinkedIn screenshots, all platform links, salary, preferred

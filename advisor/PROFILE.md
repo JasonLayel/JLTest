@@ -41,6 +41,19 @@ Drawing and painting as a hobby practice; posts it alongside 3D on
 ArtStation. Just started an Instagram (@juice.served) specifically to post
 hobby drawing/painting work.
 
+## Portfolio situation (standing priority)
+
+- The portfolio is in **rough shape and updating it is a declared priority** —
+  it serves both main-career jumps and the side-work funnel.
+- **Key constraint:** most of his strongest recent work was produced at MG2,
+  and he doesn't know the rules for what he's allowed to show/post online.
+  Employer work-for-hire + client confidentiality make day-job renderings and
+  animations risky to use until clarified. Until MG2's policy is confirmed in
+  writing, assume day-job work is OFF the table and plan around it.
+- Consequence: the portfolio must be fed primarily by **self-initiated
+  personal pieces**, which should be designed to do double duty (portfolio
+  piece AND sellable asset/scene/tutorial material).
+
 ## Online presence
 
 | Where | URL | State |

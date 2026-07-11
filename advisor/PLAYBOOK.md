@@ -16,6 +16,22 @@ packs (Fab, Blender Market) or D5/Twinmotion ecosystem content._
 | --- | --- | --- | --- | --- |
 | Upwork 3D rendering | Active | Dormant — proven at ~$2–4K/yr for 2 years, then stopped | ~2018 era | Revive only at a high rate floor and after the moonlighting question is settled |
 
+## Portfolio rebuild — standing priority #1
+
+Declared priority 2026-07-11. Serves both career jumps and side income.
+
+- **Constraint:** day-job (MG2) renderings/animations are OFF the table for
+  public posting until Jason gets the firm's portfolio policy in writing.
+  First action: short email to principal/HR asking the policy and offering
+  standard terms (credit, released projects only, private-vs-public tiers).
+- **Strategy:** feed the portfolio with self-initiated pieces designed to do
+  triple duty — portfolio piece + marketplace product + content material.
+- **Target shape:** ~10–15 strong pieces, one clear specialty story
+  (real-time archviz), traditional sketches as a supporting section.
+- **Status:** not started — needs an inventory session (Jason describes/
+  pastes what's currently on ArtStation, Wix, Behance since those sites
+  block automated fetching), then keep/rework/cut sort and per-piece briefs.
+
 ## Marketing
 
 - Portfolio home: **ArtStation** (already his most-posted platform) — needs
