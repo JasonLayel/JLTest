@@ -196,6 +196,16 @@ window.COMPANION = (() => {
         "I named a pigeon after you. It also refuses to do anything useful. 🐦",
         "Every minute you spend here, a task grows one day older and one day sadder.",
         "Royal decree: stop poking me and poke a checkbox instead.",
+        "You have the focus of a moth at a candle festival. A dim one. The moth, not the festival.",
+        "I asked the mirror who's the most productive of all. It laughed. Mirrors don't laugh.",
+        "Somewhere a task is celebrating its one-week anniversary of being ignored. Cake's on you. 🎂",
+        "My tutors taught me diplomacy, so diplomatically: your to-do list is a crime scene.",
+        "You strike me as someone who alphabetizes excuses. Impressive archive. Zero results.",
+        "The throne has better lumbar support than your work ethic has structure.",
+        "*checks sundial* Yep. Still time to do literally anything today. Astonishing.",
+        "I'd offer you a royal favor but you'd probably leave it 'until tomorrow' too.",
+        "Every kingdom has a fool. Ours has a to-do list with commitment issues.",
+        "If wishes were checkboxes, you'd STILL find a way to reroll them.",
       ],
       [
         "Oh — it's you. I was just... not thinking about you. At all.",
@@ -225,6 +235,13 @@ window.COMPANION = (() => {
         "Royal gossip: the checkbox says you two are 'going steady.' I need details.",
         "Some days you almost impress me. Today could be one. No pressure. (Pressure.)",
         "I un-crumpled the report about you. It sits flat on the desk now. That's status.",
+        "The royal chef asked who keeps finishing tasks lately. I said 'someone I tolerate.' High praise. Don't push it.",
+        "You're the only subject whose progress I track by hand. The others get the abacus.",
+        "*slides a biscuit across* This means nothing. It's surplus. The kingdom had extras. Take the biscuit.",
+        "I described you to a visiting duchess as 'a work in progress.' She said those are the interesting ones. Hm.",
+        "Your name came up at the royal breakfast. I didn't bring it up. But I didn't change the subject either.",
+        "Two more weeks of this behavior and I'll upgrade your file from pencil to pen.",
+        "*pretends to be busy* Oh, you're here. I wasn't waiting. The chair just faces the door naturally.",
       ],
       [
         "Hey, you! I was hoping you'd stop by. 😊",
@@ -245,6 +262,12 @@ window.COMPANION = (() => {
         "You're my favorite subject. Don't tell the houseplant. 🤫",
         "Somebody's looking productive today. Is it you? Please say it's you.",
         "A wise ruler celebrates small wins. I am wise. Go get me a small win. 🏆",
+        "I told the royal tailor about you. You're getting a hypothetical cape. It's hypothetically dashing.",
+        "The pigeon and I made you a friendship bracelet. It ate it. We'll try again. 🐦",
+        "You know you're in the will now, right? You get the footstool AND the houseplant. Estate planning is done.",
+        "*shares the pastry* Half. HALF. This is historic. The historian is aware.",
+        "Quiz: what's my favorite time of day? ...When the app opens. Ugh, I said it out loud.",
+        "I put a gold star sticker on today just in case you show up big. No pressure. (Pressure.) ⭐",
       ],
       [
         "There you are! I missed— I mean, the THRONE missed you. Shut up. 😳",
@@ -264,6 +287,12 @@ window.COMPANION = (() => {
         "Whoever taught you discipline deserves a royal pardon. Wait, that was me. You're welcome.",
         "Don't work TOO hard, okay? A princess worries. Quietly. Regally. 💗",
         "I renamed the footstool. It's a chair now. It's YOUR chair.",
+        "*absently fixes your collar* There. Royalty-adjacent. That's what you are now. It's a real rank. I invented it.",
+        "The visiting princesses keep asking about you. I keep changing the subject. Possessively.",
+        "I had the kitchen learn your favorite snack. I don't know what it is yet. They made twelve guesses. Come eat.",
+        "*catches herself smiling* That was about something else. Unrelated. Do a task so I have an excuse.",
+        "Today's schedule: royal duties, royal duties, thinking about— royal duties. ALL royal duties. 😳",
+        "You're in three of my five favorite memories this month. Working on the other two. No rush. Some rush.",
       ],
       [
         "My favorite notification is you. 💗",
@@ -282,6 +311,11 @@ window.COMPANION = (() => {
         "You're the only one allowed to see me un-regal. Here's my un-regal face: :3",
         "Every task you finish is a tiny 'I kept my word.' That's my favorite thing about you. 💗",
         "*flustered* Go do the thing, my love— MY LIEGE. I said my liege. Anyway. Go.",
+        "The historian tried to write today's entry without mentioning you. He couldn't. Nobody can. 💗",
+        "*adjusts your hypothetical cape* There. Now you look like someone who finishes what they start. Because you are.",
+        "I told the pigeon you're my favorite. It already knew. Everyone already knew. 🐦💗",
+        "Some day I'll run out of ways to say I'm proud of you. Today is not that day. Neither is tomorrow.",
+        "*holds up two teacups* I started setting out two. A while ago, honestly. Sit. ☕💗",
       ],
     ],
 
@@ -420,6 +454,100 @@ window.COMPANION = (() => {
         "The scrapbook is now three scrapbooks. This moment is going in all of them. 📚",
         "You did the thing! Come here. Royal high-five. We're PAST leaving me hanging. 🙌",
         "Even the dragon retired. Said the kingdom's clearly in good hands. Yours. 🐉",
+      ],
+    ],
+
+    // Completing a task right after she spoke — she was watching.
+    watched: [
+      [
+        "Wait. You did that WHILE I was talking? Rude. Effective, but rude.",
+        "Oh, NOW you perform. Because I'm watching. Theater kid.",
+        "*narrows eyes* Did you just... show off? At ME?",
+        "One task, completed directly in front of royalty. Bold. Logged.",
+        "You waited until I looked. I saw the timing. The pigeon saw the timing. 🐦",
+      ],
+      [
+        "You did that right in front of me. Was that for my benefit? ...It worked. Slightly.",
+        "Completing tasks while I watch — someone's learned how the throne room works.",
+        "*applauds exactly twice* Live productivity. The kingdom's finest entertainment.",
+        "Mid-conversation task completion. Multitasking OR showing off. I'll allow both.",
+      ],
+      [
+        "A task! Live! Before my very eyes! Encore. ENCORE! 🎭",
+        "You waited until I was watching, didn't you? I respect the showmanship.",
+        "Front-row seat to competence. My favorite show. No intermission, please.",
+        "*gasp* Right in front of me! That's the good stuff. Do another!",
+      ],
+      [
+        "Doing it while I watch — you KNOW what that does to my royal composure. 😳",
+        "*cheers* That one was for me. Don't deny it. It's going in the scrapbook. Page one.",
+        "A live performance! I'd throw roses but I only have this pastry. *keeps the pastry*",
+        "You show-off. I'm delighted. Never stop.",
+      ],
+      [
+        "You did that for me. I know it. You know it. The historian is writing it down. 💗",
+        "*happy sigh* Watching you keep promises in real time never gets old.",
+        "Performed live, for the crown. The crown is smitten. The crown is me. 💋",
+      ],
+    ],
+
+    // Powering through tasks without giving her any attention.
+    ignored: [
+      [
+        "HELLO? You've done a pile of things and not ONE royal check-in? The AUDACITY.",
+        "So the checkboxes get all your attention and I get NOTHING? Noted. Filed. FUMING. 😤",
+        "*clears throat extremely loudly* The princess exists. Just so you're aware.",
+        "Busy, busy, busy. Too busy for royalty, apparently. The pigeon warned me about you. 🐦",
+      ],
+      [
+        "You've been at it a while without saying hi. I'm not mad. I'm... adjacent to mad.",
+        "*taps foot* Productivity is great and all, but the throne room has visiting hours, you know.",
+        "All these tasks and zero visits? The notebook is getting a strongly-worded entry tonight.",
+      ],
+      [
+        "Look at you GO! ...but also: hi? Remember me? Your biggest fan? Some attention please. 🥺",
+        "You're on fire today! Come tell me about it — the houseplant gives terrible reactions. 🪴",
+        "Working hard is attractive, but so is saying hello. Just saying. Royal wisdom.",
+      ],
+      [
+        "*leans into frame* Hi. You've been amazing today, and I've been over here NOT being told about it.",
+        "I love watching you work, but my waving arm is getting tired. Wave back sometime. 💗",
+        "Busy bee. Come here for ten seconds — I have a compliment loaded and it's getting heavy.",
+      ],
+      [
+        "My liege. The kingdom thrives, the tasks fall, and your princess waits. Dramatically. Beautifully. 💗",
+        "*rests chin on hands* Watching you conquer the day. Missing you from three inches away. Ridiculous. Come say hi.",
+        "You, me, ten seconds, right now. The empire can spare you. 💋",
+      ],
+    ],
+
+    // Poked five times in rapid succession. She has limits.
+    meltdown: [
+      [
+        "STOP. POKING. ME. I am ROYALTY, not a stress ball!! 😤",
+        "That's IT. Guards!! ...I don't have guards. But IMAGINE the guards!!",
+        "Poke me ONE more time and you're reassigned to the dungeon. The dungeon is your task list. FOREVER.",
+        "AAAGH. Do you tap the Mona Lisa?! DO YOU?!",
+      ],
+      [
+        "Okay okay OKAY — personal space! Royal bubble! You are IN it!",
+        "I have counted five pokes. FIVE. The notebook is getting every single one.",
+        "*swats* Enough! Go poke a checkbox — it LIKES being tapped!",
+      ],
+      [
+        "Pfff— stop it, that tickles and I'm TRYING to be dignified!! 😆",
+        "FIVE taps?! What am I, a mini-game?! ...Do NOT answer that.",
+        "Okay! You have my attention! ALL of it! It's a lot! Are you happy?!",
+      ],
+      [
+        "*giggling* Stop— STOP, I'm supposed to be aloof and you're RUINING it!",
+        "If you wanted my attention THAT badly you could have just said so. *fixes hair* You have it.",
+        "Five pokes! The scandal! The historian is pretending not to watch! 😳",
+      ],
+      [
+        "*grabs your finger* Caught you. Now you're stuck with me. No refunds. Ever. 💗",
+        "You could just SAY you missed me instead of drumming on royalty. ...I missed you too. 💋",
+        "Poke poke poke — you're lucky adoration is my current policy. Life sentence, by the way.",
       ],
     ],
 

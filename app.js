@@ -321,7 +321,8 @@
       reacted = true;
     }
     if (!reacted) {
-      speak("complete");
+      // Finish something within 20s of her speaking and she was watching.
+      speak(Date.now() - lastSpokeAt < 20000 ? "watched" : "complete");
       if (goalBefore) toast(`✨ Royal favor: +${pts} pts (1.5× beyond the quest)`);
     }
     save();
@@ -436,6 +437,7 @@
 
   function buyGift(gift) {
     if (state.stats.totalPoints < gift.cost) return;
+    noteAttention(); // a gift is the opposite of ignoring her
     state.stats.totalPoints -= gift.cost; // lifetimePoints untouched
     addAffection(gift.affection);
     save();
@@ -671,12 +673,14 @@
   // otherwise from the floating mini-princess in the corner.
   let bubbleTimer = null;
   let miniBubbleTimer = null;
+  let lastSpokeAt = 0; // for "you did that while I was watching" reactions
   function speak(kind, vars, force) {
     const c = state.companion;
     // Scene/pose context lets her comment on where she is / what she's doing.
     const ctx = { sceneId: COMPANION.sceneForDate(todayStr()).id, poseId: currentPose.id };
     const text = COMPANION.line(kind, c.tier, c.recentLines, vars, ctx);
     if (!text) return;
+    lastSpokeAt = Date.now();
     save();
     sfxSpeak(text.length);
     const excited = kind === "goal" || kind === "streak";
@@ -769,8 +773,38 @@
     if (Math.random() < 0.45) doAntic();
   }, 50000);
 
+  // Jealousy: pile up app activity without giving her any attention and
+  // she interjects. Attention = tapping her, talking, or visiting her tab.
+  let actionsSinceAttention = 0;
+  function noteActivity() {
+    actionsSinceAttention++;
+    if (actionsSinceAttention >= 6) {
+      actionsSinceAttention = 0;
+      setTimeout(() => speak("ignored", null, true), 1200);
+    }
+  }
+  function noteAttention() {
+    actionsSinceAttention = 0;
+  }
+
+  // Meltdown: five pokes inside 20 seconds is four too many.
+  let tapTimes = [];
+  function princessTapped() {
+    noteAttention();
+    const now = Date.now();
+    tapTimes = tapTimes.filter((t) => now - t < 20000);
+    tapTimes.push(now);
+    if (tapTimes.length >= 5) {
+      tapTimes = [];
+      speak("meltdown", null, true);
+      doAntic();
+      return;
+    }
+    speak("tap", null, true);
+  }
+
   // Debug/testing hook (harmless in production).
-  window.__princess = { emote: spawnEmote, antic: doAntic, hum: sfxHum };
+  window.__princess = { emote: spawnEmote, antic: doAntic, hum: sfxHum, tap: princessTapped };
 
   // Her idle pose changes now and then (per render batch + this timer).
   let currentPose = COMPANION.randomPose();
@@ -1675,6 +1709,7 @@
   // ---------- Actions ----------
 
   function addTask(title, categoryId, mode, estimateMin, recurring) {
+    noteActivity();
     state.tasks.push({
       id: uid(),
       title,
@@ -1693,6 +1728,7 @@
   function toggleDone(id) {
     const t = state.tasks.find((x) => x.id === id);
     if (!t) return;
+    noteActivity();
     t.done = !t.done;
     t.completedAt = t.done ? new Date().toISOString() : null;
     if (t.done) {
@@ -1943,6 +1979,7 @@
   });
 
   $("#pick-now-btn").addEventListener("click", () => {
+    noteActivity();
     const entry = pickRandom("manual");
     if (!entry) {
       alert(
@@ -1970,12 +2007,12 @@
   });
 
   $("#talk-btn").addEventListener("click", () => {
-    speak("tap", null, true);
+    princessTapped();
     if (state.companion.tier >= 3) floatHearts(3);
   });
 
   $("#princess-canvas").addEventListener("click", () => {
-    speak("tap", null, true);
+    princessTapped();
     if (state.companion.tier >= 3) floatHearts(3);
   });
 
@@ -1985,9 +2022,10 @@
     if (!bubble.classList.contains("hidden")) {
       bubble.classList.add("hidden");
       renderMiniPrincess();
+      noteAttention();
       return;
     }
-    speak("tap", null, true);
+    princessTapped();
   });
 
   $("#princess-name").addEventListener("click", () => {
@@ -2092,6 +2130,7 @@
       if (tab === "princess") {
         $("#speech-bubble").classList.add("hidden");
         renderPrincess();
+        noteAttention(); // visiting her counts
       }
       if (tab === "history") {
         // Chronicles reflect completions made since the last full render.
