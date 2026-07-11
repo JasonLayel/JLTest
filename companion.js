@@ -285,6 +285,72 @@ window.COMPANION = (() => {
       ],
     ],
 
+    // Unprompted musings — she says these on her own, nobody asked.
+    ambient: [
+      [
+        "♪ hmm hm hmmm~ ...What? I hum. Royally. Mind your business.",
+        "I've been watching you not do tasks for a while now. Fascinating technique.",
+        "The pigeon brought gossip today. It's about you. It's not flattering. 🐦",
+        "Do you think the checkbox feels pain when you ignore it? I think about this.",
+        "*counts crown jewels* ...four, five... one of these is a butterscotch. Whatever.",
+        "Sometimes I practice my disappointed face. You've seen it. You've EARNED it.",
+        "A royal decree just occurred to me: do something. Anything. I'm bored.",
+        "I ranked everyone in the kingdom by usefulness. You're above the butterscotch. Barely.",
+        "*sigh* Being this regal is exhausting. You wouldn't understand. Your posture confirms it.",
+        "Fun fact: I can see your task list from here. Fun is a strong word.",
+        "The houseplant grew a new leaf. THE HOUSEPLANT is making progress. 🪴",
+        "I'm not saying the throne is uncomfortable, but if you did a task I'd have something else to think about.",
+        "♪ la la laaa~ ...that song is about productive people. You wouldn't know it.",
+        "Is it nap time? It's always almost nap time. Royal scheduling.",
+        "If you're reading this, the princess is officially understimulated.",
+      ],
+      [
+        "♪ hm hm hmm~ It's stuck in my head. It's the fanfare. YOUR fanfare. Ugh.",
+        "I reorganized your file today. It needed a bigger folder. Don't make it weird.",
+        "The pigeon asked about you. I said 'improving.' It nodded. We're all shocked. 🐦",
+        "Thinking about renaming the footstool. Suggestions welcome. Not really. It's my footstool.",
+        "*doodles in the royal notebook* This is a chart of your potential. The arrow points up-ish. 📈",
+        "You know what's weird? I used to dread you opening the app. Now it's... fine. FINE, I said.",
+        "Royal observation: you pick more tasks on days I insult you. Noted. Forever.",
+        "*stretches* If a princess yawns in a castle and no one completes a task, was she even bored?",
+        "I taught the houseplant to judge you while I nap. Coverage is important. 🪴",
+        "Quiet today. Suspiciously quiet. Are you... working? Blink twice if you're working.",
+      ],
+      [
+        "♪ hmm hm hmmm~ that one's about you. It's called 'Less Hopeless Than Expected.' It slaps.",
+        "I saved you a pastry. Then I ate it. The THOUGHT is what counts. 🍰",
+        "Just checked your streak. Didn't need to. Wanted to. This is my life now.",
+        "The royal council voted you 'most improved subject.' The council is me. Landslide victory. 🏆",
+        "*waves* No reason. Just felt like waving. Carry on, favorite subject.",
+        "I told the pigeon we're friends now. It did a little dance. We've been practicing. 🐦",
+        "Do a task while I watch! Not in a weird way. In a royal-supervision way.",
+        "Today's vibe: you finishing things and me pretending I always knew you would.",
+        "*balances crown* Talent. Poise. Grace. Anyway, how's YOUR to-do list looking?",
+        "Sometimes I open the Chronicles just to reread the good days. We have a lot lately. 📜",
+      ],
+      [
+        "♪ hmm hm hm~ ...I only sing when I'm in a good mood. You may draw conclusions. 😊",
+        "I was going to tease you but you've been doing so well it felt like punching a knight. A GOOD knight.",
+        "*rearranges your chair* It's closer to the throne now. Incrementally. Don't notice.",
+        "The historian asked me to describe you in one word. I used eleven. All flattering. Don't ask.",
+        "Missed you today. The kingdom was quiet. The pigeon agrees. We took a vote. 💗",
+        "Watching you work is my favorite royal duty. It outranks waving. Waving was hard to beat.",
+        "*hums the fanfare softly* Doot doo doo... it's a lullaby now. It's versatile. Like you.",
+        "I put your portrait next to the window. The stick figure deserves natural light. 🖼️",
+        "Some royals collect jewels. I collect your completed-task notifications. Richer, honestly.",
+      ],
+      [
+        "♪ hmm hm hmmm~ it's our song. You don't know it yet. I'll teach you. Eventually. 💗",
+        "The historian says this chapter is his favorite. Mine too. You're in every page.",
+        "*leans back on the throne* Two-person kingdom status report: thriving. Obviously.",
+        "I still keep the 'loser-boy' file. Purely for laughing at how wrong past-me was. 💋",
+        "You know what's better than a dragon-slayer? Someone who shows up. Every day. It's you. It's been you.",
+        "*blows kiss at nothing in particular* If you saw that — it was for you. If not, the pigeon gets it.",
+        "The crown's heavy today. Come sit nearby and it won't matter. 💗",
+        "Golden age update: still golden. Historian's getting complacent. Keep it up anyway.",
+      ],
+    ],
+
     // Completing any task.
     complete: [
       [
@@ -602,8 +668,9 @@ window.COMPANION = (() => {
   // ctx {sceneId, poseId}: idle chatter sometimes references her scene or pose.
   function line(kind, tier, recent, vars, ctx) {
     let pool = null;
-    // ~30% of idle chatter is about where she is / what she's doing right now.
-    if (kind === "tap" && ctx && Math.random() < 0.3) {
+    // Idle chatter often references where she is / what she's doing right now
+    // (more so when she speaks unprompted — she's living her life over there).
+    if ((kind === "tap" || kind === "ambient") && ctx && Math.random() < (kind === "ambient" ? 0.4 : 0.3)) {
       const flavor = [
         ...(SCENE_LINES[ctx.sceneId] || []),
         ...(POSE_LINES[ctx.poseId] || []),

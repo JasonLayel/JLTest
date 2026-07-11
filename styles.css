@@ -1129,6 +1129,61 @@ main { padding-bottom: 2.5rem; }
 .scene-label { font-size: 0.72rem; }
 .chronicle-verdict { font-weight: 400; }
 
+/* ---------- Ambient princess life: emotes & antics ---------- */
+.pose-emote {
+  position: absolute;
+  bottom: 45%;
+  font-size: 1.05rem;
+  font-family: var(--font-pixel);
+  color: var(--text-muted);
+  pointer-events: none;
+  z-index: 3;
+  animation: emote-drift 2.5s ease-out forwards;
+}
+
+@keyframes emote-drift {
+  0% { transform: translateY(0) scale(0.5); opacity: 0; }
+  20% { opacity: 1; }
+  100% { transform: translateY(-70px) scale(1.1) rotate(8deg); opacity: 0; }
+}
+
+/* Antics override the idle bob for one performance, then it resumes. */
+.antic-flip { animation: antic-flip 0.9s ease-in-out !important; }
+@keyframes antic-flip {
+  0% { transform: translateY(0) rotate(0); }
+  30% { transform: translateY(-26px) rotate(140deg); }
+  60% { transform: translateY(-18px) rotate(300deg); }
+  100% { transform: translateY(0) rotate(360deg); }
+}
+
+.antic-hop { animation: antic-hop 0.85s ease !important; }
+@keyframes antic-hop {
+  0%, 100% { transform: translateY(0); }
+  25% { transform: translateY(-22px); }
+  45% { transform: translateY(0); }
+  65% { transform: translateY(-12px); }
+  80% { transform: translateY(0); }
+}
+
+.antic-wiggle { animation: antic-wiggle 0.7s ease !important; }
+@keyframes antic-wiggle {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-9deg); }
+  40% { transform: rotate(8deg); }
+  60% { transform: rotate(-6deg); }
+  80% { transform: rotate(4deg); }
+}
+
+/* Full zoomies: she rockets across the screen and comes back. */
+.antic-zoomies { animation: antic-zoomies 2.4s ease-in-out !important; }
+@keyframes antic-zoomies {
+  0% { transform: translateX(0); }
+  35% { transform: translateX(calc(-100vw + 130px)) scaleX(1); }
+  50% { transform: translateX(calc(-100vw + 130px)) scaleX(-1); }
+  85% { transform: translateX(0) scaleX(-1); }
+  100% { transform: translateX(0) scaleX(1); }
+}
+
 /* ---------- Confetti ---------- */
 .confetti {
   position: fixed;
