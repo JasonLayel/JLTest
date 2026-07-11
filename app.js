@@ -589,6 +589,51 @@
     osc.stop(t0 + 0.14);
   }
 
+  // A soft little melody when she hums to herself (quieter than speech).
+  function sfxHum() {
+    const ctx = getAudio();
+    if (!ctx) return;
+    const t0 = ctx.currentTime;
+    // Random walk on a pentatonic-ish ladder: always pleasant, never a tune twice.
+    const ladder = [523, 587, 659, 784, 880];
+    let idx = 1 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < 4 + Math.floor(Math.random() * 3); i++) {
+      idx = Math.max(0, Math.min(ladder.length - 1, idx + (Math.random() < 0.5 ? -1 : 1)));
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      const start = t0 + i * 0.22;
+      osc.frequency.setValueAtTime(ladder[idx], start);
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.035, start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.2);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.22);
+    }
+  }
+
+  // A tiny descending snore for nap-time Zzz moments.
+  function sfxSnore() {
+    const ctx = getAudio();
+    if (!ctx) return;
+    const t0 = ctx.currentTime;
+    for (let i = 0; i < 2; i++) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      const start = t0 + i * 0.5;
+      osc.frequency.setValueAtTime(200, start);
+      osc.frequency.exponentialRampToValueAtTime(130, start + 0.35);
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.04, start + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.4);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + 0.45);
+    }
+  }
+
   // One delegated listener covers every button/chip/checkbox, present or future.
   document.addEventListener(
     "pointerdown",
@@ -656,13 +701,76 @@
     }
   }
 
-  // She prods on her own occasionally (not often) while the app is open.
-  const PROD_INTERVAL = 300000; // check every 5 min
+  // She prods on her own while the app is open — the best part, so more often.
+  const PROD_INTERVAL = 180000; // check every 3 min
   setInterval(() => {
     if (document.hidden) return;
     if (!$("#mini-bubble").classList.contains("hidden")) return;
-    if (Math.random() < 0.35) speak("tap");
+    if (Math.random() < 0.45) speak("ambient");
   }, PROD_INTERVAL);
+
+  // ---------- Ambient life: emotes, hums, and antics ----------
+
+  // Little thought/sound emotes that match what she's doing right now.
+  const POSE_EMOTES = {
+    phone: ["📱", "🙄", "…"],
+    hair: ["💫", "✨"],
+    nap: ["💤", "Zzz", "zZz"],
+    music: ["🎵", "🎶", "♪"],
+    tv: ["📺", "🤭"],
+    nails: ["💅", "✨"],
+    snack: ["🍰", "😋"],
+    daydream: ["💭", "☁️", "✨"],
+  };
+
+  function emoteHost() {
+    const onPrincessTab = !$("#tab-princess").classList.contains("hidden");
+    return onPrincessTab ? $("#princess-hearts") : $("#mini-princess");
+  }
+
+  function spawnEmote() {
+    const opts = POSE_EMOTES[currentPose.id] || ["✨"];
+    const e = document.createElement("span");
+    e.className = "pose-emote";
+    e.textContent = opts[Math.floor(Math.random() * opts.length)];
+    e.style.left = 25 + Math.random() * 50 + "%";
+    emoteHost().appendChild(e);
+    setTimeout(() => e.remove(), 2600);
+    // Matching sounds, sparingly: a hum with the music notes, a snore with Zzz.
+    if (Math.random() < 0.4) {
+      if (currentPose.id === "music" || currentPose.id === "hair") sfxHum();
+      else if (currentPose.id === "nap") sfxSnore();
+    }
+  }
+
+  setInterval(() => {
+    if (document.hidden) return;
+    if (Math.random() < 0.6) spawnEmote();
+  }, 6500);
+
+  // Antics: every so often she does a flip, hops, or straight-up zooms
+  // across the screen. Princesses contain multitudes.
+  function doAntic() {
+    const onPrincessTab = !$("#tab-princess").classList.contains("hidden");
+    const canvas = onPrincessTab ? $("#princess-canvas") : $("#mini-canvas");
+    // Zoomies only work from her corner perch; the stage would clip them.
+    const antics = onPrincessTab
+      ? ["antic-flip", "antic-hop", "antic-wiggle"]
+      : ["antic-flip", "antic-hop", "antic-wiggle", "antic-zoomies", "antic-zoomies"];
+    const antic = antics[Math.floor(Math.random() * antics.length)];
+    const target = antic === "antic-zoomies" ? $("#mini-princess") : canvas;
+    if (target.classList.contains("hidden")) return;
+    target.classList.add(antic);
+    target.addEventListener("animationend", () => target.classList.remove(antic), { once: true });
+  }
+
+  setInterval(() => {
+    if (document.hidden) return;
+    if (Math.random() < 0.45) doAntic();
+  }, 50000);
+
+  // Debug/testing hook (harmless in production).
+  window.__princess = { emote: spawnEmote, antic: doAntic, hum: sfxHum };
 
   // Her idle pose changes now and then (per render batch + this timer).
   let currentPose = COMPANION.randomPose();
@@ -2017,6 +2125,6 @@
 
   // She pipes up shortly after launch (unless the welcome-back line beat her to it).
   setTimeout(() => {
-    if ($("#mini-bubble").classList.contains("hidden")) speak("tap");
+    if ($("#mini-bubble").classList.contains("hidden")) speak("ambient");
   }, 4500);
 })();
