@@ -327,6 +327,7 @@
     }
     save();
     checkAchievements();
+    return pts;
   }
 
   // Un-checking a task completed today takes its entry (and points) back.
@@ -567,6 +568,37 @@
     }
   }
 
+  // Cute completion fanfare: doot-do-do-doooo 🎺 (smaller, higher, and
+  // bouncier than the Royal Decree trumpet).
+  function sfxFanfare() {
+    const ctx = getAudio();
+    if (!ctx) return;
+    const t0 = ctx.currentTime;
+    // C5 C5 D5 G5 — a happy little herald.
+    const notes = [
+      [523.25, 0, 0.1],
+      [523.25, 0.13, 0.1],
+      [587.33, 0.26, 0.1],
+      [783.99, 0.4, 0.42],
+    ];
+    for (const [f, at, dur] of notes) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(f, t0 + at);
+      gain.gain.setValueAtTime(0, t0 + at);
+      gain.gain.linearRampToValueAtTime(0.085, t0 + at + 0.015);
+      gain.gain.setValueAtTime(0.085, t0 + at + dur * 0.65);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + at + dur);
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 2800;
+      osc.connect(filter).connect(gain).connect(ctx.destination);
+      osc.start(t0 + at);
+      osc.stop(t0 + at + dur + 0.05);
+    }
+  }
+
   // Soft "pop" blip for button taps; a brighter sparkle for checking tasks off.
   function sfxClick(kind) {
     const ctx = getAudio();
@@ -649,6 +681,8 @@
     "change",
     (e) => {
       if (e.target.matches?.('input[type="checkbox"]')) {
+        // Task checkboxes get the full fanfare elsewhere; no double audio.
+        if (e.target.classList.contains("task-check")) return;
         sfxClick(e.target.checked ? "check" : "click");
       }
     },
@@ -838,6 +872,44 @@
       document.body.appendChild(p);
       setTimeout(() => p.remove(), 4000);
     }
+  }
+
+  // The check-off moment: sparkle burst from the checkbox, "+pts" flying
+  // up, a row flash, the fanfare, and sometimes a princess hop.
+  function celebrateCheck(taskId, pts) {
+    sfxFanfare();
+    const item = document.querySelector(`.task-item[data-id="${taskId}"]`);
+    if (item) {
+      item.classList.add("just-done");
+      const box = item.querySelector(".task-check").getBoundingClientRect();
+      const cx = box.left + box.width / 2;
+      const cy = box.top + box.height / 2;
+      const bits = ["✨", "⭐", "💖", "✨", "🎉"];
+      for (let i = 0; i < 9; i++) {
+        const s = document.createElement("span");
+        s.className = "burst-bit";
+        s.textContent = bits[i % bits.length];
+        s.style.left = cx + "px";
+        s.style.top = cy + "px";
+        const ang = Math.random() * Math.PI * 2;
+        const dist = 30 + Math.random() * 45;
+        s.style.setProperty("--dx", Math.cos(ang) * dist + "px");
+        s.style.setProperty("--dy", Math.sin(ang) * dist - 20 + "px");
+        document.body.appendChild(s);
+        setTimeout(() => s.remove(), 900);
+      }
+      const fp = document.createElement("span");
+      fp.className = "points-float";
+      fp.textContent = `+${pts} ⭐`;
+      fp.style.left = Math.min(cx + 30, window.innerWidth - 90) + "px";
+      fp.style.top = cy - 8 + "px";
+      document.body.appendChild(fp);
+      setTimeout(() => fp.remove(), 1200);
+    }
+    const label = $("#points-label");
+    label.classList.add("stat-pop");
+    label.addEventListener("animationend", () => label.classList.remove("stat-pop"), { once: true });
+    if (Math.random() < 0.35) doAntic(); // sometimes she celebrates too
   }
 
   function floatHearts(count) {
@@ -1175,6 +1247,7 @@
       const cat = catById(t.categoryId);
       const item = document.createElement("div");
       item.className = "task-item" + (t.done ? " done" : "");
+      item.dataset.id = t.id;
 
       const check = document.createElement("input");
       check.type = "checkbox";
@@ -1731,14 +1804,16 @@
     noteActivity();
     t.done = !t.done;
     t.completedAt = t.done ? new Date().toISOString() : null;
+    let pts = 0;
     if (t.done) {
-      recordCompletion(t);
+      pts = recordCompletion(t);
     } else {
       revokeCompletion(t.id);
     }
     save();
     renderTasks();
     renderGoalBar();
+    if (t.done) celebrateCheck(t.id, pts);
   }
 
   function deleteTask(id) {
@@ -1751,17 +1826,21 @@
     const entry = currentPickEntry();
     if (!entry) return;
     entry.status = status;
+    let doneTask = null;
+    let pts = 0;
     if (status === "done") {
       const t = state.tasks.find((x) => x.id === entry.taskId);
       if (t && !t.done) {
         t.done = true;
         t.completedAt = new Date().toISOString();
-        recordCompletion(t);
+        pts = recordCompletion(t);
+        doneTask = t;
       }
     }
     state.currentPick = null;
     save();
     renderAll();
+    if (doneTask) celebrateCheck(doneTask.id, pts);
   }
 
   // ---------- Cloud sync (via the CLOUD adapter in sync.js) ----------
