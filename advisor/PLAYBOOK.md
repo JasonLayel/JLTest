@@ -4,7 +4,21 @@ Maintained by the art-career-advisor agent. This is the single source of
 truth for what we're pursuing and why. Anything not listed here is
 deliberately *not* being pursued right now.
 
-_Last updated: 2026-07-11 (profile filled in; no new streams started yet)_
+_Last updated: 2026-07-12 (immediate priorities chosen: portfolio site +
+publish-kit pipeline)_
+
+## Immediate priorities (chosen 2026-07-12)
+
+1. **Portfolio site** — Claude-built static site on GitHub Pages with
+   Jason's own domain, replacing Wix. Doubles as the external-offer
+   career tool (comp case at MG2 already played in 2025; next raise comes
+   from competing offers). Checklist lives in the 2026-07-12 LOG entry.
+2. **Publish-kit pipeline** — `/publish-kit` command built; every finished
+   piece gets its full content tail (listing, ArtStation, IG, X, Shorts
+   script, print copy) generated in one pass into `content/<slug>/`.
+
+Comp/promotion case at MG2: DONE (2025, produced the $92K raise). Not
+repeatable soon — do not re-recommend.
 
 ## Active income streams
 

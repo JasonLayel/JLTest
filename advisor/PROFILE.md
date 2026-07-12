@@ -16,7 +16,10 @@ creative growth outside the day job.
   firm, ~450 employees), Washington DC, hybrid. Title undersells it: he is
   the **sole leader of the visualization department for the entire firm**.
   At MG2 8+ years total (Associate II 2018–2021 → Associate III 2021–2022 →
-  viz specialist 2022–present). Salary: **$92K**.
+  viz specialist 2022–present). Salary: **$92K** — won via a comp/market
+  case **less than a year ago (2025)**, so that card is played. The next
+  raise lever is **competing offers from other firms**, which makes the
+  public portfolio a direct compensation tool, not just a side-work funnel.
 - **Prior:** Project Manager, Illustrate My Design LLC, Alexandria VA,
   2014–2018.
 - **Education:** M.Arch, University of Virginia (2009–2012), focus on

@@ -8,6 +8,16 @@ what happened, what it changes.
 
 ---
 
+## 2026-07-12 — Priorities chosen: portfolio site + publish-kit
+
+Jason confirmed the comp case at MG2 was already played (2025 → $92K); next
+raise lever is competing external offers, which makes the public portfolio a
+career tool as well. Chose to immediately pursue: (1) Claude-built portfolio
+site on GitHub Pages + own domain, replacing Wix; (2) content-multiplication
+pipeline — `/publish-kit` command created. Jason's inputs still needed for
+the site: domain purchase, 10–15 curated pieces with titles/blurbs, bio,
+contact preference, MG2 policy email.
+
 ## 2026-07-11 — Portfolio rebuild declared standing priority #1
 
 Jason flagged: portfolio is in rough shape and a priority (serves career
