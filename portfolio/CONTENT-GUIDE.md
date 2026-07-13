@@ -3,6 +3,13 @@
 Everything below renders on the live site as a clearly-marked dashed box
 until you fill it. Nothing is fake-filled; the structure is real.
 
+## 0. Stills gallery — the easy drop zone
+
+**Directory: `portfolio/src/assets/stills/`** — every image dropped here
+appears in the "Stills" section automatically on the next build. Use
+descriptive kebab-case filenames (`arts-center-dusk.jpg`); they become the
+captions. Six renderings are already in.
+
 ## 1. Images (just drop files in — no code changes)
 
 | File | Used on | Spec |
@@ -33,13 +40,11 @@ imagery, and credit the firm where appropriate.
 
 ## 3. Text slots on the home page — `src/pages/index.astro`
 
-- **Tooling list** (capabilities section): your real software/hardware
-  stack. Will render as a mono-type strip.
-- **Resume details** (about section): paste resume text; becomes a career
-  timeline. Also drop a PDF at `public/jason-layel-resume.pdf`.
-- **Contact links**: LinkedIn / ArtStation / Vimeo / etc. URLs.
+- ~~Tooling list~~ — done, from resume.
+- ~~Resume details~~ — done: career timeline + linked PDF at
+  `public/jason-layel-resume.pdf`.
+- ~~Contact links~~ — done: LinkedIn + ArtStation + resume.
 
 ## 4. Config
 
 - `astro.config.mjs` → set `site:` to your real domain before deploying.
-- `src/components/Footer.astro` → add a location line if you want one.

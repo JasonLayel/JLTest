@@ -3,10 +3,45 @@ import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import WorkCard from '../components/WorkCard.astro';
 import ImageSlot from '../components/ImageSlot.astro';
+import StillsGallery from '../components/StillsGallery.astro';
 
 const work = (await getCollection('work')).sort(
   (a, b) => a.data.order - b.data.order
 );
+
+const tools = [
+  '3ds Max + V-Ray / Redshift / Arnold',
+  'Unreal Engine 5',
+  'Blender',
+  'Enscape / Twinmotion / Lumion',
+  'Revit + AutoCAD',
+  'Rhino / Grasshopper',
+  'Adobe Suite',
+  'DaVinci Resolve',
+];
+
+const timeline = [
+  {
+    years: '2005–12',
+    what: 'Architecture school, twice over — B.Des at Florida (high honors), M.Arch at UVA. Learned to draw by hand and never really stopped: watercolor, charcoal, physical models.',
+  },
+  {
+    years: '2013–14',
+    what: 'Freelance 3D artist. Renderings and real-time assets in early Unreal and Unity, built from whatever clients had — sketches, CAD files, sometimes just a phone call.',
+  },
+  {
+    years: '2014–18',
+    what: 'Illustrate My Design. Started as a 3D artist, ended up managing a team of five across 100+ architecture and interiors projects.',
+  },
+  {
+    years: '2018–22',
+    what: 'MG2, architectural designer. Project Architect on retail and grocery work — Revit, code, permitting, construction admin. The years that make my renders read like buildings instead of backdrops.',
+  },
+  {
+    years: '2022–now',
+    what: 'MG2, Design Visualization Specialist. Built the firm’s end-to-end viz pipeline from scratch; art direction and QA standards across 100+ projects a year; training curricula for 300+ designers; a fleet of 15+ VR headsets across six offices.',
+  },
+];
 
 const capabilities = [
   {
@@ -59,6 +94,15 @@ const capabilities = [
     </div>
   </section>
 
+  <!-- STILLS -->
+  <section id="stills" class="section wrap">
+    <div class="section-head">
+      <h2>Stills</h2>
+      <p class="kicker">Selected renderings</p>
+    </div>
+    <StillsGallery />
+  </section>
+
   <!-- CAPABILITIES -->
   <section id="capabilities" class="section wrap">
     <div class="section-head">
@@ -76,12 +120,9 @@ const capabilities = [
         ))
       }
     </div>
-    <div class="slot" style="margin-top: 2.5rem;">
-      <strong>Tooling list.</strong> Name the software and hardware you work in
-      (e.g. renderers, real-time engines, capture rigs, DCC apps) and I&rsquo;ll
-      set it as a mono-type strip under the capabilities. Listing real tools
-      here does heavy lifting with recruiters.
-    </div>
+    <ul class="tool-strip" aria-label="Software and tools">
+      {tools.map((t) => <li>{t}</li>)}
+    </ul>
   </section>
 
   <!-- ABOUT -->
@@ -110,12 +151,19 @@ const capabilities = [
           design crits, and know which details sell a space &mdash; so the work
           reads as architecture, not just imagery.
         </p>
-        <div class="slot">
-          <strong>Resume details.</strong> Paste your resume text (past roles,
-          education, certifications, awards) and I&rsquo;ll shape it into a
-          career timeline here, plus a linked PDF at
-          <code>public/jason-layel-resume.pdf</code>.
-        </div>
+        <dl class="timeline">
+          {
+            timeline.map((t) => (
+              <div class="tl-row">
+                <dt class="kicker">{t.years}</dt>
+                <dd>{t.what}</dd>
+              </div>
+            ))
+          }
+        </dl>
+        <p>
+          The formal version lives in the <a class="underline-link" href={`${import.meta.env.BASE_URL}jason-layel-resume.pdf`}>resume (PDF)</a>.
+        </p>
       </div>
       <div class="about-side">
         <ImageSlot
@@ -140,10 +188,9 @@ const capabilities = [
     </p>
     <a class="big-mail" href="mailto:jason.layel@gmail.com">jason.layel@gmail.com</a>
     <div class="contact-links">
-      <span class="slot" style="display:inline-block;">
-        <strong>Links.</strong> Send LinkedIn / ArtStation / Vimeo URLs and
-        they&rsquo;ll appear here as mono-type links.
-      </span>
+      <a class="arrow-link" href="https://www.linkedin.com/in/jasonlayel" rel="me">LinkedIn</a>
+      <a class="arrow-link" href="https://www.artstation.com/jasonlayel" rel="me">ArtStation</a>
+      <a class="arrow-link" href={`${import.meta.env.BASE_URL}jason-layel-resume.pdf`}>Resume</a>
     </div>
   </section>
 </Base>
@@ -244,6 +291,46 @@ const capabilities = [
 
   .contact-links {
     margin-top: 2.5rem;
-    max-width: var(--measure);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2.5rem;
+  }
+
+  .tool-strip {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 2.5rem;
+  }
+
+  .tool-strip li {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    letter-spacing: 0.04em;
+    color: var(--ink-muted);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    padding: 0.35rem 0.75rem;
+    white-space: nowrap;
+  }
+
+  .timeline {
+    display: grid;
+    gap: 1.1rem;
+    border-left: 1px solid var(--line);
+    padding-left: 1.25rem;
+    margin-block: 0.5rem;
+  }
+
+  .tl-row dt {
+    color: var(--accent);
+  }
+
+  .tl-row dd {
+    margin-top: 0.2rem;
+    font-size: var(--step--1);
+    line-height: 1.65;
+    color: var(--ink-muted);
   }
 </style>
