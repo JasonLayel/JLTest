@@ -8,7 +8,15 @@ until you fill it. Nothing is fake-filled; the structure is real.
 **Directory: `portfolio/src/assets/stills/`** — every image dropped here
 appears in the "Stills" section automatically on the next build. Use
 descriptive kebab-case filenames (`arts-center-dusk.jpg`); they become the
-captions. Six renderings are already in.
+captions. Twenty renderings are already in.
+
+**Full-width features:** filenames listed in `FEATURED` at the top of
+`src/components/StillsGallery.astro` render full-width above the grid.
+Currently: `arts-center-dusk`, `tree-art-final-small` (the latter renders
+as soon as a file with that name lands in the stills directory).
+
+**Logo:** drop a file at `src/assets/brand/logo.svg` (or `.png`/`.webp`)
+and it replaces the JL&#9679; text mark in the header automatically.
 
 ## 1. Images (just drop files in — no code changes)
 
@@ -16,7 +24,7 @@ captions. Six renderings are already in.
 |---|---|---|
 | `src/assets/work/rendering-hero.jpg` | Work card + case study hero | ≥ 2400px wide, your best still |
 | `src/assets/work/vr-ar-hero.jpg` | Work card + case study hero | ≥ 2400px wide (headset session photo or engine capture) |
-| `src/assets/work/reality-capture-hero.jpg` | Work card + case study hero | ≥ 2400px wide (point cloud / mesh view reads great) |
+| `src/assets/work/film-cinematics-hero.jpg` | Work card + case study hero | ≥ 2400px wide (a signature film frame) |
 | `src/assets/work/interactive-hero.jpg` | Work card + case study hero | ≥ 2400px wide (UI in context) |
 | `src/assets/about/portrait.jpg` | About section | ≥ 1200px wide, 4:5-ish crop |
 
@@ -25,7 +33,7 @@ at build time.
 
 ## 2. Case studies — `src/content/work/*.md`
 
-Four structured slot files exist, one per discipline. For each:
+Four structured slot files exist, one per discipline (3D Rendering, 3D Film Cinematics & Editing, VR/AR/XR, Interactive Experiences). For each:
 
 1. Frontmatter: real `title`, one-line `summary`, `year`, `role`,
    `tools: ['...', '...']`, and flip `isSlot: false`.

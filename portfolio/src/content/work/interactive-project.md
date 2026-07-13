@@ -1,6 +1,6 @@
 ---
-title: 'Interactive media project — title TBD'
-category: 'Interactive'
+title: 'Interactive experience project — title TBD'
+category: 'Interactive Experiences'
 summary: 'CONTENT SLOT: one-sentence hook for a real-time / configurator / touchscreen / web-interactive project.'
 year: ''
 role: ''

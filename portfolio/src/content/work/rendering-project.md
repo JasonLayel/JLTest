@@ -1,6 +1,6 @@
 ---
 title: 'Rendering project — title TBD'
-category: 'Rendering'
+category: '3D Rendering'
 summary: 'CONTENT SLOT: one-sentence hook for a flagship rendering / film project.'
 year: ''
 role: ''

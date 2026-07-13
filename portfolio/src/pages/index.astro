@@ -45,19 +45,19 @@ const timeline = [
 
 const capabilities = [
   {
-    name: 'Rendering & Film',
-    text: 'Stills and animation that hold up under a client’s longest stare. Pursuit imagery, marketing packages, design studies — built from live design models, not one-off art files.',
+    name: '3D Rendering',
+    text: 'Stills that hold up under a client’s longest stare. Pursuit imagery, marketing packages, design studies — built from live design models, not one-off art files.',
   },
   {
-    name: 'VR + AR',
+    name: '3D Film Cinematics & Editing',
+    text: 'Full direction from storyboard to final cut: narrative development, rendering, compositing, and editing for flagship project films.',
+  },
+  {
+    name: 'VR/AR/XR',
     text: 'Design review you can stand inside. Full-scale walkthroughs for clients and project teams, from quick massing checks to polished headset experiences.',
   },
   {
-    name: 'Reality Capture',
-    text: 'Existing conditions, captured for real. Scanning and photogrammetry that feed accurate context straight into the design and visualization pipeline.',
-  },
-  {
-    name: 'Interactive Media',
+    name: 'Interactive Experiences',
     text: 'Tools people actually pick up. Real-time experiences, configurators, and touch interfaces that let stakeholders explore a design on their own terms.',
   },
 ];
@@ -65,11 +65,11 @@ const capabilities = [
 
 <Base
   title="Jason Layel — Design Visualization"
-  description="Design Visualization Specialist with 14 years across architectural design and 3D visualization. Rendering, VR/AR, reality capture, and interactive media."
+  description="Design Visualization Specialist with 14 years across architectural design and 3D visualization. 3D rendering, film cinematics, VR/AR/XR, and interactive experiences."
 >
   <!-- HERO -->
-  <section class="hero wrap">
-    <p class="kicker rise"><b>&#9679;</b> Design Visualization &mdash; Rendering / VR &amp; AR / Reality Capture / Interactive</p>
+  <section id="top" class="hero wrap">
+    <p class="kicker rise"><b>&#9679;</b> Design Visualization &mdash; 3D Rendering / Film Cinematics / VR&#8202;/&#8202;AR&#8202;/&#8202;XR / Interactive</p>
     <h1 class="display rise">Jason<br />Layel</h1>
     <p class="lede rise-late">
       I make unbuilt architecture feel real. Fourteen years across
@@ -78,19 +78,8 @@ const capabilities = [
       firm, as a department of one.
     </p>
     <div class="hero-links rise-late">
-      <a class="arrow-link" href="#work">Selected work</a>
+      <a class="arrow-link" href="#stills">See the work</a>
       <a class="arrow-link" href="#contact">Get in touch</a>
-    </div>
-  </section>
-
-  <!-- WORK -->
-  <section id="work" class="section wrap">
-    <div class="section-head">
-      <h2>Work</h2>
-      <p class="kicker">Case studies</p>
-    </div>
-    <div class="work-grid">
-      {work.map((entry, i) => <WorkCard entry={entry} index={i} />)}
     </div>
   </section>
 
@@ -125,6 +114,17 @@ const capabilities = [
     </ul>
   </section>
 
+  <!-- WORK -->
+  <section id="work" class="section wrap">
+    <div class="section-head">
+      <h2>Work</h2>
+      <p class="kicker">Case studies</p>
+    </div>
+    <div class="work-grid">
+      {work.map((entry, i) => <WorkCard entry={entry} index={i} />)}
+    </div>
+  </section>
+
   <!-- ABOUT -->
   <section id="about" class="section wrap">
     <div class="section-head">
@@ -141,10 +141,10 @@ const capabilities = [
         <p>
           Fourteen years later that moment is my whole job. At MG2 I run the
           Visualization Technology department solo &mdash; which means I&rsquo;m
-          the strategy, the pipeline, and the person hitting render. Rendering
-          and film, VR and AR, reality capture, interactive media: if it helps
-          someone understand a design before it exists, it comes through my
-          desk.
+          the strategy, the pipeline, and the person hitting render. 3D
+          rendering, film cinematics and editing, VR/AR/XR, interactive
+          experiences: if it helps someone understand a design before it
+          exists, it comes through my desk.
         </p>
         <p>
           Coming from the design side means I read drawings, sit comfortably in
@@ -198,8 +198,12 @@ const capabilities = [
 <style>
   .hero {
     display: grid;
-    gap: clamp(1.25rem, 3vw, 2rem);
-    padding-block: clamp(5rem, 14vw, 10rem) clamp(4rem, 10vw, 8rem);
+    gap: clamp(1rem, 2.5vw, 1.5rem);
+    padding-block: clamp(3rem, 7vw, 5rem) clamp(2.5rem, 6vw, 4.5rem);
+  }
+
+  .hero .display {
+    font-size: clamp(2.8rem, 2rem + 4vw, 5rem);
   }
 
   .hero-links {

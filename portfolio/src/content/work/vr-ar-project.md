@@ -1,13 +1,13 @@
 ---
-title: 'VR / AR project — title TBD'
-category: 'VR / AR'
+title: 'VR/AR/XR project — title TBD'
+category: 'VR/AR/XR'
 summary: 'CONTENT SLOT: one-sentence hook for an immersive design-review or client-experience project.'
 year: ''
 role: ''
 tools: []
 hero: 'work/vr-ar-hero.jpg'
 heroAlt: ''
-order: 2
+order: 3
 isSlot: true
 ---
 

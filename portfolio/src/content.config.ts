@@ -5,7 +5,12 @@ const work = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/work' }),
   schema: z.object({
     title: z.string(),
-    category: z.enum(['Rendering', 'VR / AR', 'Reality Capture', 'Interactive']),
+    category: z.enum([
+      '3D Rendering',
+      '3D Film Cinematics & Editing',
+      'VR/AR/XR',
+      'Interactive Experiences',
+    ]),
     summary: z.string(),
     year: z.string().optional(),
     role: z.string().optional(),
