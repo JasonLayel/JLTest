@@ -1,0 +1,68 @@
+---
+const home = import.meta.env.BASE_URL;
+---
+
+<header class="nav wrap">
+  <a class="mark" href={home}>JL<span>&#9679;</span></a>
+  <nav aria-label="Main">
+    <a href={`${home}#work`}>Work</a>
+    <a href={`${home}#capabilities`}>Capabilities</a>
+    <a href={`${home}#about`}>About</a>
+    <a href={`${home}#contact`} class="cta">Contact</a>
+  </nav>
+</header>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-block: 1.1rem;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .mark {
+    font-weight: 700;
+    font-stretch: 125%;
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+  }
+
+  .mark span {
+    color: var(--accent);
+    font-size: 0.6em;
+    vertical-align: 0.25em;
+    margin-left: 0.1em;
+  }
+
+  nav {
+    display: flex;
+    gap: clamp(1rem, 3vw, 2.25rem);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  nav a {
+    color: var(--ink-muted);
+    transition: color 160ms ease;
+  }
+
+  nav a:hover {
+    color: var(--ink);
+  }
+
+  nav .cta {
+    color: var(--accent);
+  }
+
+  nav .cta:hover {
+    color: var(--ink);
+  }
+</style>

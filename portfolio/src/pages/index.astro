@@ -1,0 +1,249 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import WorkCard from '../components/WorkCard.astro';
+import ImageSlot from '../components/ImageSlot.astro';
+
+const work = (await getCollection('work')).sort(
+  (a, b) => a.data.order - b.data.order
+);
+
+const capabilities = [
+  {
+    name: 'Rendering & Film',
+    text: 'Stills and animation that hold up under a client’s longest stare. Pursuit imagery, marketing packages, design studies — built from live design models, not one-off art files.',
+  },
+  {
+    name: 'VR + AR',
+    text: 'Design review you can stand inside. Full-scale walkthroughs for clients and project teams, from quick massing checks to polished headset experiences.',
+  },
+  {
+    name: 'Reality Capture',
+    text: 'Existing conditions, captured for real. Scanning and photogrammetry that feed accurate context straight into the design and visualization pipeline.',
+  },
+  {
+    name: 'Interactive Media',
+    text: 'Tools people actually pick up. Real-time experiences, configurators, and touch interfaces that let stakeholders explore a design on their own terms.',
+  },
+];
+---
+
+<Base
+  title="Jason Layel — Design Visualization"
+  description="Design Visualization Specialist with 14 years across architectural design and 3D visualization. Rendering, VR/AR, reality capture, and interactive media."
+>
+  <!-- HERO -->
+  <section class="hero wrap">
+    <p class="kicker rise"><b>&#9679;</b> Design Visualization &mdash; Rendering / VR &amp; AR / Reality Capture / Interactive</p>
+    <h1 class="display rise">Jason<br />Layel</h1>
+    <p class="lede rise-late">
+      I make unbuilt architecture feel real. Fourteen years across
+      architectural design and 3D visualization &mdash; currently running the
+      Visualization Technology practice at MG2, a 450-person architecture
+      firm, as a department of one.
+    </p>
+    <div class="hero-links rise-late">
+      <a class="arrow-link" href="#work">Selected work</a>
+      <a class="arrow-link" href="#contact">Get in touch</a>
+    </div>
+  </section>
+
+  <!-- WORK -->
+  <section id="work" class="section wrap">
+    <div class="section-head">
+      <h2>Work</h2>
+      <p class="kicker">Case studies</p>
+    </div>
+    <div class="work-grid">
+      {work.map((entry, i) => <WorkCard entry={entry} index={i} />)}
+    </div>
+  </section>
+
+  <!-- CAPABILITIES -->
+  <section id="capabilities" class="section wrap">
+    <div class="section-head">
+      <h2>Capabilities</h2>
+      <p class="kicker">One person, full pipeline</p>
+    </div>
+    <div class="cap-grid">
+      {
+        capabilities.map((cap, i) => (
+          <div class="cap">
+            <span class="kicker">{String(i + 1).padStart(2, '0')}</span>
+            <h3>{cap.name}</h3>
+            <p class="muted">{cap.text}</p>
+          </div>
+        ))
+      }
+    </div>
+    <div class="slot" style="margin-top: 2.5rem;">
+      <strong>Tooling list.</strong> Name the software and hardware you work in
+      (e.g. renderers, real-time engines, capture rigs, DCC apps) and I&rsquo;ll
+      set it as a mono-type strip under the capabilities. Listing real tools
+      here does heavy lifting with recruiters.
+    </div>
+  </section>
+
+  <!-- ABOUT -->
+  <section id="about" class="section wrap">
+    <div class="section-head">
+      <h2>About</h2>
+      <p class="kicker">The short version</p>
+    </div>
+    <div class="about-grid">
+      <div class="about-text">
+        <p class="lede">
+          I started in architectural design and drifted toward the part of the
+          job everyone else treated as a deliverable: the moment a client
+          finally <em>sees</em> the building.
+        </p>
+        <p>
+          Fourteen years later that moment is my whole job. At MG2 I run the
+          Visualization Technology department solo &mdash; which means I&rsquo;m
+          the strategy, the pipeline, and the person hitting render. Rendering
+          and film, VR and AR, reality capture, interactive media: if it helps
+          someone understand a design before it exists, it comes through my
+          desk.
+        </p>
+        <p>
+          Coming from the design side means I read drawings, sit comfortably in
+          design crits, and know which details sell a space &mdash; so the work
+          reads as architecture, not just imagery.
+        </p>
+        <div class="slot">
+          <strong>Resume details.</strong> Paste your resume text (past roles,
+          education, certifications, awards) and I&rsquo;ll shape it into a
+          career timeline here, plus a linked PDF at
+          <code>public/jason-layel-resume.pdf</code>.
+        </div>
+      </div>
+      <div class="about-side">
+        <ImageSlot
+          src="about/portrait.jpg"
+          alt="Portrait of Jason Layel"
+          ratio="4 / 5"
+          hint="Portrait or working-at-desk photo, min 1200px wide"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT -->
+  <section id="contact" class="section wrap">
+    <div class="section-head">
+      <h2>Contact</h2>
+      <p class="kicker">Currently at MG2 &middot; open to conversations</p>
+    </div>
+    <p class="lede">
+      Hiring for a visualization role, or need imagery for a project?
+      Either way, the inbox is the same:
+    </p>
+    <a class="big-mail" href="mailto:jason.layel@gmail.com">jason.layel@gmail.com</a>
+    <div class="contact-links">
+      <span class="slot" style="display:inline-block;">
+        <strong>Links.</strong> Send LinkedIn / ArtStation / Vimeo URLs and
+        they&rsquo;ll appear here as mono-type links.
+      </span>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hero {
+    display: grid;
+    gap: clamp(1.25rem, 3vw, 2rem);
+    padding-block: clamp(5rem, 14vw, 10rem) clamp(4rem, 10vw, 8rem);
+  }
+
+  .hero-links {
+    display: flex;
+    gap: 2.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .work-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+  }
+
+  @media (max-width: 48rem) {
+    .work-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .cap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(17rem, 100%), 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+  }
+
+  .cap {
+    background: var(--bg);
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+    display: grid;
+    gap: 0.75rem;
+    align-content: start;
+    transition: background 200ms ease;
+  }
+
+  .cap:hover {
+    background: var(--bg-raised);
+  }
+
+  .cap h3 {
+    font-size: var(--step-1);
+  }
+
+  .cap p {
+    font-size: var(--step--1);
+    line-height: 1.65;
+  }
+
+  .about-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+
+  .about-text {
+    display: grid;
+    gap: 1.25rem;
+    align-content: start;
+    max-width: var(--measure);
+  }
+
+  @media (max-width: 48rem) {
+    .about-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .big-mail {
+    display: inline-block;
+    margin-top: 1.5rem;
+    font-size: var(--step-2);
+    font-weight: 640;
+    font-stretch: 118%;
+    letter-spacing: -0.01em;
+    background-image: linear-gradient(var(--accent), var(--accent));
+    background-repeat: no-repeat;
+    background-size: 100% 2px;
+    background-position: 0 100%;
+    padding-bottom: 4px;
+    transition: color 160ms ease;
+    word-break: break-all;
+  }
+
+  .big-mail:hover {
+    color: var(--accent);
+  }
+
+  .contact-links {
+    margin-top: 2.5rem;
+    max-width: var(--measure);
+  }
+</style>

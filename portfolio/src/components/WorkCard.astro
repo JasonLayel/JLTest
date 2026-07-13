@@ -1,0 +1,88 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import ImageSlot from './ImageSlot.astro';
+
+interface Props {
+  entry: CollectionEntry<'work'>;
+  index: number;
+}
+
+const { entry, index } = Astro.props;
+const { title, category, summary, hero, heroAlt, isSlot } = entry.data;
+const href = `${import.meta.env.BASE_URL}work/${entry.id}/`;
+const num = String(index + 1).padStart(2, '0');
+---
+
+<a class="card" href={href}>
+  <ImageSlot
+    src={hero}
+    alt={heroAlt || title}
+    ratio="4 / 3"
+    hint="Hero image, min 1600px wide"
+  />
+  <div class="meta">
+    <span class="num">{num}</span>
+    <span class="cat">{category}</span>
+    {isSlot && <span class="badge">slot</span>}
+  </div>
+  <h3>{title}</h3>
+  <p class="muted">{summary}</p>
+</a>
+
+<style>
+  .card {
+    display: grid;
+    gap: 0.7rem;
+    align-content: start;
+  }
+
+  .card :global(.img-frame) {
+    transition: opacity 200ms ease;
+  }
+
+  .card:hover :global(.img-frame) {
+    opacity: 0.85;
+  }
+
+  .meta {
+    display: flex;
+    gap: 1rem;
+    align-items: baseline;
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 0.5rem;
+  }
+
+  .num {
+    color: var(--ink-faint);
+  }
+
+  .cat {
+    color: var(--accent);
+  }
+
+  .badge {
+    margin-left: auto;
+    color: var(--ink-faint);
+    border: 1px dashed var(--ink-faint);
+    padding: 0.1rem 0.5rem;
+    border-radius: 2px;
+  }
+
+  h3 {
+    font-size: var(--step-1);
+    transition: color 160ms ease;
+  }
+
+  .card:hover h3 {
+    color: var(--accent);
+  }
+
+  p {
+    font-size: var(--step--1);
+    line-height: 1.6;
+    max-width: 34rem;
+  }
+</style>
