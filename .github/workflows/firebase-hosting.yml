@@ -1,0 +1,21 @@
+# Deploys the app to Firebase Hosting (petulent-princess-productivity.web.app)
+# on every push to master, so it stays in step with GitHub Pages.
+# Requires the FIREBASE_SERVICE_ACCOUNT repository secret (see PR notes).
+name: Deploy to Firebase Hosting
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          channelId: live
+          projectId: petulent-princess-productivity
