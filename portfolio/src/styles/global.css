@@ -1,0 +1,254 @@
+/* ---------------------------------------------------------------------------
+   Jason Layel — portfolio design system
+   Dark editorial. Images carry the color; the chrome stays out of the way.
+--------------------------------------------------------------------------- */
+
+:root {
+  --bg: #0c0c0d;
+  --bg-raised: #121214;
+  --ink: #eceae5;
+  --ink-muted: #8f8d87;
+  --ink-faint: #55534f;
+  --line: #232326;
+  --accent: #ff5a2d;
+
+  --font-sans: 'Archivo Variable', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --gutter: clamp(1.25rem, 4vw, 3.5rem);
+  --measure: 38rem;
+  --site-max: 90rem;
+
+  --step--1: clamp(0.78rem, 0.74rem + 0.2vw, 0.89rem);
+  --step-0: clamp(1rem, 0.95rem + 0.25vw, 1.13rem);
+  --step-1: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --step-2: clamp(1.7rem, 1.45rem + 1.25vw, 2.4rem);
+  --step-3: clamp(2.4rem, 1.9rem + 2.5vw, 3.8rem);
+  --step-4: clamp(3.2rem, 2.2rem + 5vw, 6.2rem);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5rem;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--step-0);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent);
+  color: #0c0c0d;
+}
+
+img, video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* --- type ---------------------------------------------------------------- */
+
+h1, h2, h3 {
+  font-weight: 640;
+  font-stretch: 118%;
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.display {
+  font-size: var(--step-4);
+  font-weight: 660;
+  font-stretch: 125%;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+}
+
+.kicker {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-muted);
+}
+
+.kicker b {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.lede {
+  font-size: var(--step-1);
+  line-height: 1.45;
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+.muted {
+  color: var(--ink-muted);
+}
+
+/* --- layout -------------------------------------------------------------- */
+
+.wrap {
+  max-width: var(--site-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.section {
+  padding-block: clamp(4rem, 10vw, 8rem);
+  border-top: 1px solid var(--line);
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: clamp(2rem, 5vw, 3.5rem);
+}
+
+.section-head h2 {
+  font-size: var(--step-3);
+  text-transform: uppercase;
+}
+
+/* --- links with intent --------------------------------------------------- */
+
+.arrow-link {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-muted);
+  transition: color 160ms ease;
+}
+
+.arrow-link::after {
+  content: ' \2192';
+  display: inline-block;
+  transition: translate 160ms ease;
+}
+
+.arrow-link:hover {
+  color: var(--accent);
+}
+
+.arrow-link:hover::after {
+  translate: 0.3em 0;
+}
+
+.underline-link {
+  background-image: linear-gradient(var(--accent), var(--accent));
+  background-repeat: no-repeat;
+  background-size: 100% 1px;
+  background-position: 0 100%;
+  transition: color 160ms ease;
+  padding-bottom: 2px;
+}
+
+.underline-link:hover {
+  color: var(--accent);
+}
+
+/* --- content slots (visible TODOs — remove as real content lands) -------- */
+
+.slot {
+  border: 1px dashed var(--ink-faint);
+  border-radius: 2px;
+  padding: 1rem 1.25rem;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  line-height: 1.7;
+  color: var(--ink-muted);
+  background:
+    repeating-linear-gradient(-45deg, transparent 0 14px, #ffffff06 14px 15px);
+}
+
+.slot::before {
+  content: '// content slot';
+  display: block;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.35rem;
+}
+
+/* --- image slot ----------------------------------------------------------- */
+
+.img-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--bg-raised);
+}
+
+.img-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.img-slot {
+  display: grid;
+  place-content: center;
+  gap: 0.4rem;
+  text-align: center;
+  padding: 1.5rem;
+  width: 100%;
+  height: 100%;
+  border: 1px dashed var(--ink-faint);
+  border-radius: 2px;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--ink-muted);
+  background:
+    repeating-linear-gradient(-45deg, transparent 0 14px, #ffffff05 14px 15px);
+}
+
+.img-slot .slot-path {
+  color: var(--ink);
+  word-break: break-all;
+}
+
+.img-slot .slot-tag {
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+/* --- motion (reduced-motion safe, CSS only) ------------------------------- */
+
+@media (prefers-reduced-motion: no-preference) {
+  .rise {
+    animation: rise 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .rise-late {
+    animation: rise 700ms 120ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      translate: 0 1.2rem;
+    }
+  }
+}

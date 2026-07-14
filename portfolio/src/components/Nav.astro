@@ -1,0 +1,102 @@
+---
+/**
+ * Drop a logo file at src/assets/brand/logo.(svg|png|webp) and it replaces
+ * the JL● text mark automatically. On the home page nav links are pure
+ * hash anchors; on subpages they route back to the home page sections.
+ */
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+const home = import.meta.env.BASE_URL;
+const onHome = Astro.url.pathname === home;
+const anchor = (id: string) => (onHome ? `#${id}` : `${home}#${id}`);
+
+const logos = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/brand/logo.{svg,png,webp}',
+  { eager: true }
+);
+const logo = Object.values(logos)[0]?.default ?? null;
+---
+
+<header class="nav wrap">
+  <a class="mark" href={onHome ? '#top' : home} aria-label="Jason Layel — home">
+    {
+      logo ? (
+        <Image src={logo} alt="Jason Layel logo" height={30} densities={[1, 2]} />
+      ) : (
+        <>JL<span>&#9679;</span></>
+      )
+    }
+  </a>
+  <nav aria-label="Main">
+    <a href={anchor('stills')}>Stills</a>
+    <a href={anchor('capabilities')}>Capabilities</a>
+    <a href={anchor('work')}>Work</a>
+    <a href={anchor('about')}>About</a>
+    <a href={anchor('contact')} class="cta">Contact</a>
+  </nav>
+</header>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 1.1rem;
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .mark {
+    font-weight: 700;
+    font-stretch: 125%;
+    font-size: 1.15rem;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .mark :global(img) {
+    height: 30px;
+    width: auto;
+  }
+
+  .mark span {
+    color: var(--accent);
+    font-size: 0.6em;
+    vertical-align: 0.25em;
+    margin-left: 0.1em;
+  }
+
+  nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(0.8rem, 2.5vw, 2.25rem);
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  nav a {
+    color: var(--ink-muted);
+    transition: color 160ms ease;
+  }
+
+  nav a:hover {
+    color: var(--ink);
+  }
+
+  nav .cta {
+    color: var(--accent);
+  }
+
+  nav .cta:hover {
+    color: var(--ink);
+  }
+</style>
