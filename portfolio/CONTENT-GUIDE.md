@@ -10,13 +10,25 @@ appears in the "Stills" section automatically on the next build. Use
 descriptive kebab-case filenames (`arts-center-dusk.jpg`); they become the
 captions. Twenty renderings are already in.
 
-**Full-width features:** filenames listed in `FEATURED` at the top of
-`src/components/StillsGallery.astro` render full-width above the grid.
-Currently: `arts-center-dusk`, `tree-art-final-small` (the latter renders
-as soon as a file with that name lands in the stills directory).
+The gallery is pure imagery — filenames become alt text only, so
+descriptive names still matter for accessibility and SEO.
 
-**Logo:** drop a file at `src/assets/brand/logo.svg` (or `.png`/`.webp`)
-and it replaces the JL&#9679; text mark in the header automatically.
+**Full-width features:** filename stems listed in `FEATURED` at the top of
+`src/components/StillsGallery.astro` render full-width above the grid
+(currently `tree-art-final-small`). The page hero backdrop is
+`arts-center-dusk` — change the stem in `src/pages/index.astro` (and the
+`EXCLUDED` list in StillsGallery) to swap it.
+
+**Logo:** `src/assets/brand/logo.png` is the header mark (auto-picked-up;
+swap the file to change it). All other logo variants live in
+`src/assets/brand/`; `mark-solid.png` is also the favicon
+(`public/favicon.png`).
+
+**Cinematics:** films are Vimeo click-to-play embeds in
+`src/pages/index.astro` (`<VimeoFilm vimeoId="..." title="..."
+poster="stills/....png" />`). One film is in; its real title and
+description are still an open slot. Send more Vimeo links + poster frames
+to grow the section.
 
 ## 1. Images (just drop files in — no code changes)
 

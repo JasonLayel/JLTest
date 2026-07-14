@@ -1,0 +1,125 @@
+---
+/**
+ * Privacy-friendly Vimeo embed: renders a local poster image with a play
+ * button; the Vimeo player iframe (and any request to vimeo.com) only
+ * loads after the viewer clicks. Poster path is relative to src/assets.
+ */
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+interface Props {
+  vimeoId: string;
+  title: string;
+  poster: string; // e.g. "stills/film-frame-forest-tower.png"
+}
+
+const { vimeoId, title, poster } = Astro.props;
+
+const files = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/**/*.{jpg,jpeg,png,webp,avif}'
+);
+const loader = files[`/src/assets/${poster}`];
+const posterImg = loader ? (await loader()).default : null;
+---
+
+<div class="film" data-vimeo-id={vimeoId}>
+  <button class="film-poster" type="button" aria-label={`Play film: ${title}`}>
+    {
+      posterImg ? (
+        <Image
+          src={posterImg}
+          alt={`Film poster — ${title}`}
+          widths={[768, 1440, 2400]}
+          sizes="100vw"
+        />
+      ) : (
+        <div class="img-slot" style="aspect-ratio: 16 / 9">
+          <span class="slot-tag">poster slot</span>
+          <span class="slot-path">src/assets/{poster}</span>
+        </div>
+      )
+    }
+    <span class="play" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+        <path d="M8 5v14l11-7z" />
+      </svg>
+      <span>Play on Vimeo</span>
+    </span>
+  </button>
+</div>
+
+<script>
+  for (const film of document.querySelectorAll<HTMLElement>('.film')) {
+    const id = film.dataset.vimeoId;
+    film.querySelector('button')?.addEventListener('click', () => {
+      const frame = document.createElement('iframe');
+      frame.src = `https://player.vimeo.com/video/${id}?autoplay=1`;
+      frame.allow = 'autoplay; fullscreen; picture-in-picture';
+      frame.allowFullscreen = true;
+      frame.style.cssText =
+        'width:100%;aspect-ratio:16/9;border:0;border-radius:2px;display:block';
+      film.replaceChildren(frame);
+    });
+  }
+</script>
+
+<style>
+  .film-poster {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .film-poster :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+    transition: opacity 200ms ease;
+  }
+
+  .film-poster:hover :global(img) {
+    opacity: 0.85;
+  }
+
+  .play {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 0.75rem;
+    color: var(--ink);
+    background: rgba(12, 12, 13, 0.35);
+    transition: background 200ms ease;
+  }
+
+  .film-poster:hover .play {
+    background: rgba(12, 12, 13, 0.15);
+  }
+
+  .play svg {
+    box-sizing: content-box;
+    padding: 1.1rem;
+    border: 1px solid var(--ink);
+    border-radius: 50%;
+    background: rgba(12, 12, 13, 0.55);
+  }
+
+  .film-poster:hover .play svg {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .play span {
+    font-family: var(--font-mono);
+    font-size: var(--step--1);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+</style>
