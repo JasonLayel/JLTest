@@ -27,16 +27,16 @@ window.COMPANION = (() => {
   // image: set to "art/scenes/<id>.png" when artwork is ready.
 
   const SCENES = [
-    { id: "beach", name: "Royal Beach Day", emoji: "🏖️", sky: ["#7fd4f7", "#c8ecff"], ground: "#f7e3b0", image: "art/scenes/beach.png" },
-    { id: "bedroom", name: "Her Chambers", emoji: "🛏️", sky: ["#eddcf8", "#f9eeff"], ground: "#d9b9ec", image: "art/scenes/bedroom.png" },
-    { id: "garden", name: "Castle Garden", emoji: "🌸", sky: ["#c2e9ff", "#eaf8da"], ground: "#90cf80", image: "art/scenes/garden.png" },
     { id: "throne", name: "Throne Room", emoji: "👑", sky: ["#f6dfdf", "#f1d0d0"], ground: "#caaa6b", image: "art/scenes/throne.png" },
+    { id: "bedroom", name: "Her Chambers", emoji: "🛏️", sky: ["#eddcf8", "#f9eeff"], ground: "#d9b9ec", image: "art/scenes/bedroom.png" },
+    { id: "terrace", name: "Sunlit Terrace", emoji: "☀️", sky: ["#8fd0f2", "#cdeeff"], ground: "#e9d6bb", image: "art/scenes/terrace.png" },
+    { id: "ballroom", name: "Grand Ballroom", emoji: "💃", sky: ["#f3dcea", "#f7e6d8"], ground: "#e6c9a8", image: "art/scenes/ballroom.png" },
+    { id: "garden", name: "Castle Garden", emoji: "🌸", sky: ["#c2e9ff", "#eaf8da"], ground: "#90cf80", image: "art/scenes/garden.png" },
     { id: "library", name: "Royal Library", emoji: "📚", sky: ["#e9ddc9", "#f6efe1"], ground: "#a97d51", image: "art/scenes/library.png" },
-    { id: "kitchen", name: "Palace Kitchen", emoji: "🧁", sky: ["#fff1e1", "#ffe5ed"], ground: "#e1b991", image: "art/scenes/kitchen.png" },
+    { id: "dressing", name: "Dressing Room", emoji: "👗", sky: ["#f7e2ee", "#fbeef6"], ground: "#e6bcd6", image: "art/scenes/dressing.png" },
+    { id: "bath", name: "Royal Bath", emoji: "🛁", sky: ["#dcecf7", "#eef6ff"], ground: "#cbd9e6", image: "art/scenes/bath.png" },
     { id: "balcony", name: "Moonlit Balcony", emoji: "🌙", sky: ["#2b2b5b", "#4b4b8b"], ground: "#3b3b6b", image: "art/scenes/balcony.png" },
-    { id: "hotspring", name: "Hot Springs", emoji: "♨️", sky: ["#d0efe9", "#e9f8f5"], ground: "#89c5b9", image: "art/scenes/hotspring.png" },
-    { id: "market", name: "Village Market", emoji: "🎪", sky: ["#ffe9c9", "#fff5dd"], ground: "#d9a979", image: "art/scenes/market.png" },
-    { id: "meadow", name: "Butterfly Meadow", emoji: "🦋", sky: ["#c9e9ff", "#e9ffd9"], ground: "#99d989", image: "art/scenes/meadow.png" },
+    { id: "tearoom", name: "Tea Room", emoji: "🫖", sky: ["#fce6ef", "#fff2f7"], ground: "#e9c7d6", image: "art/scenes/tearoom.png" },
   ];
 
   // Stable scene per calendar day: she "goes somewhere" each morning.
@@ -59,6 +59,12 @@ window.COMPANION = (() => {
     { id: "nails", label: "painting her nails 💅", mood: "unimpressed", image: "art/poses/nails.png" },
     { id: "snack", label: "nibbling royal pastries 🍰", mood: "happy", image: "art/poses/snack.png" },
     { id: "daydream", label: "daydreaming ☁️", mood: "smile", image: "art/poses/daydream.png" },
+    { id: "scepter", label: "brandishing her scepter ✨", mood: "happy", image: "art/poses/scepter.png" },
+    { id: "command", label: "issuing royal commands 📜", mood: "neutral", image: "art/poses/command.png" },
+    { id: "sulk", label: "sulking, arms crossed 😤", mood: "unimpressed", image: "art/poses/sulk.png" },
+    { id: "gracious", label: "feeling gracious 💖", mood: "happy", image: "art/poses/gracious.png" },
+    { id: "tantrum", label: "having a royal tantrum 💢", mood: "unimpressed", image: "art/poses/tantrum.png" },
+    { id: "silent", label: "giving you the silent treatment 🙄", mood: "unimpressed", image: "art/poses/silent.png" },
   ];
 
   function randomPose() {
@@ -70,46 +76,48 @@ window.COMPANION = (() => {
   // and what she's doing. Keyed by scene/pose id.
 
   const SCENE_LINES = {
-    beach: [
-      "Uh, yeah I'm at the beach. Get over it. 🏖️",
-      "Royal beach day. The ocean understands me. You could learn from the ocean.",
-      "I'd say 'wish you were here' but the sand is judgmental and so am I.",
+    throne: [
+      "You stand before the throne. State your business. Is it tasks? It better be tasks. 👑",
+      "Throne room day. I'm feeling extra official, so consider everything I say a decree.",
     ],
     bedroom: [
       "You're in my CHAMBERS. Knock next time. There's no door. Find one.",
       "I was this close to a world-class nap and then your face appeared.",
     ],
+    terrace: [
+      "Sunlit terrace today. The view is breathtaking. So am I. Don't make it weird. ☀️",
+      "I'm taking the royal air out here. It's imported. You wouldn't understand.",
+      "The castle looks so pretty from up here. Almost as pretty as me. Almost.",
+    ],
+    ballroom: [
+      "Grand ballroom day. I'd offer you a dance, but you haven't earned a single step. Tasks. 💃",
+      "This floor was waxed for MY reflection. Admire it from the doorway, peasant.",
+      "A whole ballroom and no one to waltz with but my own fabulousness. Tragic. Iconic.",
+    ],
     garden: [
       "The roses bloomed for me today. What have YOU done for me today? 🌸",
       "Garden day. Even the butterflies have better follow-through than you.",
-    ],
-    throne: [
-      "You stand before the throne. State your business. Is it tasks? It better be tasks. 👑",
-      "Throne room day. I'm feeling extra official, so consider everything I say a decree.",
     ],
     library: [
       "Shhh. It's library day. Whisper your productivity to me. 📚",
       "I'm reading a book about people who finish what they start. Fiction, obviously.",
     ],
-    kitchen: [
-      "The royal bakers let me frost things today. The kingdom may not survive. 🧁",
-      "I'm in the kitchen 'supervising.' Supervising means eating. Don't tell the chef.",
+    dressing: [
+      "Dressing room day. Four hundred gowns and 'nothing to wear.' Both facts are true. 👗",
+      "I'm trying on tiaras. This is exhausting labor. Where's YOUR labor? The tasks. Go.",
+      "Mirror, mirror — yes, obviously me. Next question. Did you do your tasks?",
+    ],
+    bath: [
+      "Royal bath day. I'm soaking. YOU should be scrubbing that to-do list. Balance. 🛁",
+      "The bubbles are imported and the judgment is complimentary. Get to work.",
     ],
     balcony: [
       "Moonlit balcony. Very romantic. Very wasted on you. 🌙",
       "I count stars out here. There are more stars than your completed tasks. By a lot.",
     ],
-    hotspring: [
-      "Hot springs day. I'm relaxing. YOU should be working. The system works. ♨️",
-      "The steam is great for royal skin. The judgment is great for your motivation.",
-    ],
-    market: [
-      "Village market day! I pointed at things and the royal purse wept. 🎪",
-      "A merchant tried to overcharge me. ME. He's a jester now. Career change.",
-    ],
-    meadow: [
-      "Butterfly meadow. One landed on my crown. Nature recognizes rank. 🦋",
-      "It's meadow day. I'm frolicking. Regally. There's a technique to it.",
+    tearoom: [
+      "Tea room day. Pinkies up, tasks done. That's the order. Don't improvise. 🫖",
+      "The pastries are for finishers. You've finished... nothing. Awkward. For you.",
     ],
   };
 
@@ -146,6 +154,32 @@ window.COMPANION = (() => {
     daydream: [
       "*staring into the distance* I was somewhere better. Now I'm here. With you. ☁️",
       "I was daydreaming about a kingdom where everyone finishes their tasks. Wild fantasy stuff.",
+    ],
+    scepter: [
+      "*twirls scepter* One bonk and you're a frog. Behave. Do tasks. ✨",
+      "This scepter is solid gold and cost more than your whole to-do list is worth.",
+      "I knight thee... nobody. Come back when you've finished something.",
+    ],
+    command: [
+      "You. Yes, you. I've decided your next task. Do it. That's the decree. 📜",
+      "*pointing* I'm not bossy, I'm the boss. There's a crown-shaped difference.",
+    ],
+    sulk: [
+      "*arms crossed* I'm not mad. I'm just... royally disappointed. In you. 😤",
+      "Hmph. I'll unfold my arms when you fold some tasks into 'done.'",
+    ],
+    gracious: [
+      "*graciously* You may approach. I'm in a GOOD mood. Rare. Historic. Don't ruin it. 💖",
+      "Behold, benevolence! I'm being nice. Quick, do a task before it wears off.",
+    ],
+    tantrum: [
+      "*stomps* I want it done NOW and I wanted it done YESTERDAY! 💢",
+      "This is a royal tantrum. It is very dignified. IT IS. Now DO the task!",
+    ],
+    silent: [
+      "*facing away* ...",
+      "*won't turn around* I have nothing to say to someone with unfinished tasks. 🙄",
+      "*over her shoulder* Oh, NOW you want my attention. Do a task first.",
     ],
   };
 
