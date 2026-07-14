@@ -1,39 +1,18 @@
 ---
-/**
- * Drop a logo file at src/assets/brand/logo.(svg|png|webp) and it replaces
- * the JL● text mark automatically. On the home page nav links are pure
- * hash anchors; on subpages they route back to the home page sections.
- */
 import { Image } from 'astro:assets';
-import type { ImageMetadata } from 'astro';
-
-const home = import.meta.env.BASE_URL;
-const onHome = Astro.url.pathname === home;
-const anchor = (id: string) => (onHome ? `#${id}` : `${home}#${id}`);
-
-const logos = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/brand/logo.{svg,png,webp}',
-  { eager: true }
-);
-const logo = Object.values(logos)[0]?.default ?? null;
+import mark from '../assets/brand/logo.png';
 ---
 
 <header class="nav wrap">
-  <a class="mark" href={onHome ? '#top' : home} aria-label="Jason Layel — home">
-    {
-      logo ? (
-        <Image src={logo} alt="Jason Layel logo" height={30} densities={[1, 2]} />
-      ) : (
-        <>JL<span>&#9679;</span></>
-      )
-    }
+  <a class="brand" href="#top" aria-label="Jason Layel — top of page">
+    <Image src={mark} alt="" height={30} densities={[1, 2]} />
+    <span class="wordmark">Jason Layel</span>
   </a>
   <nav aria-label="Main">
-    <a href={anchor('stills')}>Stills</a>
-    <a href={anchor('capabilities')}>Capabilities</a>
-    <a href={anchor('work')}>Work</a>
-    <a href={anchor('about')}>About</a>
-    <a href={anchor('contact')} class="cta">Contact</a>
+    <a href="#work">Work</a>
+    <a href="#capabilities">Capabilities</a>
+    <a href="#about">About</a>
+    <a href="#contact" class="cta">Contact</a>
   </nav>
 </header>
 
@@ -46,31 +25,31 @@ const logo = Object.values(logos)[0]?.default ?? null;
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    padding-block: 1.1rem;
+    padding-block: 1rem;
     background: color-mix(in srgb, var(--bg) 82%, transparent);
     backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
     border-bottom: 1px solid var(--line);
   }
 
-  .mark {
-    font-weight: 700;
-    font-stretch: 125%;
-    font-size: 1.15rem;
-    letter-spacing: 0.02em;
+  .brand {
     display: inline-flex;
     align-items: center;
+    gap: 0.7rem;
   }
 
-  .mark :global(img) {
-    height: 30px;
+  .brand :global(img) {
+    height: 26px;
     width: auto;
   }
 
-  .mark span {
-    color: var(--accent);
-    font-size: 0.6em;
-    vertical-align: 0.25em;
-    margin-left: 0.1em;
+  .wordmark {
+    font-weight: 660;
+    font-stretch: 122%;
+    font-size: 0.98rem;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    translate: 0 0.05em;
   }
 
   nav {
@@ -98,5 +77,11 @@ const logo = Object.values(logos)[0]?.default ?? null;
 
   nav .cta:hover {
     color: var(--ink);
+  }
+
+  @media (max-width: 30rem) {
+    .wordmark {
+      display: none;
+    }
   }
 </style>

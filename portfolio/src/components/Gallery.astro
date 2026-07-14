@@ -1,0 +1,340 @@
+---
+/**
+ * Curated gallery. Each entry names a file in src/assets/stills/ plus the
+ * caption and grid width it should get. `size` controls the layout rhythm:
+ *   'full'  — spans the whole row (panoramas, anchor images)
+ *   'half'  — two per row
+ *   'third' — three per row (good for portrait crops)
+ * New renders: drop the file in stills/ and add one line here.
+ */
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
+type Size = 'full' | 'half' | 'third';
+
+const sequence: { file: string; title: string; tag: string; size: Size }[] = [
+  { file: 'estate-at-night', title: 'Estate at night', tag: 'Exterior — Residential', size: 'full' },
+  { file: '1319-14th-street', title: '1319 14th Street', tag: 'Exterior — Mixed-use', size: 'half' },
+  { file: 'brandywine-dusk', title: 'Brandywine at dusk', tag: 'Exterior — Multifamily', size: 'half' },
+  { file: '37-l-street-tower', title: '37 L Street', tag: 'Exterior — Residential tower', size: 'third' },
+  { file: 'lobby-glass-canopy', title: 'Lobby under the glass canopy', tag: 'Interior — Workplace', size: 'third' },
+  { file: 'surf-boardwalk', title: 'Boardwalk pavilion', tag: 'Exterior — Coastal', size: 'third' },
+  { file: 'lobby-red-stair', title: 'Lobby with the red stair', tag: 'Interior — Workplace', size: 'full' },
+  { file: 'concrete-and-wood-lobby', title: 'Concrete and wood lobby', tag: 'Interior — Workplace', size: 'half' },
+  { file: 'office-lounge', title: 'Office lounge', tag: 'Interior — Workplace', size: 'half' },
+  { file: 'spiral-stair-glass-sculpture', title: 'Spiral stair and glass sculpture', tag: 'Interior — Hospitality', size: 'half' },
+  { file: 'mosaic-bath-suite', title: 'Mosaic bath suite', tag: 'Interior — Residential', size: 'half' },
+  { file: 'food-market-dusk', title: 'Food market at dusk', tag: 'Exterior — Retail', size: 'full' },
+  { file: 'alpha-industries-showroom', title: 'Alpha Industries showroom', tag: 'Interior — Retail', size: 'half' },
+  { file: 'credit-union-branch', title: 'Credit union branch', tag: 'Interior — Retail banking', size: 'half' },
+  { file: '1415-street-entry', title: 'Entry at 1415', tag: 'Exterior — Civic', size: 'half' },
+  { file: 'brandywine-corner-view', title: 'Brandywine, corner view', tag: 'Exterior — Multifamily', size: 'half' },
+  { file: 'stone-estate-pond', title: 'Stone estate from the pond', tag: 'Exterior — Residential', size: 'full' },
+  { file: 'film-frame-forest-tower', title: 'Forest tower', tag: 'Film frame — Cinematic short', size: 'full' },
+  { file: 'unreal-engine-open-office', title: 'Open office', tag: 'Real-time — Unreal Engine', size: 'half' },
+  { file: 'unreal-engine-amenity-lounge', title: 'Amenity lounge', tag: 'Real-time — Unreal Engine', size: 'half' },
+];
+
+const files = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/stills/*.{jpg,jpeg,png,webp,avif}',
+  { eager: true }
+);
+
+const byStem = new Map(
+  Object.entries(files).map(([path, mod]) => [
+    path.split('/').pop()!.replace(/\.[^.]+$/, ''),
+    mod.default,
+  ])
+);
+
+const entries = sequence
+  .map((e) => ({ ...e, image: byStem.get(e.file) }))
+  .filter((e): e is (typeof e & { image: ImageMetadata }) => Boolean(e.image));
+
+// Anything in stills/ not named above still shows up, at half width.
+// arts-center-dusk is the home page hero, so the grid skips it.
+const listed = new Set([...sequence.map((e) => e.file), 'arts-center-dusk']);
+for (const [stem, image] of byStem) {
+  if (!listed.has(stem)) {
+    const title = stem.replaceAll('-', ' ').replace(/^./, (c) => c.toUpperCase());
+    entries.push({ file: stem, title, tag: 'Rendering', size: 'half', image });
+  }
+}
+
+const sizesFor = (size: Size) =>
+  size === 'full'
+    ? '(max-width: 90rem) 100vw, 90rem'
+    : size === 'half'
+      ? '(max-width: 48rem) 100vw, 45vw'
+      : '(max-width: 48rem) 100vw, 30vw';
+---
+
+<div class="gallery">
+  {
+    entries.map(({ title, tag, size, image }, i) => (
+      <figure class={size}>
+        <button
+          type="button"
+          class="frame"
+          data-lightbox
+          data-title={title}
+          data-tag={tag}
+          aria-label={`View larger: ${title}`}
+        >
+          <Image
+            src={image}
+            alt={`${title} — ${tag.toLowerCase()} rendering`}
+            widths={size === 'full' ? [768, 1440, 2400] : [480, 960, 1600]}
+            sizes={sizesFor(size)}
+            loading={i < 2 ? 'eager' : 'lazy'}
+          />
+        </button>
+        <figcaption>
+          <span class="title">{title}</span>
+          <span class="tag">{tag}</span>
+        </figcaption>
+      </figure>
+    ))
+  }
+</div>
+
+<dialog class="lightbox" aria-label="Image viewer">
+  <button type="button" class="lb-close" aria-label="Close">&times;</button>
+  <button type="button" class="lb-prev" aria-label="Previous image">&larr;</button>
+  <button type="button" class="lb-next" aria-label="Next image">&rarr;</button>
+  <figure>
+    <img alt="" />
+    <figcaption>
+      <span class="title"></span>
+      <span class="tag kicker"></span>
+    </figcaption>
+  </figure>
+</dialog>
+
+<script>
+  const dialog = document.querySelector<HTMLDialogElement>('.lightbox')!;
+  const img = dialog.querySelector('img')!;
+  const title = dialog.querySelector<HTMLElement>('.title')!;
+  const tag = dialog.querySelector<HTMLElement>('.tag')!;
+  const thumbs = [...document.querySelectorAll<HTMLButtonElement>('[data-lightbox]')];
+  let current = 0;
+
+  // Largest candidate in the thumb's srcset = the pre-optimized full asset.
+  const fullSrc = (thumb: HTMLButtonElement) => {
+    const el = thumb.querySelector('img')!;
+    const candidates = (el.srcset || el.src)
+      .split(',')
+      .map((s) => s.trim().split(/\s+/))
+      .sort((a, b) => (parseInt(a[1]) || 0) - (parseInt(b[1]) || 0));
+    return candidates.at(-1)![0];
+  };
+
+  const show = (i: number) => {
+    current = (i + thumbs.length) % thumbs.length;
+    const thumb = thumbs[current];
+    img.src = fullSrc(thumb);
+    img.alt = thumb.querySelector('img')!.alt;
+    title.textContent = thumb.dataset.title ?? '';
+    tag.textContent = thumb.dataset.tag ?? '';
+    if (!dialog.open) dialog.showModal();
+  };
+
+  thumbs.forEach((thumb, i) =>
+    thumb.addEventListener('click', () => show(i))
+  );
+  dialog.querySelector('.lb-close')!.addEventListener('click', () => dialog.close());
+  dialog.querySelector('.lb-prev')!.addEventListener('click', () => show(current - 1));
+  dialog.querySelector('.lb-next')!.addEventListener('click', () => show(current + 1));
+  dialog.addEventListener('click', (e) => {
+    if (e.target === dialog) dialog.close();
+  });
+  dialog.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft') show(current - 1);
+    if (e.key === 'ArrowRight') show(current + 1);
+  });
+  dialog.addEventListener('close', () => {
+    img.src = '';
+  });
+</script>
+
+<style>
+  .gallery {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: clamp(1rem, 2.2vw, 2rem);
+  }
+
+  figure {
+    margin: 0;
+    display: grid;
+    gap: 0.6rem;
+    align-content: start;
+  }
+
+  .full {
+    grid-column: span 6;
+  }
+
+  .half {
+    grid-column: span 3;
+  }
+
+  .third {
+    grid-column: span 2;
+  }
+
+  @media (max-width: 48rem) {
+    .half,
+    .third {
+      grid-column: span 6;
+    }
+  }
+
+  .frame {
+    all: unset;
+    cursor: zoom-in;
+    display: block;
+    overflow: hidden;
+    border-radius: 2px;
+    background: var(--bg-raised);
+  }
+
+  .frame:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  .frame :global(img) {
+    width: 100%;
+    height: auto;
+    display: block;
+    transition: scale 600ms cubic-bezier(0.2, 0.7, 0.2, 1), opacity 600ms ease;
+  }
+
+  /* Uniform crops keep the rows flush; the lightbox shows the full frame. */
+  .half .frame :global(img) {
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+  }
+
+  .third .frame :global(img) {
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+  }
+
+  figure:hover .frame :global(img) {
+    scale: 1.02;
+  }
+
+  figcaption {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: baseline;
+  }
+
+  figcaption .title {
+    font-size: var(--step--1);
+    color: var(--ink-muted);
+  }
+
+  figcaption .tag {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--ink-faint);
+    white-space: nowrap;
+  }
+
+  /* --- lightbox ------------------------------------------------------------ */
+
+  .lightbox {
+    border: 0;
+    padding: 0;
+    max-width: 100vw;
+    max-height: 100dvh;
+    width: 100vw;
+    height: 100dvh;
+    background: transparent;
+    display: none;
+    place-items: center;
+  }
+
+  .lightbox[open] {
+    display: grid;
+  }
+
+  .lightbox::backdrop {
+    background: rgb(8 8 9 / 0.94);
+  }
+
+  .lightbox figure {
+    max-width: min(94vw, 110rem);
+    max-height: 100dvh;
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  .lightbox img {
+    max-width: 100%;
+    max-height: calc(100dvh - 6rem);
+    width: auto;
+    height: auto;
+    margin-inline: auto;
+    border-radius: 2px;
+  }
+
+  .lightbox figcaption {
+    justify-content: center;
+    gap: 1.5rem;
+  }
+
+  .lightbox .title {
+    color: var(--ink);
+  }
+
+  .lb-close,
+  .lb-prev,
+  .lb-next {
+    all: unset;
+    cursor: pointer;
+    position: fixed;
+    z-index: 2;
+    font-size: 1.6rem;
+    line-height: 1;
+    color: var(--ink-muted);
+    padding: 1rem 1.25rem;
+    transition: color 160ms ease;
+  }
+
+  .lb-close:hover,
+  .lb-prev:hover,
+  .lb-next:hover {
+    color: var(--ink);
+  }
+
+  .lb-close:focus-visible,
+  .lb-prev:focus-visible,
+  .lb-next:focus-visible {
+    outline: 2px solid var(--accent);
+  }
+
+  .lb-close {
+    top: 0.5rem;
+    right: 0.75rem;
+  }
+
+  .lb-prev {
+    left: 0.5rem;
+    top: 50%;
+    translate: 0 -50%;
+  }
+
+  .lb-next {
+    right: 0.5rem;
+    top: 50%;
+    translate: 0 -50%;
+  }
+</style>

@@ -1,9 +1,9 @@
 # Jason Layel — Portfolio
 
-Static portfolio site for design visualization work. Built with
-[Astro](https://astro.build): zero JavaScript shipped to the browser, no
-external requests (fonts are self-hosted), no analytics, no model calls —
-pure static HTML/CSS output.
+Portfolio site for architectural visualization work. Built with
+[Astro](https://astro.build) as a fully static single page: self-hosted
+fonts, no analytics, no external requests. The only JavaScript on the page
+is the gallery lightbox (a few dozen lines, inlined at build).
 
 ## Local development
 
@@ -20,26 +20,34 @@ npm run preview    # serve the built site locally
 
 Requires Node 20+.
 
-## Adding content
+## Adding or reordering work
 
-See [CONTENT-GUIDE.md](./CONTENT-GUIDE.md) for every open content slot.
-The short version:
+1. Drop the render into `src/assets/stills/` with a descriptive kebab-case
+   filename (`arts-center-dusk.jpg`).
+2. Add one line to the `sequence` array at the top of
+   `src/components/Gallery.astro` with the title, tag, and grid width
+   (`full`, `half`, or `third`).
 
-- **Images** — drop files into `src/assets/work/` and `src/assets/about/`
-  using the exact filenames printed inside each dashed "image slot" box on
-  the site. The build picks them up automatically and generates optimized
-  responsive variants; no code changes needed.
-- **Case studies** — edit the four files in `src/content/work/`. Replace the
-  `<div class="slot">` blocks with real prose, fill in the frontmatter
-  (`title`, `summary`, `year`, `role`, `tools`), and set `isSlot: false`.
-  Add a new `.md` file to add a new project.
-- **Text slots** — anything in a dashed box labeled `// content slot` is a
-  visible TODO. Search the codebase for `class="slot"` to find them all.
+Files in `stills/` that aren't listed in `sequence` still appear at the end
+of the grid at half width, with a caption derived from the filename — so
+step 2 is optional but recommended. Astro generates optimized responsive
+variants for everything at build time.
+
+Other content homes:
+
+- **Hero image** — `src/pages/index.astro` imports
+  `stills/arts-center-dusk.jpg`; swap the import to change it.
+- **Logo** — the header uses `src/assets/brand/logo.png`. Alternate marks
+  and lockups live in `src/assets/brand/`.
+- **About image** — `src/assets/about/tree-art.jpg`.
+- **Resume** — `public/jason-layel-resume.pdf` (linked from About and
+  Contact).
+- **Copy** — hero, capabilities, timeline, about, and contact text all live
+  in `src/pages/index.astro`.
 
 ## Deployment (free hosting)
 
-The site is a plain static build — any static host works. Two good free
-options:
+The site is a plain static build — any static host works.
 
 ### Cloudflare Pages / Netlify (recommended)
 
@@ -66,14 +74,13 @@ on both.
 portfolio/
 ├── astro.config.mjs        # site URL / base path
 ├── src/
-│   ├── assets/             # images (auto-optimized; drop files here)
-│   ├── components/         # Nav, Footer, WorkCard, ImageSlot
-│   ├── content/work/       # case studies (Markdown + frontmatter)
-│   ├── content.config.ts   # case study schema
-│   ├── layouts/Base.astro  # head, fonts, nav, footer
-│   ├── pages/
-│   │   ├── index.astro     # single-page home (hero/work/capabilities/about/contact)
-│   │   └── work/[slug].astro  # case study template
-│   └── styles/global.css   # design system
-└── public/                 # served as-is (favicon, resume PDF)
+│   ├── assets/
+│   │   ├── stills/         # the work — gallery images
+│   │   ├── brand/          # logo marks and lockups
+│   │   └── about/          # about-section imagery
+│   ├── components/         # Nav, Footer, Gallery (grid + lightbox)
+│   ├── layouts/Base.astro  # head, meta/OG tags, fonts, nav, footer
+│   ├── pages/index.astro   # the whole site: hero/work/capabilities/about/contact
+│   └── styles/global.css   # design tokens and shared styles
+└── public/                 # served as-is (favicon, og image, resume PDF)
 ```
