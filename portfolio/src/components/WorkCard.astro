@@ -13,35 +13,60 @@ const href = `${import.meta.env.BASE_URL}work/${entry.id}/`;
 const num = String(index + 1).padStart(2, '0');
 ---
 
-<a class="card" href={href}>
-  <ImageSlot
-    src={hero}
-    alt={heroAlt || title}
-    ratio="4 / 3"
-    hint="Hero image, min 1600px wide"
-  />
-  <div class="meta">
-    <span class="num">{num}</span>
-    <span class="cat">{category}</span>
-    {isSlot && <span class="badge">slot</span>}
+<a class="row" href={href}>
+  <div class="media">
+    <ImageSlot
+      src={hero}
+      alt={heroAlt || title}
+      ratio="16 / 9"
+      hint="Hero image, min 2000px wide"
+    />
   </div>
-  <h3>{title}</h3>
-  <p class="muted">{summary}</p>
+  <div class="body">
+    <div class="meta">
+      <span class="num">{num}</span>
+      <span class="cat">{category}</span>
+      {isSlot && <span class="badge">slot</span>}
+    </div>
+    <h3>{title}</h3>
+    <p class="muted">{summary}</p>
+    <span class="arrow-link view">View case study</span>
+  </div>
 </a>
 
 <style>
-  .card {
+  .row {
     display: grid;
-    gap: 0.7rem;
-    align-content: start;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: clamp(1.5rem, 4vw, 3rem);
+    align-items: center;
+    padding-block: clamp(1.75rem, 4vw, 2.75rem);
+    border-top: 1px solid var(--line);
   }
 
-  .card :global(.img-frame) {
+  .row:last-child {
+    border-bottom: 1px solid var(--line);
+  }
+
+  @media (max-width: 46rem) {
+    .row {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+    }
+  }
+
+  .media :global(.img-frame) {
     transition: opacity 200ms ease;
   }
 
-  .card:hover :global(.img-frame) {
+  .row:hover .media :global(.img-frame) {
     opacity: 0.85;
+  }
+
+  .body {
+    display: grid;
+    gap: 0.7rem;
+    align-content: center;
   }
 
   .meta {
@@ -52,7 +77,6 @@ const num = String(index + 1).padStart(2, '0');
     font-size: var(--step--1);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    margin-top: 0.5rem;
   }
 
   .num {
@@ -64,7 +88,6 @@ const num = String(index + 1).padStart(2, '0');
   }
 
   .badge {
-    margin-left: auto;
     color: var(--ink-faint);
     border: 1px dashed var(--ink-faint);
     padding: 0.1rem 0.5rem;
@@ -72,17 +95,20 @@ const num = String(index + 1).padStart(2, '0');
   }
 
   h3 {
-    font-size: var(--step-1);
+    font-size: var(--step-2);
     transition: color 160ms ease;
   }
 
-  .card:hover h3 {
+  .row:hover h3 {
     color: var(--accent);
   }
 
-  p {
-    font-size: var(--step--1);
+  .body p {
+    font-size: var(--step-0);
     line-height: 1.6;
-    max-width: 34rem;
+  }
+
+  .view {
+    margin-top: 0.35rem;
   }
 </style>

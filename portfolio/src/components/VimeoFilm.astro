@@ -8,45 +8,54 @@ import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 
 interface Props {
-  vimeoId: string;
+  vimeoId?: string; // omit to render a placeholder (no play button)
   title: string;
-  poster: string; // e.g. "stills/film-frame-forest-tower.png"
+  poster?: string; // e.g. "stills/film-frame-forest-tower.png"
+  slotNote?: string; // shown inside the placeholder when no vimeoId
 }
 
-const { vimeoId, title, poster } = Astro.props;
+const { vimeoId, title, poster, slotNote } = Astro.props;
 
 const files = import.meta.glob<{ default: ImageMetadata }>(
   '/src/assets/**/*.{jpg,jpeg,png,webp,avif}'
 );
-const loader = files[`/src/assets/${poster}`];
+const loader = poster ? files[`/src/assets/${poster}`] : undefined;
 const posterImg = loader ? (await loader()).default : null;
+const isPlaceholder = !vimeoId;
 ---
 
-<div class="film" data-vimeo-id={vimeoId}>
-  <button class="film-poster" type="button" aria-label={`Play film: ${title}`}>
-    {
-      posterImg ? (
-        <Image
-          src={posterImg}
-          alt={`Film poster — ${title}`}
-          widths={[768, 1440, 2400]}
-          sizes="100vw"
-        />
-      ) : (
-        <div class="img-slot" style="aspect-ratio: 16 / 9">
-          <span class="slot-tag">poster slot</span>
-          <span class="slot-path">src/assets/{poster}</span>
-        </div>
-      )
-    }
-    <span class="play" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
-        <path d="M8 5v14l11-7z" />
-      </svg>
-      <span>Play on Vimeo</span>
-    </span>
-  </button>
-</div>
+{
+  isPlaceholder ? (
+    <div class="film-placeholder img-slot" style="aspect-ratio: 16 / 9">
+      <span class="slot-tag">vimeo video slot</span>
+      <span>{slotNote ?? 'Send a Vimeo link + a poster frame and this becomes a click-to-play film.'}</span>
+    </div>
+  ) : (
+    <div class="film" data-vimeo-id={vimeoId}>
+      <button class="film-poster" type="button" aria-label={`Play film: ${title}`}>
+        {posterImg ? (
+          <Image
+            src={posterImg}
+            alt={`Film poster — ${title}`}
+            widths={[768, 1440, 2400]}
+            sizes="100vw"
+          />
+        ) : (
+          <div class="img-slot" style="aspect-ratio: 16 / 9">
+            <span class="slot-tag">poster slot</span>
+            <span class="slot-path">src/assets/{poster}</span>
+          </div>
+        )}
+        <span class="play" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="currentColor">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+          <span>Play on Vimeo</span>
+        </span>
+      </button>
+    </div>
+  )
+}
 
 <script>
   for (const film of document.querySelectorAll<HTMLElement>('.film')) {

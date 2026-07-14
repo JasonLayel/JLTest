@@ -13,22 +13,23 @@ captions. Twenty renderings are already in.
 The gallery is pure imagery — filenames become alt text only, so
 descriptive names still matter for accessibility and SEO.
 
-**Full-width features:** filename stems listed in `FEATURED` at the top of
-`src/components/StillsGallery.astro` render full-width above the grid
-(currently `tree-art-final-small`). The page hero backdrop is
-`arts-center-dusk` — change the stem in `src/pages/index.astro` (and the
-`EXCLUDED` list in StillsGallery) to swap it.
+**Page hero backdrop** is `tree-art-final-small` (with a scroll-driven
+parallax zoom). To swap it, change the stem in `src/pages/index.astro` and
+the `EXCLUDED` list in `StillsGallery.astro` so it doesn't also appear in
+the grid. **Full-width features:** add a stem to `FEATURED` at the top of
+`StillsGallery.astro` to render it full-width above the grid.
 
 **Logo:** `src/assets/brand/logo.png` is the header mark (auto-picked-up;
 swap the file to change it). All other logo variants live in
 `src/assets/brand/`; `mark-solid.png` is also the favicon
 (`public/favicon.png`).
 
-**Cinematics:** films are Vimeo click-to-play embeds in
+**Cinematics & XR/VR/AR:** both are Vimeo click-to-play embeds in
 `src/pages/index.astro` (`<VimeoFilm vimeoId="..." title="..."
-poster="stills/....png" />`). One film is in; its real title and
-description are still an open slot. Send more Vimeo links + poster frames
-to grow the section.
+poster="stills/....png" />`). Cinematics has one film in (title/description
+still an open slot). XR/VR/AR is a placeholder — give its `<VimeoFilm>` a
+`vimeoId` and `poster` to activate it. Send more Vimeo links + poster
+frames to grow either section.
 
 ## 1. Images (just drop files in — no code changes)
 
@@ -45,7 +46,7 @@ at build time.
 
 ## 2. Case studies — `src/content/work/*.md`
 
-Four structured slot files exist, one per discipline (3D Rendering, 3D Film Cinematics & Editing, VR/AR/XR, Interactive Experiences). For each:
+Three structured slot files exist — 3D Rendering, 3D Film Cinematics & Editing, and Interactive Experiences (VR/AR/XR lives in its own video section instead). They stack vertically in the Work section. For each:
 
 1. Frontmatter: real `title`, one-line `summary`, `year`, `role`,
    `tools: ['...', '...']`, and flip `isSlot: false`.

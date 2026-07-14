@@ -12,8 +12,8 @@
 import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 
-const FEATURED = ['tree-art-final-small'];
-const EXCLUDED = ['arts-center-dusk']; // page hero backdrop
+const FEATURED: string[] = [];
+const EXCLUDED = ['tree-art-final-small']; // page hero backdrop
 
 const files = import.meta.glob<{ default: ImageMetadata }>(
   '/src/assets/stills/*.{jpg,jpeg,png,webp,avif}',

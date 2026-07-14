@@ -7,7 +7,7 @@ role: ''
 tools: []
 hero: 'work/interactive-hero.jpg'
 heroAlt: ''
-order: 4
+order: 3
 isSlot: true
 ---
 

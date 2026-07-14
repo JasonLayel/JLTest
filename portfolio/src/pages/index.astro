@@ -11,7 +11,7 @@ import VimeoFilm from '../components/VimeoFilm.astro';
 // Hero backdrop — swap the stem to feature a different still up top
 // (keep it in sync with EXCLUDED in StillsGallery.astro).
 const heroFiles = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/stills/arts-center-dusk.{jpg,jpeg,png,webp}',
+  '/src/assets/stills/tree-art-final-small.{jpg,jpeg,png,webp}',
   { eager: true }
 );
 const heroImage = Object.values(heroFiles)[0]?.default ?? null;
@@ -79,7 +79,7 @@ const capabilities = [
   description="Design Visualization Specialist with 14 years across architectural design and 3D visualization. 3D rendering, film cinematics, VR/AR/XR, and interactive experiences."
 >
   <!-- HERO -->
-  <section id="top" class="hero">
+  <section id="top" class="hero" data-parallax>
     {
       heroImage && (
         <Image
@@ -111,6 +111,10 @@ const capabilities = [
 
   <!-- STILLS -->
   <section id="stills" class="section wrap">
+    <div class="section-head">
+      <h2>Stills</h2>
+      <p class="kicker">Selected renderings</p>
+    </div>
     <StillsGallery />
   </section>
 
@@ -130,6 +134,24 @@ const capabilities = [
       one-line description, and send more Vimeo links to grow this section
       into a reel grid. Poster frames can be swapped by changing the
       <code>poster</code> path in src/pages/index.astro.
+    </div>
+  </section>
+
+  <!-- XR / VR / AR -->
+  <section id="immersive" class="section wrap">
+    <div class="section-head">
+      <h2>XR / VR / AR</h2>
+      <p class="kicker">Immersive &amp; real-time</p>
+    </div>
+    <VimeoFilm
+      title="Immersive experience"
+      slotNote="Drop a Vimeo link to an immersive / VR / real-time capture here and it becomes a click-to-play film, just like Cinematics."
+    />
+    <div class="slot" style="margin-top: 1.5rem;">
+      <strong>XR reel.</strong> Send a Vimeo link (headset capture,
+      walkthrough, or real-time demo) plus a poster frame, and this slot
+      becomes a click-to-play film. Add <code>vimeoId</code> and <code>poster</code>
+      props to the <code>VimeoFilm</code> above in src/pages/index.astro.
     </div>
   </section>
 
@@ -170,27 +192,40 @@ const capabilities = [
   <section id="about" class="section wrap">
     <div class="section-head">
       <h2>About</h2>
-      <p class="kicker">The short version</p>
+      <p class="kicker">Background &amp; experience</p>
     </div>
     <div class="about-grid">
       <div class="about-text">
         <p class="lede">
-          I started in architectural design and drifted toward the part of the
-          job everyone else treated as a deliverable: the moment a client
-          finally <em>sees</em> the building.
+          Design Visualization Specialist with fourteen years spanning
+          architectural design and 3D visualization production, and a
+          professional foundation as a licensed-track Project Architect.
         </p>
         <p>
-          Fourteen years later that moment is my whole job. At MG2 I run the
-          Visualization Technology department solo &mdash; which means I&rsquo;m
-          the strategy, the pipeline, and the person hitting render. 3D
-          rendering, film cinematics and editing, VR/AR/XR, interactive
-          experiences: if it helps someone understand a design before it
-          exists, it comes through my desk.
+          I founded and lead the Visualization Technology department at MG2, a
+          450-person architecture firm, as its sole practitioner &mdash; owning
+          strategy, pipeline architecture, and production across still
+          rendering, cinematic film, VR/AR/XR, and interactive media. I built
+          the firm&rsquo;s end-to-end visualization pipeline from the ground up,
+          established firm-wide QA and art-direction standards enforced across
+          100+ client and public deliverables a year, and authored training
+          curricula in seven visualization and rendering tools for 300+ design
+          staff. I also manage a fleet of 15+ VR headsets supporting
+          interactive tours and design reviews across six regional offices.
         </p>
         <p>
-          Coming from the design side means I read drawings, sit comfortably in
-          design crits, and know which details sell a space &mdash; so the work
-          reads as architecture, not just imagery.
+          Before specializing in visualization, I spent four years at MG2 as an
+          architectural designer and Project Architect on retail, grocery, and
+          food &amp; beverage projects &mdash; managing design intent, code
+          compliance, entitlements, and construction administration across all
+          project phases. That grounding in real practice is why the work reads
+          as architecture, not just imagery: I read drawings fluently, hold my
+          own in design crits, and know which details make a space convincing.
+        </p>
+        <p>
+          I hold a Master of Architecture from the University of Virginia and a
+          Bachelor of Design in Architecture (high honors) from the University
+          of Florida.
         </p>
         <dl class="timeline">
           {
@@ -221,17 +256,19 @@ const capabilities = [
   <section id="contact" class="section wrap">
     <div class="section-head">
       <h2>Contact</h2>
-      <p class="kicker">Currently at MG2 &middot; open to conversations</p>
+      <p class="kicker">Currently at MG2 &middot; open to the right role</p>
     </div>
     <p class="lede">
-      Hiring for a visualization role, or need imagery for a project?
-      Either way, the inbox is the same:
+      If you&rsquo;re hiring for a design visualization or visualization
+      leadership role &mdash; or building a team and want to talk about how one
+      dedicated specialist raised the bar across an entire firm &mdash;
+      I&rsquo;d welcome the conversation. The fastest way to reach me:
     </p>
     <a class="big-mail" href="mailto:jason.layel@gmail.com">jason.layel@gmail.com</a>
     <div class="contact-links">
+      <a class="arrow-link" href={`${import.meta.env.BASE_URL}jason-layel-resume.pdf`}>Download resume</a>
       <a class="arrow-link" href="https://www.linkedin.com/in/jasonlayel" rel="me">LinkedIn</a>
-      <a class="arrow-link" href="https://www.artstation.com/jasonlayel" rel="me">ArtStation</a>
-      <a class="arrow-link" href={`${import.meta.env.BASE_URL}jason-layel-resume.pdf`}>Resume</a>
+      <a class="arrow-link" href="https://www.artstation.com/jasonlayel" rel="me">Portfolio (ArtStation)</a>
     </div>
   </section>
 </Base>
@@ -252,6 +289,18 @@ const capabilities = [
     height: 100%;
     object-fit: cover;
     z-index: -2;
+    /* parallax + zoom is driven by --p (0 at top → 1 when hero scrolled past),
+       set by a scroll listener; falls back to a static image if JS/motion off */
+    transform: scale(calc(1 + var(--p, 0) * 0.18))
+      translateY(calc(var(--p, 0) * 4vh));
+    transform-origin: 50% 42%;
+    will-change: transform;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero :global(.hero-bg) {
+      transform: none;
+    }
   }
 
   .hero::after {
@@ -289,15 +338,7 @@ const capabilities = [
   }
 
   .work-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: clamp(1.5rem, 4vw, 3.5rem);
-  }
-
-  @media (max-width: 48rem) {
-    .work-grid {
-      grid-template-columns: 1fr;
-    }
+    display: block;
   }
 
   .cap-grid {
@@ -413,4 +454,35 @@ const capabilities = [
     line-height: 1.65;
     color: var(--ink-muted);
   }
+
+  .film-placeholder {
+    width: 100%;
+  }
 </style>
+
+<script>
+  // Scroll-driven parallax + zoom on the hero image. Sets --p from 0 (hero
+  // fully in view) to 1 (hero fully scrolled past). rAF-throttled; disabled
+  // when the viewer prefers reduced motion.
+  const hero = document.querySelector<HTMLElement>('[data-parallax]');
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (hero && !reduce) {
+    let ticking = false;
+    const update = () => {
+      const h = hero.offsetHeight || 1;
+      const p = Math.min(1, Math.max(0, window.scrollY / h));
+      hero.style.setProperty('--p', p.toFixed(4));
+      ticking = false;
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', update, { passive: true });
+  }
+</script>
