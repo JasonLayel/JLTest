@@ -61,9 +61,51 @@ python fantasy_landscape.py --render out.png
 | `--samples N` | Cycles samples (default 128) |
 | `--res WxH` | Resolution (default 1920x1080) |
 | `--grid N` | Terrain grid resolution (default 512; 256 is much faster) |
-| `--fast` | Preview mode: small grid, low samples |
+| `--fast` | Preview mode: small grid, low samples, emissive cloud deck |
 | `--no-volumetrics` | Skip the fog volume — big render speedup; a shader-level distance haze still provides aerial perspective |
+| `--clouds MODE` | `deck` (default: emissive shadow-casting layer), `volume` (true volumetric clouds via Geometry Nodes — slower, best quality), `off` |
+| `--asset-lib DIR` | Folder of .blend asset files (see below). Also via env `FANTASY_ASSET_LIB`, or auto-detected at `fantasy-landscape/assets/` |
+| `--hdri-dir DIR` | Folder of .hdr/.exr skies (see below). Also via env `FANTASY_HDRI_DIR`, or auto-detected at `fantasy-landscape/hdri/` |
+| `--hdri FILE` | Force one specific HDRI for this render |
 | `--list-moods` | Print moods and exit |
+
+## Using your own assets (Quixel / Megascans, etc.)
+
+Import your scans into one or more .blend files (one big file is fine),
+**mark each object as an Asset** in the Asset Browser, and drop the file(s)
+into the asset library folder. Objects are classified by name keywords:
+
+- rocks/cliffs: `rock`, `cliff`, `stone`, `boulder`, `scree`, `rubble`, `crag`
+- trees: `tree`, `pine`, `spruce`, `fir`, `birch`, `oak`, `juniper`, `cypress`, `poplar`
+
+Assets are **linked**, never copied — your library stays the single source
+of truth, and the repo never contains licensed content. Each asset is
+auto-normalized to a sensible base size and scattered with random
+scale/rotation. Without a library the generator falls back to its
+procedural rocks and conifers.
+
+## Using your own HDRIs
+
+Drop `.hdr`/`.exr` files into one flat folder. Each is auto-classified
+into a mood by brightness, warmth, and saturation; putting a mood name in
+the filename (e.g. `quarry_golden_hour_4k.exr`) overrides the guess. When
+a matching HDRI exists for the rolled mood, it replaces the procedural sky:
+the image is rotated so its sun sits where the composition wants it, the
+sun lamp is aligned to the HDRI's brightest point, and exposure is
+normalized per mood. Overcast HDRIs (low contrast) get a soft wide sun.
+
+## Art-directing in the UI (Geometry Nodes)
+
+Everything heavy is a Geometry Nodes modifier you can tweak live after the
+script builds the scene:
+
+- **Terrain object → "FL Rocks" / "FL Trees" modifiers** — density, seed,
+  scale range, slope limit, altitude window, clump scale/keep, tilt, sink.
+- **VolumeClouds object → "Clouds" modifier** (with `--clouds volume`) —
+  coverage, noise scale, warp, density, sun-gap radius.
+
+Change a slider and the scatter/clouds update instantly; re-render without
+touching Python.
 
 ## How a world is built
 

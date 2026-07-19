@@ -41,6 +41,7 @@ import bmesh
 import math
 import random
 import sys
+import os
 import time
 import numpy as np
 from mathutils import Vector, Euler
@@ -63,6 +64,9 @@ def parse_args():
         "render": None, "save": None, "samples": 128,
         "res": (1920, 1080), "grid": 512, "fast": False,
         "volumetrics": True, "force_on": set(), "force_off": set(),
+        "asset_lib": os.environ.get("FANTASY_ASSET_LIB"),
+        "hdri_dir": os.environ.get("FANTASY_HDRI_DIR"),
+        "hdri": None, "clouds": "deck",
     }
     i = 0
     while i < len(argv):
@@ -92,6 +96,14 @@ def parse_args():
             opts["fast"] = True
         elif a == "--no-volumetrics":
             opts["volumetrics"] = False
+        elif a == "--asset-lib":
+            opts["asset_lib"] = nxt()
+        elif a == "--hdri-dir":
+            opts["hdri_dir"] = nxt()
+        elif a == "--hdri":
+            opts["hdri"] = nxt()
+        elif a == "--clouds":
+            opts["clouds"] = nxt()   # deck | volume | off
         elif a == "--with":
             opts["force_on"] |= set(nxt().split(","))
         elif a == "--without":
@@ -528,6 +540,528 @@ def emissive_material(name, color, strength):
     out = nt.nodes.new("ShaderNodeOutputMaterial")
     nt.links.new(em.outputs["Emission"], out.inputs["Surface"])
     return mat
+
+
+# --------------------------------------------------------------------------
+# Asset library: link user-owned scans (Quixel/Megascans etc.) from .blend
+# asset files. One or many .blend files in the library folder; objects
+# marked as Assets are classified by name keywords. Fully optional — the
+# generator falls back to procedural prototypes without it.
+# --------------------------------------------------------------------------
+
+ASSET_KEYWORDS = {
+    "rock": ("rock", "cliff", "stone", "boulder", "scree", "rubble", "crag"),
+    "tree": ("tree", "pine", "spruce", "fir", "birch", "oak", "juniper",
+             "cypress", "poplar"),
+}
+
+
+def load_asset_library(lib_dir):
+    """Link mesh assets from every .blend in lib_dir; returns cat->objects."""
+    if not lib_dir or not os.path.isdir(lib_dir):
+        return None
+    cats = {k: [] for k in ASSET_KEYWORDS}
+    for fname in sorted(os.listdir(lib_dir)):
+        if not fname.endswith(".blend"):
+            continue
+        path = os.path.join(lib_dir, fname)
+        try:
+            with bpy.data.libraries.load(path, link=True,
+                                         assets_only=True) as (dfrom, dto):
+                dto.objects = list(dfrom.objects)
+        except Exception as exc:
+            print(f"[fantasy] asset lib skip {fname}: {exc}")
+            continue
+        for obj in dto.objects:
+            if obj is None or obj.type != "MESH":
+                continue
+            lname = obj.name.lower()
+            for cat, keys in ASSET_KEYWORDS.items():
+                if any(k in lname for k in keys):
+                    cats[cat].append(obj)
+                    break
+    found = {k: len(v) for k, v in cats.items() if v}
+    if found:
+        print(f"[fantasy] asset library: {found} from {lib_dir}")
+        return cats
+    return None
+
+
+def build_proto_collection(name, objs, target_size):
+    """Hidden prototype collection; objects normalized to target_size."""
+    coll = bpy.data.collections.new(name)     # not linked to the scene:
+    for i, src in enumerate(objs):            # originals never render
+        ob = bpy.data.objects.new(f"{name}.{i}", src.data)
+        dim = max(src.dimensions[:] or [1.0]) or 1.0
+        s = target_size / dim
+        ob.scale = (s, s, s)
+        coll.objects.link(ob)
+    return coll
+
+
+# --------------------------------------------------------------------------
+# Geometry Nodes scatter: one reusable group, parameters exposed on the
+# modifier so everything stays art-directable in the Blender UI.
+# --------------------------------------------------------------------------
+
+def _rv_socket(node, sock_type, name, output=False):
+    socks = node.outputs if output else node.inputs
+    for s in socks:
+        if s.name == name and s.type == sock_type:
+            return s
+    return None
+
+
+def gn_scatter_group():
+    name = "FL_Scatter"
+    if name in bpy.data.node_groups:
+        return bpy.data.node_groups[name]
+    ng = bpy.data.node_groups.new(name, "GeometryNodeTree")
+    iface = ng.interface
+    iface.new_socket("Geometry", in_out="INPUT",
+                     socket_type="NodeSocketGeometry")
+    for sname, stype, default in (
+            ("Prototypes", "NodeSocketCollection", None),
+            ("Density", "NodeSocketFloat", 0.0002),
+            ("Seed", "NodeSocketInt", 0),
+            ("Scale Min", "NodeSocketFloat", 0.8),
+            ("Scale Max", "NodeSocketFloat", 1.6),
+            ("Min Normal Z", "NodeSocketFloat", 0.0),
+            ("Min Z", "NodeSocketFloat", -100000.0),
+            ("Max Z", "NodeSocketFloat", 100000.0),
+            ("Clump Scale", "NodeSocketFloat", 0.003),
+            ("Clump Keep", "NodeSocketFloat", 1.0),
+            ("Tilt", "NodeSocketFloat", 0.05),
+            ("Sink", "NodeSocketFloat", 0.1)):
+        s = iface.new_socket(sname, in_out="INPUT", socket_type=stype)
+        if default is not None:
+            try:
+                s.default_value = default
+            except Exception:
+                pass
+    iface.new_socket("Geometry", in_out="OUTPUT",
+                     socket_type="NodeSocketGeometry")
+
+    n = ng.nodes
+    lk = ng.links.new
+    gin = n.new("NodeGroupInput")
+    gout = n.new("NodeGroupOutput")
+
+    dist = n.new("GeometryNodeDistributePointsOnFaces")
+    lk(gin.outputs["Geometry"], dist.inputs["Mesh"])
+    lk(gin.outputs["Density"], dist.inputs["Density"])
+    lk(gin.outputs["Seed"], dist.inputs["Seed"])
+
+    pos = n.new("GeometryNodeInputPosition")
+    sep = n.new("ShaderNodeSeparateXYZ")
+    lk(pos.outputs["Position"], sep.inputs["Vector"])
+
+    z_lo = n.new("FunctionNodeCompare")
+    z_lo.operation = "GREATER_THAN"
+    lk(sep.outputs["Z"], z_lo.inputs["A"])
+    lk(gin.outputs["Min Z"], z_lo.inputs["B"])
+    z_hi = n.new("FunctionNodeCompare")
+    z_hi.operation = "LESS_THAN"
+    lk(sep.outputs["Z"], z_hi.inputs["A"])
+    lk(gin.outputs["Max Z"], z_hi.inputs["B"])
+    z_ok = n.new("FunctionNodeBooleanMath")
+    z_ok.operation = "AND"
+    lk(z_lo.outputs["Result"], z_ok.inputs[0])
+    lk(z_hi.outputs["Result"], z_ok.inputs[1])
+
+    nsep = n.new("ShaderNodeSeparateXYZ")
+    lk(dist.outputs["Normal"], nsep.inputs["Vector"])
+    n_ok = n.new("FunctionNodeCompare")
+    n_ok.operation = "GREATER_THAN"
+    lk(nsep.outputs["Z"], n_ok.inputs["A"])
+    lk(gin.outputs["Min Normal Z"], n_ok.inputs["B"])
+
+    clump = n.new("ShaderNodeTexNoise")
+    clump.inputs["Detail"].default_value = 3.0
+    lk(pos.outputs["Position"], clump.inputs["Vector"])
+    cscale = n.new("ShaderNodeMath")            # noise Scale expects ~1/m
+    cscale.operation = "MULTIPLY"
+    lk(gin.outputs["Clump Scale"], cscale.inputs[0])
+    cscale.inputs[1].default_value = 1000.0
+    lk(cscale.outputs["Value"], clump.inputs["Scale"])
+    thresh = n.new("ShaderNodeMath")
+    thresh.operation = "SUBTRACT"
+    thresh.inputs[0].default_value = 1.0
+    lk(gin.outputs["Clump Keep"], thresh.inputs[1])
+    c_ok = n.new("FunctionNodeCompare")
+    c_ok.operation = "GREATER_THAN"
+    lk(clump.outputs["Fac"], c_ok.inputs["A"])
+    lk(thresh.outputs["Value"], c_ok.inputs["B"])
+
+    and1 = n.new("FunctionNodeBooleanMath")
+    and1.operation = "AND"
+    lk(z_ok.outputs["Boolean"], and1.inputs[0])
+    lk(n_ok.outputs["Result"], and1.inputs[1])
+    sel = n.new("FunctionNodeBooleanMath")
+    sel.operation = "AND"
+    lk(and1.outputs["Boolean"], sel.inputs[0])
+    lk(c_ok.outputs["Result"], sel.inputs[1])
+
+    cinfo = n.new("GeometryNodeCollectionInfo")
+    cinfo.inputs["Separate Children"].default_value = True
+    cinfo.inputs["Reset Children"].default_value = False   # keep proto scale
+    lk(gin.outputs["Prototypes"], cinfo.inputs["Collection"])
+
+    pick = n.new("FunctionNodeRandomValue")
+    pick.data_type = "INT"
+    _rv_socket(pick, "INT", "Max").default_value = 100000
+    lk(gin.outputs["Seed"], _rv_socket(pick, "INT", "Seed"))
+
+    inst = n.new("GeometryNodeInstanceOnPoints")
+    inst.inputs["Pick Instance"].default_value = True
+    lk(dist.outputs["Points"], inst.inputs["Points"])
+    lk(sel.outputs["Boolean"], inst.inputs["Selection"])
+    lk(cinfo.outputs["Instances"], inst.inputs["Instance"])
+    lk(_rv_socket(pick, "INT", "Value", True), inst.inputs["Instance Index"])
+
+    def rand_float(lo_sock, hi_sock, seed_off, lo_val=None, hi_val=None):
+        r = n.new("FunctionNodeRandomValue")
+        r.data_type = "FLOAT"
+        if lo_sock is not None:
+            lk(lo_sock, _rv_socket(r, "VALUE", "Min"))
+        else:
+            _rv_socket(r, "VALUE", "Min").default_value = lo_val
+        if hi_sock is not None:
+            lk(hi_sock, _rv_socket(r, "VALUE", "Max"))
+        else:
+            _rv_socket(r, "VALUE", "Max").default_value = hi_val
+        soff = n.new("ShaderNodeMath")
+        soff.operation = "ADD"
+        lk(gin.outputs["Seed"], soff.inputs[0])
+        soff.inputs[1].default_value = seed_off
+        lk(soff.outputs["Value"], _rv_socket(r, "INT", "Seed"))
+        return _rv_socket(r, "VALUE", "Value", True)
+
+    scale_v = rand_float(gin.outputs["Scale Min"], gin.outputs["Scale Max"], 11)
+    zjit = rand_float(None, None, 23, 0.8, 1.25)
+    sz = n.new("ShaderNodeMath")
+    sz.operation = "MULTIPLY"
+    lk(scale_v, sz.inputs[0])
+    lk(zjit, sz.inputs[1])
+    scale_vec = n.new("ShaderNodeCombineXYZ")
+    lk(scale_v, scale_vec.inputs["X"])
+    lk(scale_v, scale_vec.inputs["Y"])
+    lk(sz.outputs["Value"], scale_vec.inputs["Z"])
+
+    tilt_x = rand_float(None, None, 31, -1.0, 1.0)
+    tilt_y = rand_float(None, None, 41, -1.0, 1.0)
+    spin = rand_float(None, None, 53, 0.0, 6.2832)
+    tx = n.new("ShaderNodeMath")
+    tx.operation = "MULTIPLY"
+    lk(tilt_x, tx.inputs[0])
+    lk(gin.outputs["Tilt"], tx.inputs[1])
+    ty = n.new("ShaderNodeMath")
+    ty.operation = "MULTIPLY"
+    lk(tilt_y, ty.inputs[0])
+    lk(gin.outputs["Tilt"], ty.inputs[1])
+    rot_vec = n.new("ShaderNodeCombineXYZ")
+    lk(tx.outputs["Value"], rot_vec.inputs["X"])
+    lk(ty.outputs["Value"], rot_vec.inputs["Y"])
+    lk(spin, rot_vec.inputs["Z"])
+
+    rot = n.new("GeometryNodeRotateInstances")
+    lk(inst.outputs["Instances"], rot.inputs["Instances"])
+    lk(rot_vec.outputs["Vector"], rot.inputs["Rotation"])
+    scl = n.new("GeometryNodeScaleInstances")
+    lk(rot.outputs["Instances"], scl.inputs["Instances"])
+    lk(scale_vec.outputs["Vector"], scl.inputs["Scale"])
+
+    sink = n.new("ShaderNodeMath")
+    sink.operation = "MULTIPLY"
+    lk(scale_v, sink.inputs[0])
+    lk(gin.outputs["Sink"], sink.inputs[1])
+    sink_neg = n.new("ShaderNodeMath")
+    sink_neg.operation = "MULTIPLY"
+    lk(sink.outputs["Value"], sink_neg.inputs[0])
+    sink_neg.inputs[1].default_value = -1.0
+    sink_vec = n.new("ShaderNodeCombineXYZ")
+    lk(sink_neg.outputs["Value"], sink_vec.inputs["Z"])
+    trans = n.new("GeometryNodeTranslateInstances")
+    trans.inputs["Local Space"].default_value = False
+    lk(scl.outputs["Instances"], trans.inputs["Instances"])
+    lk(sink_vec.outputs["Vector"], trans.inputs["Translation"])
+
+    join = n.new("GeometryNodeJoinGeometry")
+    lk(trans.outputs["Instances"], join.inputs["Geometry"])
+    lk(gin.outputs["Geometry"], join.inputs["Geometry"])
+    lk(join.outputs["Geometry"], gout.inputs["Geometry"])
+    return ng
+
+
+def add_scatter(obj, label, protos_coll, **params):
+    """Attach an FL_Scatter modifier; params keyed by socket name."""
+    ng = gn_scatter_group()
+    mod = obj.modifiers.new(label, "NODES")
+    mod.node_group = ng
+    ident = {}
+    for item in ng.interface.items_tree:
+        if getattr(item, "in_out", None) == "INPUT":
+            ident[item.name] = item.identifier
+    mod[ident["Prototypes"]] = protos_coll
+    for key, val in params.items():
+        if key in ident:
+            mod[ident[key]] = val
+    return mod
+
+
+# --------------------------------------------------------------------------
+# HDRI environment: flat folder of .hdr/.exr, auto-classified into moods
+# by brightness / warmth / saturation. Filenames containing a mood name
+# (e.g. "cloudy_dusk_blue_hour.exr") override the guess.
+# --------------------------------------------------------------------------
+
+def analyze_hdri(path):
+    img = None
+    try:
+        img = bpy.data.images.load(path)
+        img.scale(256, 128)
+        px = np.array(img.pixels[:], dtype=np.float32).reshape(128, 256, 4)
+        rgb = px[..., :3]
+    finally:
+        if img is not None:
+            bpy.data.images.remove(img)
+    lum = (rgb * [0.2126, 0.7152, 0.0722]).sum(-1)
+    k = np.ones((5, 5)) / 25.0
+    lb = lum.copy()
+    for _ in range(2):     # cheap blur so the sun peak is stable
+        lb = (np.roll(lb, 1, 0) + np.roll(lb, -1, 0) + np.roll(lb, 1, 1) +
+              np.roll(lb, -1, 1) + lb) / 5.0
+    r, c = np.unravel_index(np.argmax(lb), lb.shape)
+    u = (c + 0.5) / 256.0
+    v = (r + 0.5) / 128.0            # pixel row 0 is the image bottom
+    sun_elev = (v - 0.5) * math.pi
+    sun_azim = (u - 0.75) * 2 * math.pi
+    top = rgb[64:]                    # upper hemisphere only
+    mean_lum = float(lum.mean())
+    warmth = float((top[..., 0] - top[..., 2]).mean() /
+                   max(top.mean(), 1e-6))
+    sat = float((top.max(-1) - top.min(-1)).mean() / max(top.mean(), 1e-6))
+    contrast = float(lb.max() / max(mean_lum, 1e-6))
+    return dict(path=path, mean_lum=mean_lum, warmth=warmth, sat=sat,
+                contrast=contrast, sun_elev=sun_elev, sun_azim=sun_azim)
+
+
+def classify_hdri(info):
+    fname = os.path.basename(info["path"]).lower()
+    for mood in MOODS:
+        if mood in fname or mood.replace("_", "-") in fname:
+            return mood
+    w, s, c = info["warmth"], info["sat"], info["contrast"]
+    if info["mean_lum"] < 0.05:
+        return "moonlit"
+    if w > 0.25 and s > 0.3:
+        return "golden_hour" if c > 20 else "blue_hour"
+    if w < 0.0 and s > 0.25:
+        return "blue_hour"
+    if s < 0.18 and c < 12:
+        return "misty_dawn" if info["mean_lum"] > 0.35 else "stormy"
+    if s > 0.45:
+        return "alien_dusk"
+    return "stormy" if info["mean_lum"] < 0.25 else "golden_hour"
+
+
+def index_hdris(hdri_dir):
+    if not hdri_dir or not os.path.isdir(hdri_dir):
+        return {}
+    by_mood = {}
+    for fname in sorted(os.listdir(hdri_dir)):
+        if not fname.lower().endswith((".hdr", ".exr")):
+            continue
+        try:
+            info = analyze_hdri(os.path.join(hdri_dir, fname))
+        except Exception as exc:
+            print(f"[fantasy] hdri skip {fname}: {exc}")
+            continue
+        by_mood.setdefault(classify_hdri(info), []).append(info)
+    if by_mood:
+        print("[fantasy] hdris:",
+              {k: len(v) for k, v in by_mood.items()})
+    return by_mood
+
+
+def apply_hdri(scene, mood, info, desired_azim, rng, coll):
+    """World = HDRI env; returns a sun lamp aligned with the HDRI sun."""
+    world = bpy.data.worlds.new("FantasyHDRI")
+    world.use_nodes = True
+    scene.world = world
+    nt = world.node_tree
+    nt.nodes.clear()
+    out = nt.nodes.new("ShaderNodeOutputWorld")
+    bg = nt.nodes.new("ShaderNodeBackground")
+    env = nt.nodes.new("ShaderNodeTexEnvironment")
+    env.image = bpy.data.images.load(info["path"])
+    mapping = nt.nodes.new("ShaderNodeMapping")
+    texco = nt.nodes.new("ShaderNodeTexCoord")
+    rot = info["sun_azim"] - desired_azim
+    mapping.inputs["Rotation"].default_value = (0, 0, rot)
+    nt.links.new(texco.outputs["Generated"], mapping.inputs["Vector"])
+    nt.links.new(mapping.outputs["Vector"], env.inputs["Vector"])
+    nt.links.new(env.outputs["Color"], bg.inputs["Color"])
+    nt.links.new(bg.outputs["Background"], out.inputs["Surface"])
+    # normalize wildly different HDRI exposures to the mood's target level
+    target = 0.22 * sum(rng.uniform(*MOODS[mood]["sky_strength"])
+                        for _ in (1,)) / max(MOODS[mood]["sky_strength"][0], 1e-6)
+    bg.inputs["Strength"].default_value = min(
+        4.0, 0.35 / max(info["mean_lum"], 1e-4))
+
+    sun_data = bpy.data.lights.new("Sun", "SUN")
+    mood_p = MOODS[mood]
+    sun_data.energy = rng.uniform(*mood_p["sun_energy"])
+    sun_data.color = mood_p["sun_color"]
+    sun_data.angle = math.radians(rng.uniform(0.5, 2.0))
+    sun = bpy.data.objects.new("Sun", sun_data)
+    link_obj(sun, coll)
+    elev = max(info["sun_elev"], math.radians(2.0))
+    sun["elev"] = elev
+    if info["contrast"] < 8:        # overcast HDRI: soft top light
+        sun_data.energy *= 0.5
+        sun_data.angle = math.radians(15)
+    return sun
+
+
+# --------------------------------------------------------------------------
+# Volumetric clouds (Geometry Nodes Volume Cube) — heavier renders, real
+# light scattering. Enabled with --clouds volume.
+# --------------------------------------------------------------------------
+
+def build_volume_clouds(mood, rng, coll, cam, sun_azim, sun_elev, top_z,
+                        view_azim=None):
+    cover, base_em, glow_col, glow_str = mood["deck"]
+    base_z = top_z + rng.uniform(1200, 2000)
+    thick = rng.uniform(700, 1400)
+    gap_azim = sun_azim
+    if view_azim is not None:
+        d = (sun_azim - view_azim + math.pi) % (2 * math.pi) - math.pi
+        gap_azim = view_azim + max(-0.7, min(0.7, d))
+    horiz = (base_z - cam.location.z) / max(math.tan(max(sun_elev, 0.05)),
+                                            0.05)
+    horiz = min(max(horiz, 2500.0), 15000.0)
+    gx = cam.location.x + math.cos(gap_azim) * horiz
+    gy = cam.location.y + math.sin(gap_azim) * horiz
+    gap_r = rng.uniform(2200, 4000)
+
+    name = "FL_Clouds"
+    ng = bpy.data.node_groups.new(name, "GeometryNodeTree")
+    iface = ng.interface
+    for sname, default in (("Coverage", cover), ("Noise Scale", 0.00035),
+                           ("Warp", rng.uniform(0.5, 1.5)),
+                           ("Density", rng.uniform(0.004, 0.010)),
+                           ("Gap Radius", gap_r)):
+        s = iface.new_socket(sname, in_out="INPUT",
+                             socket_type="NodeSocketFloat")
+        s.default_value = default
+    iface.new_socket("Geometry", in_out="OUTPUT",
+                     socket_type="NodeSocketGeometry")
+    n = ng.nodes
+    lk = ng.links.new
+    gin = n.new("NodeGroupInput")
+    gout = n.new("NodeGroupOutput")
+
+    cube = n.new("GeometryNodeVolumeCube")
+    cube.inputs["Min"].default_value = (-16000, -16000, base_z)
+    cube.inputs["Max"].default_value = (16000, 16000, base_z + thick)
+    for axis, res in (("Resolution X", 192), ("Resolution Y", 192),
+                      ("Resolution Z", 24)):
+        cube.inputs[axis].default_value = res
+
+    pos = n.new("GeometryNodeInputPosition")
+    nz = n.new("ShaderNodeTexNoise")
+    nz.inputs["Detail"].default_value = 6.0
+    nz.inputs["Roughness"].default_value = 0.55
+    lk(pos.outputs["Position"], nz.inputs["Vector"])
+    nscale = n.new("ShaderNodeMath")
+    nscale.operation = "MULTIPLY"
+    lk(gin.outputs["Noise Scale"], nscale.inputs[0])
+    nscale.inputs[1].default_value = 1000.0
+    lk(nscale.outputs["Value"], nz.inputs["Scale"])
+    lk(gin.outputs["Warp"], nz.inputs["Distortion"])
+
+    thr = n.new("ShaderNodeMath")           # threshold from coverage
+    thr.operation = "MULTIPLY_ADD"
+    lk(gin.outputs["Coverage"], thr.inputs[0])
+    thr.inputs[1].default_value = -0.34
+    thr.inputs[2].default_value = 0.66
+    shape = n.new("ShaderNodeMapRange")
+    lk(nz.outputs["Fac"], shape.inputs["Value"])
+    lk(thr.outputs["Value"], shape.inputs["From Min"])
+    thr2 = n.new("ShaderNodeMath")
+    thr2.operation = "ADD"
+    lk(thr.outputs["Value"], thr2.inputs[0])
+    thr2.inputs[1].default_value = 0.30
+    lk(thr2.outputs["Value"], shape.inputs["From Max"])
+
+    sep = n.new("ShaderNodeSeparateXYZ")
+    lk(pos.outputs["Position"], sep.inputs["Vector"])
+    up = n.new("ShaderNodeMapRange")
+    lk(sep.outputs["Z"], up.inputs["Value"])
+    up.inputs["From Min"].default_value = base_z
+    up.inputs["From Max"].default_value = base_z + thick * 0.3
+    down = n.new("ShaderNodeMapRange")
+    lk(sep.outputs["Z"], down.inputs["Value"])
+    down.inputs["From Min"].default_value = base_z + thick * 0.55
+    down.inputs["From Max"].default_value = base_z + thick
+    down.inputs["To Min"].default_value = 1.0
+    down.inputs["To Max"].default_value = 0.0
+    prof = n.new("ShaderNodeMath")
+    prof.operation = "MULTIPLY"
+    lk(up.outputs["Result"], prof.inputs[0])
+    lk(down.outputs["Result"], prof.inputs[1])
+
+    gdist = n.new("ShaderNodeVectorMath")
+    gdist.operation = "DISTANCE"
+    lk(pos.outputs["Position"], gdist.inputs[0])
+    gdist.inputs[1].default_value = (gx, gy, base_z + thick / 2)
+    gmul = n.new("ShaderNodeMath")
+    gmul.operation = "MULTIPLY"
+    lk(gin.outputs["Gap Radius"], gmul.inputs[0])
+    gmul.inputs[1].default_value = 0.35
+    gap = n.new("ShaderNodeMapRange")
+    lk(gdist.outputs["Value"], gap.inputs["Value"])
+    lk(gmul.outputs["Value"], gap.inputs["From Min"])
+    lk(gin.outputs["Gap Radius"], gap.inputs["From Max"])
+
+    m1 = n.new("ShaderNodeMath")
+    m1.operation = "MULTIPLY"
+    lk(shape.outputs["Result"], m1.inputs[0])
+    lk(prof.outputs["Value"], m1.inputs[1])
+    m2 = n.new("ShaderNodeMath")
+    m2.operation = "MULTIPLY"
+    lk(m1.outputs["Value"], m2.inputs[0])
+    lk(gap.outputs["Result"], m2.inputs[1])
+    m3 = n.new("ShaderNodeMath")
+    m3.operation = "MULTIPLY"
+    lk(m2.outputs["Value"], m3.inputs[0])
+    lk(gin.outputs["Density"], m3.inputs[1])
+    lk(m3.outputs["Value"], cube.inputs["Density"])
+
+    mat = bpy.data.materials.new("VolumeCloudMat")
+    mat.use_nodes = True
+    mnt = mat.node_tree
+    mnt.nodes.clear()
+    mout = mnt.nodes.new("ShaderNodeOutputMaterial")
+    pv = mnt.nodes.new("ShaderNodeVolumePrincipled")
+    pv.inputs["Color"].default_value = (1.0, 1.0, 1.0, 1.0)
+    try:
+        pv.inputs["Anisotropy"].default_value = 0.4
+    except Exception:
+        pass
+    mnt.links.new(pv.outputs["Volume"], mout.inputs["Volume"])
+    setmat = n.new("GeometryNodeSetMaterial")
+    setmat.inputs["Material"].default_value = mat
+    lk(cube.outputs["Volume"], setmat.inputs["Geometry"])
+    lk(setmat.outputs["Geometry"], gout.inputs["Geometry"])
+
+    mesh = bpy.data.meshes.new("VolumeClouds")
+    host = bpy.data.objects.new("VolumeClouds", mesh)
+    link_obj(host, coll)
+    mod = host.modifiers.new("Clouds", "NODES")
+    mod.node_group = ng
+    return host
 
 
 # --------------------------------------------------------------------------
@@ -1634,73 +2168,50 @@ def build_figures(terrain, cam_pos, focal, rng, coll):
 # Nature scatter: trees & boulders
 # --------------------------------------------------------------------------
 
-def tree_prototypes(mood, rng, coll):
-    prototypes = []
-    conifer_mat = simple_material(
-        "Conifer", tuple(min(1.0, c * rng.uniform(0.8, 1.2))
-                         for c in (0.022, 0.05, 0.025)), 0.95)
-    trunk_mat = simple_material("Trunk", (0.09, 0.06, 0.04), 0.9)
-    bm = bmesh.new()
-    z0 = 0.0
-    for radius, height in ((1.6, 2.6), (1.25, 2.4), (0.85, 2.2)):
-        geom = None
+def procedural_tree_protos(mood, rng, coll):
+    """Two stylized single-mesh conifers (canopy + trunk material slots)."""
+    protos = []
+    for k in range(2):
+        conifer_mat = simple_material(
+            f"Conifer.{k}", tuple(min(1.0, c * rng.uniform(0.75, 1.25))
+                                  for c in (0.022, 0.05, 0.025)), 0.95)
+        trunk_mat = simple_material(f"Trunk.{k}", (0.09, 0.06, 0.04), 0.9)
+        bm = bmesh.new()
+        z0 = 0.0
+        tiers = ((1.6, 2.6), (1.25, 2.4), (0.85, 2.2)) if k == 0 else \
+                ((1.9, 2.2), (1.4, 2.0), (1.0, 1.8), (0.6, 1.6))
+        for radius, height in tiers:
+            try:
+                geom = bmesh.ops.create_cone(bm, cap_ends=True, segments=7,
+                                             radius1=radius, radius2=0.03,
+                                             depth=height)
+            except TypeError:
+                geom = bmesh.ops.create_cone(bm, cap_ends=True, segments=7,
+                                             diameter1=radius * 2,
+                                             diameter2=0.06, depth=height)
+            bmesh.ops.translate(bm, vec=(0, 0, z0 + height / 2 + 1.0),
+                                verts=geom["verts"])
+            z0 += height * 0.62
+        bm.faces.ensure_lookup_table()
+        canopy_faces = len(bm.faces)
         try:
-            geom = bmesh.ops.create_cone(bm, cap_ends=True, segments=7,
-                                         radius1=radius, radius2=0.03,
-                                         depth=height)
+            bmesh.ops.create_cone(bm, cap_ends=True, segments=6,
+                                  radius1=0.18, radius2=0.14, depth=2.0)
         except TypeError:
-            geom = bmesh.ops.create_cone(bm, cap_ends=True, segments=7,
-                                         diameter1=radius * 2, diameter2=0.06,
-                                         depth=height)
-        verts = geom["verts"]
-        bmesh.ops.translate(bm, vec=(0, 0, z0 + height / 2 + 1.0), verts=verts)
-        z0 += height * 0.62
-    proto = mesh_from_bmesh("TreeProto", bm, coll, conifer_mat, smooth=False)
-    trunk = make_cylinder("TrunkProto", 0.18, 2.0, coll, trunk_mat, segments=6)
-    trunk.location = (0, 0, 1.0)
-    trunk.parent = proto
-    proto.location = (0, 0, -4000)   # prototype parked out of sight
-    prototypes.append(proto)
-    return prototypes
-
-
-def scatter_trees(terrain, water_z, mood, nk, rng, coll, count):
-    protos = tree_prototypes(mood, rng, coll)
-    slope = blur(terrain.slope(), 2)
-    H = terrain.H
-    treeline = np.percentile(H, 80)
-    floor = (water_z + 4) if water_z is not None else H.min() + 2
-    n = terrain.n
-    placed = 0
-    attempts = 0
-    while placed < count and attempts < count * 20:
-        attempts += 1
-        ix = rng.randint(int(n * 0.1), int(n * 0.9))
-        iy = rng.randint(int(n * 0.1), int(n * 0.9))
-        if slope[iy, ix] > 0.7 or not (floor < H[iy, ix] < treeline):
-            continue
-        x, y = terrain.grid_to_world(ix, iy)
-        clump = nk.fbm(np.array([x * 0.002]), np.array([y * 0.002]),
-                       3, offset=(77.0, -12.0))[0]
-        if clump < rng.uniform(-0.18, 0.12):
-            continue
-        proto = protos[0]
-        inst = bpy.data.objects.new(f"Tree.{placed}", proto.data)
-        s = rng.uniform(0.9, 2.4)
-        inst.scale = (s, s, s * rng.uniform(0.9, 1.3))
-        inst.location = (x + rng.uniform(-3, 3), y + rng.uniform(-3, 3),
-                         terrain.height(x, y) - 0.4)
-        inst.rotation_euler = (rng.uniform(-0.04, 0.04),
-                               rng.uniform(-0.04, 0.04),
-                               rng.uniform(0, 2 * math.pi))
-        link_obj(inst, coll)
-        for child in proto.children:
-            ci = bpy.data.objects.new(f"TreeTrunk.{placed}", child.data)
-            ci.parent = inst
-            ci.location = child.location
-            link_obj(ci, coll)
-        placed += 1
-    return placed
+            bmesh.ops.create_cone(bm, cap_ends=True, segments=6,
+                                  diameter1=0.36, diameter2=0.28, depth=2.0)
+        bm.faces.ensure_lookup_table()
+        for i in range(canopy_faces, len(bm.faces)):
+            bm.faces[i].material_index = 1
+        bmesh.ops.translate(
+            bm, vec=(0, 0, 1.0),
+            verts=list({v for f in bm.faces[canopy_faces:]
+                        for v in f.verts}))
+        proto = mesh_from_bmesh(f"TreeProto.{k}", bm, coll, conifer_mat,
+                                smooth=False)
+        proto.data.materials.append(trunk_mat)
+        protos.append(proto)
+    return protos
 
 
 def boulder_prototypes(rng, coll, mat, n_protos=3):
@@ -1720,42 +2231,25 @@ def boulder_prototypes(rng, coll, mat, n_protos=3):
             d += 0.5 * mnoise.noise(v.co * freq * 2.7 + off)
             v.co *= 1.0 + 0.33 * d
         obj = mesh_from_bmesh(f"BoulderProto.{i}", bm, coll, mat, smooth=True)
-        obj.location = (0, 0, -4500 - i * 20)
         protos.append(obj)
     return protos
 
 
-def scatter_boulders(terrain, rng, coll, count, nk):
-    """Moorland rock field: half-buried boulders, clustered and on slopes."""
-    rock = weathered_material("Boulder", (0.135, 0.125, 0.115), 0.95)
-    protos = boulder_prototypes(rng, coll, rock)
-    slope = blur(terrain.slope(), 2)
-    n = terrain.n
-    placed = 0
-    attempts = 0
-    while placed < count and attempts < count * 18:
-        attempts += 1
-        ix = rng.randint(int(n * 0.1), int(n * 0.9))
-        iy = rng.randint(int(n * 0.1), int(n * 0.9))
-        s = slope[iy, ix]
-        x, y = terrain.grid_to_world(ix, iy)
-        clump = nk.fbm(np.array([x * 0.004]), np.array([y * 0.004]),
-                       3, offset=(31.0, 88.0))[0]
-        if s < 0.12 and clump < 0.10:     # flats need a rocky clump
-            continue
-        r = rng.uniform(0.6, 3.4) * (1.5 if s > 0.5 else 1.0)
-        inst = bpy.data.objects.new(f"Boulder.{placed}",
-                                    rng.choice(protos).data)
-        rz = r * rng.uniform(0.55, 0.95)
-        inst.scale = (r, r * rng.uniform(0.7, 1.1), rz)
-        inst.location = (x + rng.uniform(-4, 4), y + rng.uniform(-4, 4),
-                         terrain.height(x, y) + rz * rng.uniform(0.05, 0.45))
-        inst.rotation_euler = (rng.uniform(-0.25, 0.25),
-                               rng.uniform(-0.25, 0.25),
-                               rng.uniform(0, 2 * math.pi))
-        link_obj(inst, coll)
-        placed += 1
-    return placed
+def build_scatter_protos(kind, assets, mood, rng):
+    """Prototype collection for a scatter system: user assets when the
+    library has them, procedural stand-ins otherwise. The collection is
+    intentionally NOT linked to the scene, so originals never render."""
+    if assets and assets.get(kind):
+        target = {"rock": 2.4, "tree": 9.0}[kind]
+        return build_proto_collection(f"FL_{kind}_protos", assets[kind],
+                                      target), True
+    coll = bpy.data.collections.new(f"FL_{kind}_protos")
+    if kind == "rock":
+        rock = weathered_material("Boulder", (0.135, 0.125, 0.115), 0.95)
+        boulder_prototypes(rng, coll, rock)
+    else:
+        procedural_tree_protos(mood, rng, coll)
+    return coll, False
 
 
 # --------------------------------------------------------------------------
@@ -1964,7 +2458,7 @@ def main():
     if relief < 330:          # low country: no snow at all
         snow_z = float(H.max() + 500)
     mat = terrain_material(mood, rng, water_z, snow_z)
-    build_terrain_mesh("Terrain", H, size, c_terrain, mat)
+    terrain_obj = build_terrain_mesh("Terrain", H, size, c_terrain, mat)
 
     # far shell: coarse distant mountains ringing the playable terrain
     n2 = 192
@@ -2016,13 +2510,31 @@ def main():
         if site:
             focals["fields"] = build_fields(site, terrain, rng, c_elements,
                                             mood, mood_name)
-    # ---- nature ------------------------------------------------------------
-    tree_count = 250 if opts["fast"] else rng.randint(450, 900)
-    n_trees = scatter_trees(terrain, water_z, mood, nk, rng, c_nature,
-                            tree_count)
-    n_boulders = scatter_boulders(terrain, rng, c_nature,
-                                  60 if opts["fast"]
-                                  else rng.randint(140, 320), nk)
+    # ---- nature: Geometry Nodes scatter (art-directable in the UI) --------
+    script_dir = os.path.dirname(os.path.abspath(__file__)) \
+        if "__file__" in globals() else os.getcwd()
+    assets = load_asset_library(opts["asset_lib"] or
+                                os.path.join(script_dir, "assets"))
+    rock_coll, rock_real = build_scatter_protos("rock", assets, mood, rng)
+    tree_coll, tree_real = build_scatter_protos("tree", assets, mood, rng)
+    dens_mul = 0.4 if opts["fast"] else 1.0
+    floor_z = (water_z + 3.0) if water_z is not None else float(H.min())
+    treeline = float(np.percentile(H, 80))
+    add_scatter(terrain_obj, "FL Rocks", rock_coll,
+                Density=rng.uniform(1.2e-4, 3e-4) * dens_mul,
+                Seed=seed % 10000, **{
+                    "Scale Min": 0.5, "Scale Max": 2.6,
+                    "Min Normal Z": 0.0, "Min Z": floor_z,
+                    "Clump Scale": 0.004, "Clump Keep": rng.uniform(0.4, 0.7),
+                    "Tilt": 0.25, "Sink": rng.uniform(0.2, 0.4)})
+    add_scatter(terrain_obj, "FL Trees", tree_coll,
+                Density=rng.uniform(3e-4, 8e-4) * dens_mul,
+                Seed=(seed + 7) % 10000, **{
+                    "Scale Min": 0.7, "Scale Max": 1.8,
+                    "Min Normal Z": 0.8, "Min Z": floor_z + 1.0,
+                    "Max Z": treeline,
+                    "Clump Scale": 0.002, "Clump Keep": rng.uniform(0.25, 0.5),
+                    "Tilt": 0.03, "Sink": 0.05})
 
     # ---- camera, sun aim, figures -----------------------------------------
     priority = ["castle", "spire", "ruins", "stones", "fields"]
@@ -2035,10 +2547,35 @@ def main():
 
     cam = place_camera(scene, terrain, focal, rng, c_cam, water_z)
     azim = sun_azimuth_for(mood, cam, focal, rng)
-    aim_sun(sun, sky, sun["elev"], azim)
     va = math.atan2(focal.y - cam.location.y, focal.x - cam.location.x)
-    build_cloud_deck(mood, rng, c_atmos, cam, azim, sun["elev"],
-                     float(H.max()), view_azim=va)
+
+    # HDRI environment (explicit file, or auto-picked from the folder)
+    hdri_used = None
+    if opts["hdri"]:
+        try:
+            hdri_used = analyze_hdri(opts["hdri"])
+        except Exception as exc:
+            print(f"[fantasy] hdri load failed: {exc}")
+    else:
+        bank = index_hdris(opts["hdri_dir"] or
+                           os.path.join(script_dir, "hdri"))
+        pool = bank.get(mood_name) or []
+        if pool:
+            hdri_used = rng.choice(pool)
+    if hdri_used:
+        bpy.data.objects.remove(sun, do_unlink=True)
+        sun = apply_hdri(scene, mood_name, hdri_used, azim, rng, c_atmos)
+        sky = None
+        print(f"[fantasy] hdri: {os.path.basename(hdri_used['path'])}")
+    aim_sun(sun, sky, sun["elev"], azim)
+
+    cloud_mode = "deck" if opts["fast"] else opts["clouds"]
+    if cloud_mode == "volume":
+        build_volume_clouds(mood, rng, c_atmos, cam, azim, sun["elev"],
+                            float(H.max()), view_azim=va)
+    elif cloud_mode == "deck" and not hdri_used:
+        build_cloud_deck(mood, rng, c_atmos, cam, azim, sun["elev"],
+                         float(H.max()), view_azim=va)
 
     view_azim = math.atan2(focal.y - cam.location.y, focal.x - cam.location.x)
     if "ships" in chosen:
@@ -2052,7 +2589,9 @@ def main():
 
     present = sorted(k for k, v in focals.items() if v)
     print(f"[fantasy] elements: {', '.join(present) if present else 'none'} | "
-          f"trees={n_trees} boulders={n_boulders} | "
+          f"scatter: rocks={'assets' if rock_real else 'procedural'} "
+          f"trees={'assets' if tree_real else 'procedural'} | "
+          f"clouds={cloud_mode}{' +hdri' if hdri_used else ''} | "
           f"water={'yes' if water_z is not None else 'no'} | "
           f"lens={int(cam.data.lens)}mm | built in {time.time() - t0:.1f}s")
     print(f"[fantasy] recipe: --seed {seed} --mood {mood_name} "
