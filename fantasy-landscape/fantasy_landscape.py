@@ -44,6 +44,7 @@ import sys
 import time
 import numpy as np
 from mathutils import Vector, Euler
+from mathutils import noise as mnoise
 
 # --------------------------------------------------------------------------
 # Arguments
@@ -329,6 +330,12 @@ def generate_heightfield(kind, n, size, nk, rng, nrng):
     # read as smooth blobs; erosion then carves texture into it
     detail = nk.fbm(wx * 0.006, wy * 0.006, 5, offset=(140.0, -77.0))
     H += detail * (H.max() - H.min()) * 0.07
+
+    # craggy summits: high ground gets extra ridged roughness so peaks and
+    # big hills never end as smooth cones
+    hn = (H - H.min()) / max(H.max() - H.min(), 1e-6)
+    H += (nk.ridged(wx * 0.0018, wy * 0.0018, 5, offset=(9.0, 77.0)) - 0.4) * \
+        (H.max() - H.min()) * 0.22 * np.power(hn, 1.6)
     H += nk.ridged(wx * 0.003, wy * 0.003, 4, offset=(-66.0, 19.0)) * \
         (H.max() - H.min()) * 0.08
 
@@ -345,6 +352,14 @@ def generate_heightfield(kind, n, size, nk, rng, nrng):
                                  steps=48)
     H = blur(H_scaled, 1) * cell
     H = np.clip(np.nan_to_num(H, nan=lo), lo - 40, hi + 20)
+
+    # rocky ledge terracing: steep faces collapse into stepped cliff bands
+    gy2, gx2 = np.gradient(H, cell)
+    steep = np.clip((np.hypot(gx2, gy2) - 0.5) / 0.55, 0.0, 1.0)
+    step = rng.uniform(14, 30)
+    Hq = np.round(H / step) * step
+    H = H + (Hq - H) * 0.35 * steep
+
     # water level from the POST-erosion terrain, or it drowns the map
     water_z = None
     if water_pct is not None:
@@ -529,6 +544,7 @@ MOODS = {
         grass=(0.14, 0.17, 0.055), grass2=(0.26, 0.22, 0.08),
         cloud_color=(1.0, 0.80, 0.62), cloud_strength=(1.2, 2.4), cloud_cover=0.4,
         magic_color=(0.5, 0.85, 1.0), scifi_bias=0.0, glare=0.9,
+        accent=(0.30, 0.14, 0.05), deck=(0.55, 0.5, (1.0, 0.55, 0.25), 4.0),
     ),
     "misty_dawn": dict(
         sun_elev=(4, 10), sun_energy=(2.2, 3.8), sun_color=(1.0, 0.83, 0.62),
@@ -539,16 +555,18 @@ MOODS = {
         grass=(0.14, 0.16, 0.09), grass2=(0.22, 0.24, 0.13),
         cloud_color=(0.92, 0.90, 0.88), cloud_strength=(0.8, 1.5), cloud_cover=0.45,
         magic_color=(0.55, 0.9, 1.0), scifi_bias=0.0, glare=1.2,
+        accent=(0.30, 0.26, 0.14), deck=(0.68, 0.7, (0.95, 0.9, 0.8), 2.0),
     ),
     "stormy": dict(
-        sun_elev=(9, 22), sun_energy=(1.0, 2.2), sun_color=(0.92, 0.92, 0.98),
+        sun_elev=(9, 22), sun_energy=(2.4, 4.2), sun_color=(0.95, 0.94, 0.9),
         sun_dir="side", sky_strength=(0.08, 0.16),
         air=2.0, dust=(4.0, 8.0), ozone=1.0,
         fog_density=(1.5e-4, 4e-4), fog_color=(0.62, 0.66, 0.72),
-        fog_top_add=(150, 350), exposure=(0.3, 0.8),
-        grass=(0.11, 0.14, 0.07), grass2=(0.18, 0.19, 0.10),
+        fog_top_add=(150, 350), exposure=(0.5, 1.0),
+        grass=(0.12, 0.16, 0.05), grass2=(0.16, 0.19, 0.08),
         cloud_color=(0.30, 0.32, 0.36), cloud_strength=(0.5, 1.0), cloud_cover=0.9,
         magic_color=(0.6, 0.9, 1.0), scifi_bias=0.05, glare=0.5,
+        accent=(0.16, 0.13, 0.04), deck=(0.92, 0.45, (0.95, 0.9, 0.8), 3.5),
     ),
     "blue_hour": dict(
         sun_elev=(2.5, 6), sun_energy=(1.0, 1.8), sun_color=(1.0, 0.62, 0.38),
@@ -559,6 +577,7 @@ MOODS = {
         grass=(0.09, 0.11, 0.08), grass2=(0.14, 0.15, 0.11),
         cloud_color=(0.45, 0.48, 0.60), cloud_strength=(0.6, 1.2), cloud_cover=0.5,
         magic_color=(0.4, 0.8, 1.0), scifi_bias=0.10, glare=1.0,
+        accent=(0.14, 0.09, 0.13), deck=(0.65, 0.3, (1.0, 0.45, 0.2), 3.0),
     ),
     "moonlit": dict(
         sun_elev=(22, 45), sun_energy=(0.18, 0.4), sun_color=(0.68, 0.78, 1.0),
@@ -569,6 +588,7 @@ MOODS = {
         grass=(0.07, 0.09, 0.07), grass2=(0.10, 0.12, 0.10),
         cloud_color=(0.20, 0.24, 0.34), cloud_strength=(0.3, 0.7), cloud_cover=0.35,
         magic_color=(0.5, 0.9, 1.0), scifi_bias=0.10, glare=1.3,
+        accent=(0.08, 0.10, 0.09), deck=(0.45, 0.12, (0.6, 0.7, 0.95), 1.2),
     ),
     "alien_dusk": dict(
         sun_elev=(3, 9), sun_energy=(2.0, 4.0), sun_color=(1.0, 0.5, 0.55),
@@ -579,6 +599,7 @@ MOODS = {
         grass=(0.10, 0.13, 0.10), grass2=(0.20, 0.15, 0.14),
         cloud_color=(0.75, 0.45, 0.60), cloud_strength=(0.9, 1.8), cloud_cover=0.55,
         magic_color=(0.35, 1.0, 0.75), scifi_bias=0.35, glare=1.1,
+        accent=(0.35, 0.10, 0.22), deck=(0.7, 0.35, (1.0, 0.35, 0.45), 3.5),
     ),
 }
 
@@ -746,6 +767,81 @@ def terrain_material(mood, rng, water_z, snow_z, rock_hue=None):
     nt.links.new(grass_col.outputs[2], ground.inputs[6])
     nt.links.new(rock_col.outputs[2], ground.inputs[7])
 
+    # horizontal strata bands darken the cliff faces
+    smap = nt.nodes.new("ShaderNodeMapping")
+    smap.inputs["Scale"].default_value = (0.02, 0.02, 0.30)
+    nt.links.new(geo.outputs["Position"], smap.inputs["Vector"])
+    strata_noise = nt.nodes.new("ShaderNodeTexNoise")
+    strata_noise.inputs["Scale"].default_value = 1.0
+    strata_noise.inputs["Detail"].default_value = 6.0
+    nt.links.new(smap.outputs["Vector"], strata_noise.inputs["Vector"])
+    strata_band = nt.nodes.new("ShaderNodeMapRange")
+    nt.links.new(strata_noise.outputs["Fac"], strata_band.inputs["Value"])
+    strata_band.inputs["From Min"].default_value = 0.47
+    strata_band.inputs["From Max"].default_value = 0.62
+    strata_band.inputs["To Max"].default_value = 0.55
+    steep2 = nt.nodes.new("ShaderNodeMath")   # strata only on true cliffs
+    steep2.operation = "POWER"
+    nt.links.new(slope_ramp.outputs["Result"], steep2.inputs[0])
+    steep2.inputs[1].default_value = 2.2
+    strata_f = nt.nodes.new("ShaderNodeMath")
+    strata_f.operation = "MULTIPLY"
+    nt.links.new(strata_band.outputs["Result"], strata_f.inputs[0])
+    nt.links.new(steep2.outputs["Value"], strata_f.inputs[1])
+    strata_mix = nt.nodes.new("ShaderNodeMix")
+    strata_mix.data_type = "RGBA"
+    nt.links.new(strata_f.outputs["Value"], strata_mix.inputs["Factor"])
+    nt.links.new(ground.outputs[2], strata_mix.inputs[6])
+    strata_mix.inputs[7].default_value = (rock_b[0] * 0.7, rock_b[1] * 0.7,
+                                          rock_b[2] * 0.7, 1.0)
+
+    # scree / bare-earth band where grass gives way to rock
+    scree_lo = nt.nodes.new("ShaderNodeMapRange")
+    nt.links.new(slope_mix.outputs["Value"], scree_lo.inputs["Value"])
+    scree_lo.inputs["From Min"].default_value = 0.22
+    scree_lo.inputs["From Max"].default_value = 0.42
+    scree_hi = nt.nodes.new("ShaderNodeMapRange")
+    nt.links.new(slope_mix.outputs["Value"], scree_hi.inputs["Value"])
+    scree_hi.inputs["From Min"].default_value = 0.85
+    scree_hi.inputs["From Max"].default_value = 0.55
+    scree_f = nt.nodes.new("ShaderNodeMath")
+    scree_f.operation = "MULTIPLY"
+    nt.links.new(scree_lo.outputs["Result"], scree_f.inputs[0])
+    nt.links.new(scree_hi.outputs["Result"], scree_f.inputs[1])
+    scree_f2 = nt.nodes.new("ShaderNodeMath")
+    scree_f2.operation = "MULTIPLY"
+    nt.links.new(scree_f.outputs["Value"], scree_f2.inputs[0])
+    nt.links.new(breakup.outputs["Fac"], scree_f2.inputs[1])
+    scree_mix = nt.nodes.new("ShaderNodeMix")
+    scree_mix.data_type = "RGBA"
+    nt.links.new(scree_f2.outputs["Value"], scree_mix.inputs["Factor"])
+    nt.links.new(strata_mix.outputs[2], scree_mix.inputs[6])
+    scree_mix.inputs[7].default_value = (0.16, 0.135, 0.105, 1.0)
+
+    # mood accent ground cover (heather / rust / straw) in broad drifts
+    acc_noise = nt.nodes.new("ShaderNodeTexNoise")
+    acc_noise.inputs["Scale"].default_value = 0.0025
+    acc_noise.inputs["Detail"].default_value = 5.0
+    nt.links.new(geo.outputs["Position"], acc_noise.inputs["Vector"])
+    acc_band = nt.nodes.new("ShaderNodeMapRange")
+    nt.links.new(acc_noise.outputs["Fac"], acc_band.inputs["Value"])
+    acc_band.inputs["From Min"].default_value = 0.56
+    acc_band.inputs["From Max"].default_value = 0.72
+    acc_band.inputs["To Max"].default_value = 0.85
+    acc_flat = nt.nodes.new("ShaderNodeMath")   # accents only on open ground
+    acc_flat.operation = "SUBTRACT"
+    acc_flat.inputs[0].default_value = 1.0
+    nt.links.new(slope_mix.outputs["Value"], acc_flat.inputs[1])
+    acc_f = nt.nodes.new("ShaderNodeMath")
+    acc_f.operation = "MULTIPLY"
+    nt.links.new(acc_band.outputs["Result"], acc_f.inputs[0])
+    nt.links.new(acc_flat.outputs["Value"], acc_f.inputs[1])
+    acc_mix = nt.nodes.new("ShaderNodeMix")
+    acc_mix.data_type = "RGBA"
+    nt.links.new(acc_f.outputs["Value"], acc_mix.inputs["Factor"])
+    nt.links.new(scree_mix.outputs[2], acc_mix.inputs[6])
+    acc_mix.inputs[7].default_value = (*mood["accent"], 1.0)
+
     # snow above the snowline (noise-broken), only on gentler slopes
     snow_h = nt.nodes.new("ShaderNodeMapRange")
     nt.links.new(sep_p.outputs["Z"], snow_h.inputs["Value"])
@@ -762,7 +858,7 @@ def terrain_material(mood, rng, water_z, snow_z, rock_hue=None):
     snow_mix = nt.nodes.new("ShaderNodeMix")
     snow_mix.data_type = "RGBA"
     nt.links.new(snow_gate.outputs["Value"], snow_mix.inputs["Factor"])
-    nt.links.new(ground.outputs[2], snow_mix.inputs[6])
+    nt.links.new(acc_mix.outputs[2], snow_mix.inputs[6])
     snow_mix.inputs[7].default_value = (0.75, 0.78, 0.83, 1.0)
 
     final_col = snow_mix
@@ -925,7 +1021,7 @@ def build_fog(mood, rng, coll, ground_min, fog_top, enabled):
     curve.inputs[1].default_value = 1.8
 
     wisps = nt.nodes.new("ShaderNodeTexNoise")
-    wisps.inputs["Scale"].default_value = rng.uniform(1.2, 2.8)
+    wisps.inputs["Scale"].default_value = rng.uniform(2.2, 4.5)
     wisps.inputs["Detail"].default_value = 4.0
     nt.links.new(tex.outputs["Object"], wisps.inputs["Vector"])
     wisp_rng = nt.nodes.new("ShaderNodeMapRange")
@@ -942,7 +1038,7 @@ def build_fog(mood, rng, coll, ground_min, fog_top, enabled):
     m2 = nt.nodes.new("ShaderNodeMath")
     m2.operation = "MULTIPLY"
     nt.links.new(m1.outputs["Value"], m2.inputs[0])
-    m2.inputs[1].default_value = density
+    m2.inputs[1].default_value = density * 0.7
     nt.links.new(m2.outputs["Value"], scat.inputs["Density"])
     nt.links.new(scat.outputs["Volume"], out.inputs["Volume"])
 
@@ -950,7 +1046,7 @@ def build_fog(mood, rng, coll, ground_min, fog_top, enabled):
     bmesh.ops.create_cube(bm, size=1.0)
     fog = mesh_from_bmesh("FogVolume", bm, coll, mat)
     depth = fog_top - (ground_min - 60)
-    fog.scale = (7000, 7000, depth)
+    fog.scale = (12000, 12000, depth)
     fog.location = (0, 0, ground_min - 60 + depth / 2)
     fog.display_type = "WIRE"
     try:
@@ -958,6 +1054,104 @@ def build_fog(mood, rng, coll, ground_min, fog_top, enabled):
     except Exception:
         pass
     return fog
+
+
+def build_cloud_deck(mood, rng, coll, cam, sun_azim, sun_elev, top_z,
+                     view_azim=None):
+    """A vast shadow-casting cloud layer with a ragged gap near the sun.
+
+    The gap keeps the scene from going flat under heavy cover: the sun
+    pours through it, spilling dappled light pools on the terrain and god
+    rays through the fog, with the sky glowing around the opening.
+    """
+    cover, base_em, glow_col, glow_str = mood["deck"]
+    deck_z = top_z + rng.uniform(1600, 2800)
+    horiz = (deck_z - cam.location.z) / max(math.tan(max(sun_elev, 0.05)), 0.05)
+    horiz = min(max(horiz, 2500.0), 18000.0)
+    gap_azim = sun_azim
+    if view_azim is not None:      # keep the bright gap near the frame
+        d = (sun_azim - view_azim + math.pi) % (2 * math.pi) - math.pi
+        gap_azim = view_azim + max(-0.7, min(0.7, d))
+    gx = cam.location.x + math.cos(gap_azim) * horiz
+    gy = cam.location.y + math.sin(gap_azim) * horiz
+    gap_r = rng.uniform(2000, 3800)
+
+    mat = bpy.data.materials.new("CloudDeck")
+    mat.use_nodes = True
+    nt = mat.node_tree
+    nt.nodes.clear()
+    out = nt.nodes.new("ShaderNodeOutputMaterial")
+    mix = nt.nodes.new("ShaderNodeMixShader")
+    trans = nt.nodes.new("ShaderNodeBsdfTransparent")
+    emit = nt.nodes.new("ShaderNodeEmission")
+
+    geo = nt.nodes.new("ShaderNodeNewGeometry")
+    dist = nt.nodes.new("ShaderNodeVectorMath")
+    dist.operation = "DISTANCE"
+    nt.links.new(geo.outputs["Position"], dist.inputs[0])
+    dist.inputs[1].default_value = (gx, gy, deck_z)
+
+    # coverage noise (features ~1.5-3 km)
+    tex = nt.nodes.new("ShaderNodeTexCoord")
+    cmap = nt.nodes.new("ShaderNodeMapping")
+    sc = rng.uniform(16, 30)
+    cmap.inputs["Scale"].default_value = (sc, sc * rng.uniform(0.6, 1.0), sc)
+    cmap.inputs["Rotation"].default_value = (0, 0, rng.uniform(0, 3.14))
+    # Generated coords: 0..1 across the plane regardless of its size
+    nt.links.new(tex.outputs["Generated"], cmap.inputs["Vector"])
+    noise = nt.nodes.new("ShaderNodeTexNoise")
+    noise.inputs["Scale"].default_value = 1.0
+    noise.inputs["Detail"].default_value = 9.0
+    noise.inputs["Roughness"].default_value = 0.55
+    nt.links.new(cmap.outputs["Vector"], noise.inputs["Vector"])
+    alpha0 = nt.nodes.new("ShaderNodeMapRange")
+    nt.links.new(noise.outputs["Fac"], alpha0.inputs["Value"])
+    t0 = 0.66 - 0.34 * cover
+    alpha0.inputs["From Min"].default_value = t0
+    alpha0.inputs["From Max"].default_value = t0 + 0.18
+    alpha0.inputs["To Max"].default_value = 0.85   # sun always leaks a bit
+
+    # carve the sun gap
+    gap = nt.nodes.new("ShaderNodeMapRange")
+    nt.links.new(dist.outputs["Value"], gap.inputs["Value"])
+    gap.inputs["From Min"].default_value = gap_r * 0.35
+    gap.inputs["From Max"].default_value = gap_r
+    alpha = nt.nodes.new("ShaderNodeMath")
+    alpha.operation = "MULTIPLY"
+    nt.links.new(alpha0.outputs["Result"], alpha.inputs[0])
+    nt.links.new(gap.outputs["Result"], alpha.inputs[1])
+    nt.links.new(alpha.outputs["Value"], mix.inputs["Fac"])
+
+    # glow: warm bright cloud color near the gap, dark bases far from it
+    glow = nt.nodes.new("ShaderNodeMapRange")
+    nt.links.new(dist.outputs["Value"], glow.inputs["Value"])
+    glow.inputs["From Min"].default_value = gap_r * 0.4
+    glow.inputs["From Max"].default_value = gap_r * 3.2
+    glow.inputs["To Min"].default_value = 1.0
+    glow.inputs["To Max"].default_value = 0.0
+    cc = mood["cloud_color"]
+    col_mix = nt.nodes.new("ShaderNodeMix")
+    col_mix.data_type = "RGBA"
+    nt.links.new(glow.outputs["Result"], col_mix.inputs["Factor"])
+    col_mix.inputs[6].default_value = (cc[0] * 0.55, cc[1] * 0.55,
+                                       cc[2] * 0.6, 1.0)
+    col_mix.inputs[7].default_value = (*glow_col, 1.0)
+    nt.links.new(col_mix.outputs[2], emit.inputs["Color"])
+    stren = nt.nodes.new("ShaderNodeMapRange")
+    nt.links.new(glow.outputs["Result"], stren.inputs["Value"])
+    stren.inputs["To Min"].default_value = base_em
+    stren.inputs["To Max"].default_value = base_em + glow_str
+    nt.links.new(stren.outputs["Result"], emit.inputs["Strength"])
+
+    nt.links.new(trans.outputs["BSDF"], mix.inputs[1])
+    nt.links.new(emit.outputs["Emission"], mix.inputs[2])
+    nt.links.new(mix.outputs["Shader"], out.inputs["Surface"])
+
+    bm = bmesh.new()
+    bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=30000)
+    deck = mesh_from_bmesh("CloudDeck", bm, coll, mat)
+    deck.location = (0, 0, deck_z)
+    return deck
 
 
 def build_clouds(mood, rng, coll, top_z):
@@ -1002,7 +1196,7 @@ def build_clouds(mood, rng, coll, top_z):
     nt.links.new(emit.outputs["Emission"], mix.inputs[2])
     nt.links.new(mix.outputs["Shader"], out.inputs["Surface"])
 
-    count = rng.randint(6, 12) + int(cover * 10)
+    count = rng.randint(2, 5)   # a few near cards; the deck does the rest
     for i in range(count):
         bm = bmesh.new()
         bmesh.ops.create_grid(bm, x_segments=1, y_segments=1, size=1.0)
@@ -1144,17 +1338,52 @@ def build_castle(site, terrain, rng, coll, mood):
     return Vector((x, y, top_of_crag + keep_h * 0.7))
 
 
+def jagged_wall(name, length, height, thick, coll, mat, rng):
+    """A ruined wall: subdivided box whose top edge is broken down."""
+    bm = bmesh.new()
+    bmesh.ops.create_cube(bm, size=1.0)
+    bmesh.ops.subdivide_edges(bm, edges=bm.edges[:], cuts=6,
+                              use_grid_fill=True)
+    off = rng.uniform(0, 50)
+    for v in bm.verts:
+        if v.co.z > 0.3:
+            n = abs(mnoise.noise(Vector((v.co.x * 2.6 + off,
+                                         v.co.y * 2.6, v.co.z))))
+            v.co.z -= n * rng.uniform(0.45, 0.95)
+            v.co.x += mnoise.noise(Vector((v.co.z * 3.0, off, v.co.x))) * 0.03
+    bmesh.ops.scale(bm, vec=(length, thick, height), verts=bm.verts)
+    return mesh_from_bmesh(name, bm, coll, mat, smooth=False)
+
+
 def build_ruins(site, rng, coll):
     x, y, z = site
     stone = weathered_material("RuinStone", (0.21, 0.195, 0.165),
                                roughness=0.92)
-    ring_r = rng.uniform(6, 13)
-    n = rng.randint(6, 12)
-    for i in range(n):
-        a = i * 2 * math.pi / n + rng.uniform(-0.25, 0.25)
+
+    # broken rectangular shell of a keep or chapel
+    w = rng.uniform(9, 17)
+    d = rng.uniform(6, 12)
+    rot = rng.uniform(0, math.pi)
+    cr, sr = math.cos(rot), math.sin(rot)
+    sides = [((w / 2, 0), d, math.pi / 2), ((-w / 2, 0), d, math.pi / 2),
+             ((0, d / 2), w, 0.0), ((0, -d / 2), w, 0.0)]
+    heights = [rng.uniform(4.5, 8.5), rng.uniform(2.5, 6),
+               rng.uniform(0.8, 2.0), rng.uniform(1.5, 5)]
+    rng.shuffle(heights)
+    for i, ((lx, ly), length, lrot) in enumerate(sides):
+        wx = x + lx * cr - ly * sr
+        wy = y + lx * sr + ly * cr
+        wall = jagged_wall(f"RuinWall.{i}", length, heights[i], 1.0,
+                           coll, stone, rng)
+        wall.location = (wx, wy, z + heights[i] * 0.4 - 0.5)
+        wall.rotation_euler = (0, 0, rot + lrot)
+
+    ring_r = max(w, d) * rng.uniform(0.9, 1.4)
+    for i in range(rng.randint(2, 5)):
+        a = rng.uniform(0, 2 * math.pi)
         cx = x + math.cos(a) * ring_r
         cy = y + math.sin(a) * ring_r
-        if rng.random() < 0.25:      # fallen column
+        if rng.random() < 0.3:       # fallen column
             h = rng.uniform(3, 6)
             col = make_cylinder(f"FallenCol.{i}", 0.5, h, coll, stone, segments=9)
             col.location = (cx, cy, z + 0.5)
@@ -1474,25 +1703,57 @@ def scatter_trees(terrain, water_z, mood, nk, rng, coll, count):
     return placed
 
 
-def scatter_boulders(terrain, rng, coll, count):
-    rock = simple_material("Boulder", (0.14, 0.13, 0.12), 0.95)
+def boulder_prototypes(rng, coll, mat, n_protos=3):
+    """Noise-displaced rock meshes, shared by all scattered instances."""
+    protos = []
+    for i in range(n_protos):
+        bm = bmesh.new()
+        try:
+            bmesh.ops.create_icosphere(bm, subdivisions=3, radius=1.0)
+        except TypeError:
+            bmesh.ops.create_icosphere(bm, subdivisions=3, diameter=2.0)
+        off = Vector((rng.uniform(0, 90), rng.uniform(0, 90),
+                      rng.uniform(0, 90)))
+        freq = rng.uniform(1.0, 1.9)
+        for v in bm.verts:
+            d = mnoise.noise(v.co * freq + off)
+            d += 0.5 * mnoise.noise(v.co * freq * 2.7 + off)
+            v.co *= 1.0 + 0.33 * d
+        obj = mesh_from_bmesh(f"BoulderProto.{i}", bm, coll, mat, smooth=True)
+        obj.location = (0, 0, -4500 - i * 20)
+        protos.append(obj)
+    return protos
+
+
+def scatter_boulders(terrain, rng, coll, count, nk):
+    """Moorland rock field: half-buried boulders, clustered and on slopes."""
+    rock = weathered_material("Boulder", (0.135, 0.125, 0.115), 0.95)
+    protos = boulder_prototypes(rng, coll, rock)
     slope = blur(terrain.slope(), 2)
     n = terrain.n
     placed = 0
     attempts = 0
-    while placed < count and attempts < count * 15:
+    while placed < count and attempts < count * 18:
         attempts += 1
-        ix = rng.randint(int(n * 0.12), int(n * 0.88))
-        iy = rng.randint(int(n * 0.12), int(n * 0.88))
-        if not (0.25 < slope[iy, ix] < 0.9):
-            continue
+        ix = rng.randint(int(n * 0.1), int(n * 0.9))
+        iy = rng.randint(int(n * 0.1), int(n * 0.9))
+        s = slope[iy, ix]
         x, y = terrain.grid_to_world(ix, iy)
-        b = make_icosphere(f"Boulder.{placed}", rng.uniform(1.2, 4.5),
-                           coll, rock, 1)
-        b.location = (x, y, terrain.height(x, y) + 0.2)
-        b.scale = (1, rng.uniform(0.6, 1.3), rng.uniform(0.45, 0.85))
-        b.rotation_euler = (rng.uniform(0, 3), rng.uniform(0, 3),
-                            rng.uniform(0, 3))
+        clump = nk.fbm(np.array([x * 0.004]), np.array([y * 0.004]),
+                       3, offset=(31.0, 88.0))[0]
+        if s < 0.12 and clump < 0.10:     # flats need a rocky clump
+            continue
+        r = rng.uniform(0.6, 3.4) * (1.5 if s > 0.5 else 1.0)
+        inst = bpy.data.objects.new(f"Boulder.{placed}",
+                                    rng.choice(protos).data)
+        rz = r * rng.uniform(0.55, 0.95)
+        inst.scale = (r, r * rng.uniform(0.7, 1.1), rz)
+        inst.location = (x + rng.uniform(-4, 4), y + rng.uniform(-4, 4),
+                         terrain.height(x, y) + rz * rng.uniform(0.05, 0.45))
+        inst.rotation_euler = (rng.uniform(-0.25, 0.25),
+                               rng.uniform(-0.25, 0.25),
+                               rng.uniform(0, 2 * math.pi))
+        link_obj(inst, coll)
         placed += 1
     return placed
 
@@ -1760,7 +2021,8 @@ def main():
     n_trees = scatter_trees(terrain, water_z, mood, nk, rng, c_nature,
                             tree_count)
     n_boulders = scatter_boulders(terrain, rng, c_nature,
-                                  20 if opts["fast"] else rng.randint(25, 60))
+                                  60 if opts["fast"]
+                                  else rng.randint(140, 320), nk)
 
     # ---- camera, sun aim, figures -----------------------------------------
     priority = ["castle", "spire", "ruins", "stones", "fields"]
@@ -1774,6 +2036,9 @@ def main():
     cam = place_camera(scene, terrain, focal, rng, c_cam, water_z)
     azim = sun_azimuth_for(mood, cam, focal, rng)
     aim_sun(sun, sky, sun["elev"], azim)
+    va = math.atan2(focal.y - cam.location.y, focal.x - cam.location.x)
+    build_cloud_deck(mood, rng, c_atmos, cam, azim, sun["elev"],
+                     float(H.max()), view_azim=va)
 
     view_azim = math.atan2(focal.y - cam.location.y, focal.x - cam.location.x)
     if "ships" in chosen:
