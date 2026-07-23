@@ -8,6 +8,19 @@ what happened, what it changes.
 
 ---
 
+## 2026-07-14 — Found the near-complete portfolio site
+
+Jason revealed a portfolio site is already built in a separate Code session
+and committed to this repo on branch `claude/cool-wright-ys0p7w`
+(`portfolio/`, Astro). Reviewed it: genuinely strong — correct external-
+offers positioning, 21 stills, full About/timeline, resume, one film. Open
+items: 3 case-study slots, XR placeholder, portrait image, `site:` domain
+config. Flagged the key risk: several still filenames look like real MG2/
+client projects → provenance must be cleared before PUBLIC launch, tying
+straight back to Jason's stated NDA concern. Domain purchased (name still
+needed). Advisor memory (PLAYBOOK) updated to treat the site as near-done,
+not unstarted.
+
 ## 2026-07-12 — Priorities chosen: portfolio site + publish-kit
 
 Jason confirmed the comp case at MG2 was already played (2025 → $92K); next

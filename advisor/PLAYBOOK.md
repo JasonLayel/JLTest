@@ -30,21 +30,44 @@ packs (Fab, Blender Market) or D5/Twinmotion ecosystem content._
 | --- | --- | --- | --- | --- |
 | Upwork 3D rendering | Active | Dormant — proven at ~$2–4K/yr for 2 years, then stopped | ~2018 era | Revive only at a high rate floor and after the moonlighting question is settled |
 
-## Portfolio rebuild — standing priority #1
+## Portfolio site — standing priority #1 (MUCH FURTHER ALONG than thought)
 
-Declared priority 2026-07-11. Serves both career jumps and side income.
+A near-complete portfolio site already exists, built in a separate Code
+session. As of 2026-07-14 it lives in this same repo on branch
+**`claude/cool-wright-ys0p7w`**, in the `portfolio/` subdirectory.
 
-- **Constraint:** day-job (MG2) renderings/animations are OFF the table for
-  public posting until Jason gets the firm's portfolio policy in writing.
-  First action: short email to principal/HR asking the policy and offering
-  standard terms (credit, released projects only, private-vs-public tiers).
-- **Strategy:** feed the portfolio with self-initiated pieces designed to do
-  triple duty — portfolio piece + marketplace product + content material.
-- **Target shape:** ~10–15 strong pieces, one clear specialty story
-  (real-time archviz), traditional sketches as a supporting section.
-- **Status:** not started — needs an inventory session (Jason describes/
-  pastes what's currently on ArtStation, Wix, Behance since those sites
-  block automated fetching), then keep/rework/cut sort and per-piece briefs.
+- **Stack:** Astro static site, zero JS shipped, self-hosted fonts, no
+  external calls. Dark editorial design system in `src/styles/global.css`.
+- **Positioning:** aimed squarely at the external-offers / career audience
+  (hero: "I make unbuilt architecture feel real… one-person Visualization
+  Technology department at MG2"; contact: "open to the right role"). This is
+  correct — next raise comes from competing offers, so the site IS the tool.
+- **Already done:** 21 stills in the gallery; full About + career timeline;
+  tool strip; resume PDF; contact links (email, LinkedIn, ArtStation); one
+  Vimeo film embedded; brand/logo pack; favicon.
+- **Open slots (visible dashed boxes, nothing fake-filled):**
+  - 3 case studies still in slot state (`isSlot: true`) — Rendering,
+    Film Cinematics, Interactive — need real brief→approach→outcome prose
+    + frontmatter + hero images.
+  - XR/VR/AR section is a placeholder (needs a Vimeo id + poster).
+  - Featured film needs a real title/description.
+  - About portrait image missing (`src/assets/about/portrait.jpg`).
+  - `astro.config.mjs` `site:` still needs the real domain.
+- **CRITICAL OPEN QUESTION — imagery provenance.** Several of the 21 stills
+  have names that read like real commercial projects (`1319-14th-street`,
+  `37-l-street-tower`, `credit-union-branch`, `food-market-dusk`,
+  `alpha-industries-showroom`). If these are MG2/client work, the site
+  can't go PUBLIC until the MG2 portfolio-policy question (below) is
+  resolved — this is exactly the concern Jason raised. Personal pieces
+  (e.g. `tree-art-final`, `surf-boardwalk`, `stone-estate-pond`) are safe.
+  Advisor must resolve provenance per-image before public launch.
+- **Still true:** get the MG2 portfolio policy in writing (email principal/
+  HR: credit, released-projects-only, private-vs-public tiers). The site
+  can launch on personal/cleared work; MG2 work gets added once approved.
+- **Coordination:** two sessions now touch this repo. This (advisor) session
+  owns strategy/content/deploy guidance; the other session owns the site
+  build. Don't push to `claude/cool-wright-ys0p7w` without coordinating.
+- **Domain:** purchased (name TBD in advisor notes — ask Jason).
 
 ## Marketing
 
