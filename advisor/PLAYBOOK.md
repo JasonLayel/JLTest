@@ -67,7 +67,19 @@ session. As of 2026-07-14 it lives in this same repo on branch
 - **Coordination:** two sessions now touch this repo. This (advisor) session
   owns strategy/content/deploy guidance; the other session owns the site
   build. Don't push to `claude/cool-wright-ys0p7w` without coordinating.
-- **Domain:** purchased (name TBD in advisor notes — ask Jason).
+- **Domain:** purchased (exact name still TBD — ask Jason).
+- **Launch decisions (2026-07-14):**
+  - **Visibility = public but noindex** — live at the domain, shareable by
+    direct link, but a `<meta name="robots" content="noindex">` in
+    `Base.astro` keeps it out of search. Correct while employed at MG2 and
+    quietly seeking offers. Revisit (remove noindex) once he's ready to be
+    openly on the market.
+  - **Host = Cloudflare Pages** — base dir `portfolio`, build `npm run
+    build`, output `dist`. Move domain nameservers to Cloudflare for clean
+    DNS + SSL.
+  - Remaining pre-launch edits (need permission to touch
+    `claude/cool-wright-ys0p7w`, or hand to the other session): add noindex
+    meta to `Base.astro`; set `site:` in `astro.config.mjs` to the domain.
 
 ## Marketing
 
