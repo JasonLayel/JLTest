@@ -18,6 +18,9 @@ const { title, description } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Keep the site out of search results while it's shared privately with
+         recruiters. Remove this line to allow indexing when going public. -->
+    <meta name="robots" content="noindex" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta property="og:title" content={title} />
