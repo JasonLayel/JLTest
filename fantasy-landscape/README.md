@@ -64,25 +64,54 @@ python fantasy_landscape.py --render out.png
 | `--fast` | Preview mode: small grid, low samples, emissive cloud deck |
 | `--no-volumetrics` | Skip the fog volume — big render speedup; a shader-level distance haze still provides aerial perspective |
 | `--clouds MODE` | `deck` (default: emissive shadow-casting layer), `volume` (true volumetric clouds via Geometry Nodes — slower, best quality), `off` |
-| `--asset-lib DIR` | Folder of .blend asset files (see below). Also via env `FANTASY_ASSET_LIB`, or auto-detected at `fantasy-landscape/assets/` |
+| `--asset-lib DIR` | Asset library: raw Megascans/FAB folders **or** marked-asset .blend files (see below). Also env `FANTASY_ASSET_LIB`, or auto-detected at `fantasy-landscape/assets/` |
+| `--lod N` | Megascans LOD to import for scatter (default 2) |
+| `--tex-res RES` | Preferred texture resolution: `2K` (default), `4K`, `1K` |
 | `--hdri-dir DIR` | Folder of .hdr/.exr skies (see below). Also via env `FANTASY_HDRI_DIR`, or auto-detected at `fantasy-landscape/hdri/` |
 | `--hdri FILE` | Force one specific HDRI for this render |
 | `--list-moods` | Print moods and exit |
 
-## Using your own assets (Quixel / Megascans, etc.)
+## Using your own assets (Quixel / Megascans / FAB)
 
-Import your scans into one or more .blend files (one big file is fine),
-**mark each object as an Asset** in the Asset Browser, and drop the file(s)
-into the asset library folder. Objects are classified by name keywords:
+Point `--asset-lib` (or `FANTASY_ASSET_LIB`, or the auto-detected
+`fantasy-landscape/assets/` folder) at your library. **Two layouts are
+supported and can be mixed in the same folder:**
 
+**A. Raw Megascans / FAB download folders (no prep — use this for FAB).**
+Just point at the top of your downloaded library, e.g.
+
+```
+blender -b -P fantasy_landscape.py -- --asset-lib "F:\Quixel-FAB Library" --render out.png
+```
+
+The script walks the tree; any folder that directly contains a `.fbx` is
+treated as an asset. For each it:
+- picks the LOD closest to `--lod N` (default 2 — low-poly enough to
+  scatter hundreds without choking; raise for hero foreground, lower for
+  distant fill),
+- builds a Principled material from the texture set (albedo, normal,
+  roughness, AO, displacement, metal, opacity — matched by the standard
+  Megascans map-name suffixes at the `--tex-res` resolution, default 2K),
+- classifies it from its `.json` metadata / folder name.
+
+**B. Curated `.blend` files with objects marked as Assets.** Import into
+one or more `.blend` files (one big file is fine), mark objects as Assets
+in the Asset Browser, drop them in the folder. These are **linked** (never
+copied). Use this when you want to hand-pick and pre-clean a set.
+
+Either way, objects are classified by keyword:
 - rocks/cliffs: `rock`, `cliff`, `stone`, `boulder`, `scree`, `rubble`, `crag`
 - trees: `tree`, `pine`, `spruce`, `fir`, `birch`, `oak`, `juniper`, `cypress`, `poplar`
 
-Assets are **linked**, never copied — your library stays the single source
-of truth, and the repo never contains licensed content. Each asset is
-auto-normalized to a sensible base size and scattered with random
-scale/rotation. Without a library the generator falls back to its
-procedural rocks and conifers.
+Each asset is auto-normalized to a sensible base size and scattered with
+random scale/rotation/tilt/sink. The console prints exactly what it
+imported and classified, so if your FAB folder layout differs you'll see
+it immediately. Without a library the generator falls back to procedural
+rocks and conifers. Licensed content never enters the repo — the library
+stays on your machine.
+
+Relevant flags: `--lod N` (LOD to import, default 2), `--tex-res 2K|4K|1K`
+(texture resolution to prefer).
 
 ## Using your own HDRIs
 

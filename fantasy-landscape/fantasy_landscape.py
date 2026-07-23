@@ -42,6 +42,7 @@ import math
 import random
 import sys
 import os
+import re
 import time
 import numpy as np
 from mathutils import Vector, Euler
@@ -66,7 +67,7 @@ def parse_args():
         "volumetrics": True, "force_on": set(), "force_off": set(),
         "asset_lib": os.environ.get("FANTASY_ASSET_LIB"),
         "hdri_dir": os.environ.get("FANTASY_HDRI_DIR"),
-        "hdri": None, "clouds": "deck",
+        "hdri": None, "clouds": "deck", "lod": 2, "tex_res": "2k",
     }
     i = 0
     while i < len(argv):
@@ -104,6 +105,10 @@ def parse_args():
             opts["hdri"] = nxt()
         elif a == "--clouds":
             opts["clouds"] = nxt()   # deck | volume | off
+        elif a == "--lod":
+            opts["lod"] = int(nxt())
+        elif a == "--tex-res":
+            opts["tex_res"] = nxt().lower()
         elif a == "--with":
             opts["force_on"] |= set(nxt().split(","))
         elif a == "--without":
@@ -556,11 +561,225 @@ ASSET_KEYWORDS = {
 }
 
 
-def load_asset_library(lib_dir):
-    """Link mesh assets from every .blend in lib_dir; returns cat->objects."""
+# Megascans / FAB texture map filename keywords -> shader role
+MEGA_TEX_ROLES = {
+    "base": ("albedo", "basecolor", "base_color", "diffuse", "_col", "_color"),
+    "normal": ("normal", "_nrm", "normalgl", "_nor"),
+    "rough": ("roughness", "_rgh", "_rough"),
+    "ao": ("occlusion", "ambientocclusion", "_ao"),
+    "disp": ("displacement", "height", "_dsp", "_disp"),
+    "metal": ("metalness", "metallic", "_mtl"),
+    "opacity": ("opacity", "alpha", "_opc", "_mask"),
+}
+_TEX_EXT = (".jpg", ".jpeg", ".png", ".exr", ".tif", ".tiff")
+_RES_PREF = ("2k", "1k", "512", "4k", "8k")   # scatter: balance detail/memory
+
+
+def _enable_fbx():
+    try:
+        import addon_utils
+        addon_utils.enable("io_scene_fbx", default_set=False, persistent=True)
+    except Exception:
+        pass
+
+
+def classify_asset_text(text):
+    """Return the first asset category whose keyword appears in text."""
+    for cat, keys in ASSET_KEYWORDS.items():
+        if any(k in text for k in keys):
+            return cat
+    return None
+
+
+def pick_lod_fbx(folder, filenames, prefer_lod):
+    fbxs = [f for f in filenames if f.lower().endswith(".fbx")]
+    if not fbxs:
+        return None
+    best = None
+    for f in fbxs:
+        m = re.search(r"lod(\d+)", f.lower())
+        lod = int(m.group(1)) if m else 0
+        score = abs(lod - prefer_lod)
+        # prefer closest to target LOD; on ties take the lower-poly (higher) one
+        if best is None or (score, -lod) < (best[0], -best[2]):
+            best = (score, f, lod)
+    return best[1]
+
+
+def collect_textures(folder, filenames, res_pref):
+    imgs = [f for f in filenames if f.lower().endswith(_TEX_EXT)]
+    order = (res_pref.lower(),) + tuple(r for r in _RES_PREF
+                                        if r != res_pref.lower())
+
+    def res_rank(fname):
+        low = fname.lower()
+        for i, r in enumerate(order):
+            if r in low:
+                return i
+        return len(order)
+
+    tex = {}
+    for role, keys in MEGA_TEX_ROLES.items():
+        cands = [f for f in imgs if any(k in f.lower() for k in keys)]
+        if role == "normal":   # don't let 'ao'/'col' substrings steal normals
+            cands = [f for f in cands if "normal" in f.lower()
+                     or "_nrm" in f.lower() or "_nor" in f.lower()]
+        if cands:
+            cands.sort(key=lambda f: (res_rank(f), len(f)))
+            tex[role] = os.path.join(folder, cands[0])
+    return tex
+
+
+def build_pbr_material(name, tex):
+    mat = bpy.data.materials.new(name)
+    mat.use_nodes = True
+    nt = mat.node_tree
+    nt.nodes.clear()
+    out = nt.nodes.new("ShaderNodeOutputMaterial")
+    bsdf = nt.nodes.new("ShaderNodeBsdfPrincipled")
+    nt.links.new(bsdf.outputs["BSDF"], out.inputs["Surface"])
+
+    def img_node(path, non_color):
+        n = nt.nodes.new("ShaderNodeTexImage")
+        try:
+            n.image = bpy.data.images.load(path, check_existing=True)
+            if non_color:
+                n.image.colorspace_settings.name = "Non-Color"
+        except Exception as exc:
+            print(f"[fantasy]   tex load fail {os.path.basename(path)}: {exc}")
+            return None
+        return n
+
+    base = img_node(tex["base"], False) if "base" in tex else None
+    if base:
+        if "ao" in tex:      # multiply AO into base color
+            ao = img_node(tex["ao"], True)
+            if ao:
+                mix = nt.nodes.new("ShaderNodeMixRGB")
+                mix.blend_type = "MULTIPLY"
+                mix.inputs["Fac"].default_value = 0.8
+                nt.links.new(base.outputs["Color"], mix.inputs["Color1"])
+                nt.links.new(ao.outputs["Color"], mix.inputs["Color2"])
+                nt.links.new(mix.outputs["Color"], bsdf.inputs["Base Color"])
+            else:
+                nt.links.new(base.outputs["Color"], bsdf.inputs["Base Color"])
+        else:
+            nt.links.new(base.outputs["Color"], bsdf.inputs["Base Color"])
+    if "rough" in tex:
+        r = img_node(tex["rough"], True)
+        if r:
+            nt.links.new(r.outputs["Color"], bsdf.inputs["Roughness"])
+    if "metal" in tex:
+        m = img_node(tex["metal"], True)
+        if m:
+            nt.links.new(m.outputs["Color"], bsdf.inputs["Metallic"])
+    if "opacity" in tex:
+        o = img_node(tex["opacity"], True)
+        if o:
+            pset(bsdf, "Alpha", 0.0)   # ensure the socket accepts a link
+            nt.links.new(o.outputs["Color"], bsdf.inputs["Alpha"])
+            try:
+                mat.blend_method = "CLIP"
+                mat.shadow_method = "CLIP"
+            except Exception:
+                pass
+    normal_out = None
+    if "normal" in tex:
+        nn = img_node(tex["normal"], True)
+        if nn:
+            nmap = nt.nodes.new("ShaderNodeNormalMap")
+            nt.links.new(nn.outputs["Color"], nmap.inputs["Color"])
+            normal_out = nmap.outputs["Normal"]
+    if "disp" in tex:
+        dn = img_node(tex["disp"], True)
+        if dn:
+            bump = nt.nodes.new("ShaderNodeBump")
+            bump.inputs["Strength"].default_value = 0.3
+            nt.links.new(dn.outputs["Color"], bump.inputs["Height"])
+            if normal_out:
+                nt.links.new(normal_out, bump.inputs["Normal"])
+            normal_out = bump.outputs["Normal"]
+    if normal_out:
+        nt.links.new(normal_out, bsdf.inputs["Normal"])
+    return mat
+
+
+def import_fbx_object(path):
+    """Import an FBX, return one joined mesh object unlinked from the scene."""
+    _enable_fbx()
+    before = set(bpy.data.objects)
+    try:
+        bpy.ops.import_scene.fbx(filepath=path)
+    except Exception as exc:
+        print(f"[fantasy]   fbx import fail {os.path.basename(path)}: {exc}")
+        return None
+    new = [o for o in bpy.data.objects if o not in before]
+    meshes = [o for o in new if o.type == "MESH"]
+    extras = [o for o in new if o.type != "MESH"]
+    main = None
+    if meshes:
+        try:                       # join all parts into the first mesh
+            for o in bpy.data.objects:
+                o.select_set(False)
+            for o in meshes:
+                o.select_set(True)
+            bpy.context.view_layer.objects.active = meshes[0]
+            if len(meshes) > 1:
+                bpy.ops.object.join()
+            main = meshes[0]
+        except Exception:
+            main = max(meshes, key=lambda o: len(o.data.vertices))
+            for o in meshes:
+                if o is not main:
+                    bpy.data.objects.remove(o, do_unlink=True)
+    for o in extras:
+        bpy.data.objects.remove(o, do_unlink=True)
+    if main is None:
+        return None
+    for c in list(main.users_collection):   # detach from render collections
+        c.objects.unlink(main)
+    return main
+
+
+def scan_megascans_folders(root, max_depth=5):
+    """Walk root; every dir directly containing a .fbx is an asset folder."""
+    assets = []
+    root = os.path.abspath(root)
+    base = root.rstrip(os.sep).count(os.sep)
+    for dirpath, dirnames, filenames in os.walk(root):
+        if dirpath.count(os.sep) - base > max_depth:
+            dirnames[:] = []
+            continue
+        if not any(f.lower().endswith(".fbx") for f in filenames):
+            continue
+        text = os.path.basename(dirpath).lower()
+        for f in filenames:
+            if f.lower().endswith(".json"):
+                try:
+                    with open(os.path.join(dirpath, f), encoding="utf-8",
+                              errors="ignore") as fh:
+                        text += " " + fh.read().lower()
+                except Exception:
+                    pass
+        text += " " + " ".join(filenames).lower()
+        cat = classify_asset_text(text)
+        if cat:
+            assets.append((dirpath, cat, filenames))
+        dirnames[:] = []           # don't descend into an asset's LOD subdirs
+    return assets
+
+
+def load_asset_library(lib_dir, rng=None, max_per_cat=8, prefer_lod=2,
+                       tex_res="2k"):
+    """Build cat->[objects] from a library folder. Handles two layouts:
+    (1) .blend files with objects marked as Assets  -> linked
+    (2) raw Megascans/FAB folders (FBX + textures)   -> imported + PBR mats
+    Fully optional; returns None when nothing usable is found."""
     if not lib_dir or not os.path.isdir(lib_dir):
         return None
     cats = {k: [] for k in ASSET_KEYWORDS}
+
+    # (1) marked-asset .blend files
     for fname in sorted(os.listdir(lib_dir)):
         if not fname.endswith(".blend"):
             continue
@@ -575,11 +794,37 @@ def load_asset_library(lib_dir):
         for obj in dto.objects:
             if obj is None or obj.type != "MESH":
                 continue
-            lname = obj.name.lower()
-            for cat, keys in ASSET_KEYWORDS.items():
-                if any(k in lname for k in keys):
-                    cats[cat].append(obj)
-                    break
+            cat = classify_asset_text(obj.name.lower())
+            if cat:
+                cats[cat].append(obj)
+
+    # (2) raw Megascans/FAB asset folders
+    mega = scan_megascans_folders(lib_dir)
+    by_cat = {}
+    for entry in mega:
+        by_cat.setdefault(entry[1], []).append(entry)
+    for cat, items in by_cat.items():
+        if rng is not None and len(items) > max_per_cat:
+            items = rng.sample(items, max_per_cat)
+        else:
+            items = items[:max_per_cat]
+        for folder, _, filenames in items:
+            fbx = pick_lod_fbx(folder, filenames, prefer_lod)
+            if not fbx:
+                continue
+            obj = import_fbx_object(os.path.join(folder, fbx))
+            if obj is None:
+                continue
+            tex = collect_textures(folder, filenames, tex_res)
+            if tex:
+                mat = build_pbr_material(os.path.basename(folder), tex)
+                obj.data.materials.clear()
+                obj.data.materials.append(mat)
+            obj.name = "MEGA_" + os.path.basename(folder)
+            cats[cat].append(obj)
+            print(f"[fantasy]   imported {cat}: {os.path.basename(folder)} "
+                  f"({fbx}, {len(tex)} maps)")
+
     found = {k: len(v) for k, v in cats.items() if v}
     if found:
         print(f"[fantasy] asset library: {found} from {lib_dir}")
@@ -2514,7 +2759,9 @@ def main():
     script_dir = os.path.dirname(os.path.abspath(__file__)) \
         if "__file__" in globals() else os.getcwd()
     assets = load_asset_library(opts["asset_lib"] or
-                                os.path.join(script_dir, "assets"))
+                                os.path.join(script_dir, "assets"),
+                                rng=rng, prefer_lod=opts["lod"],
+                                tex_res=opts["tex_res"])
     rock_coll, rock_real = build_scatter_protos("rock", assets, mood, rng)
     tree_coll, tree_real = build_scatter_protos("tree", assets, mood, rng)
     dens_mul = 0.4 if opts["fast"] else 1.0
