@@ -48,6 +48,11 @@ import numpy as np
 from mathutils import Vector, Euler
 from mathutils import noise as mnoise
 
+# Bumped on every push. Compare the "[fantasy] script build" line in the
+# console against the number Claude tells you to confirm auto-update works.
+SCRIPT_BUILD = 8
+SCRIPT_DATE = "2026-07-30"
+
 # --------------------------------------------------------------------------
 # Arguments
 # --------------------------------------------------------------------------
@@ -2837,6 +2842,7 @@ def decide_elements(rng, mood_name, mood, opts):
 
 def main():
     t0 = time.time()
+    print(f"[fantasy] script build {SCRIPT_BUILD} ({SCRIPT_DATE})")
     opts = parse_args()
     seed = opts["seed"] if opts["seed"] is not None else random.randrange(10 ** 6)
     rng = random.Random(seed)
