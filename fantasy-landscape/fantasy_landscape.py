@@ -68,6 +68,7 @@ def parse_args():
         "asset_lib": os.environ.get("FANTASY_ASSET_LIB"),
         "hdri_dir": os.environ.get("FANTASY_HDRI_DIR"),
         "hdri": None, "clouds": "deck", "lod": 2, "tex_res": "2k",
+        "relief": 1.0, "hdri_match": None,
     }
     i = 0
     while i < len(argv):
@@ -109,6 +110,10 @@ def parse_args():
             opts["lod"] = int(nxt())
         elif a == "--tex-res":
             opts["tex_res"] = nxt().lower()
+        elif a == "--relief":
+            opts["relief"] = float(nxt())
+        elif a == "--hdri-match":
+            opts["hdri_match"] = nxt().lower()
         elif a == "--with":
             opts["force_on"] |= set(nxt().split(","))
         elif a == "--without":
@@ -294,7 +299,7 @@ def blur(H, passes=1):
 ARCHETYPES = ["alpine", "highlands", "coast", "canyon"]
 
 
-def generate_heightfield(kind, n, size, nk, rng, nrng):
+def generate_heightfield(kind, n, size, nk, rng, nrng, relief=1.0):
     """Returns (H in meters, water_z or None). Grid is n x n over size x size m."""
     axis = np.linspace(-size / 2, size / 2, n)
     X, Y = np.meshgrid(axis, axis)
@@ -348,13 +353,14 @@ def generate_heightfield(kind, n, size, nk, rng, nrng):
     detail = nk.fbm(wx * 0.006, wy * 0.006, 5, offset=(140.0, -77.0))
     H += detail * (H.max() - H.min()) * 0.07
 
-    # craggy summits: high ground gets extra ridged roughness so peaks and
-    # big hills never end as smooth cones
-    hn = (H - H.min()) / max(H.max() - H.min(), 1e-6)
-    H += (nk.ridged(wx * 0.0018, wy * 0.0018, 5, offset=(9.0, 77.0)) - 0.4) * \
-        (H.max() - H.min()) * 0.22 * np.power(hn, 1.6)
-    H += nk.ridged(wx * 0.003, wy * 0.003, 4, offset=(-66.0, 19.0)) * \
-        (H.max() - H.min()) * 0.08
+    # craggy summits: high ground gets a little extra ridged roughness so
+    # peaks and big hills never end as perfectly smooth cones (kept gentle
+    # and blurred so it never facets into shading artifacts)
+    span0 = max(H.max() - H.min(), 1e-6)
+    hn = (H - H.min()) / span0
+    crag = (nk.ridged(wx * 0.0018, wy * 0.0018, 5, offset=(9.0, 77.0)) - 0.4) \
+        * span0 * 0.11 * np.power(hn, 1.6)
+    H += blur(crag, 1)
 
     # normalize sea of negatives, erode, polish
     H = H - H.min()
@@ -367,15 +373,13 @@ def generate_heightfield(kind, n, size, nk, rng, nrng):
     H_scaled = hydraulic_erosion(H_scaled, nrng,
                                  drops=int(18000 * (n / 512) ** 2) + 6000,
                                  steps=48)
-    H = blur(H_scaled, 1) * cell
-    H = np.clip(np.nan_to_num(H, nan=lo), lo - 40, hi + 20)
+    H = blur(H_scaled, 2) * cell              # extra blur kills single-cell
+    H = np.clip(np.nan_to_num(H, nan=lo), lo - 40, hi + 20)   # spikes/creases
 
-    # rocky ledge terracing: steep faces collapse into stepped cliff bands
-    gy2, gx2 = np.gradient(H, cell)
-    steep = np.clip((np.hypot(gx2, gy2) - 0.5) / 0.55, 0.0, 1.0)
-    step = rng.uniform(14, 30)
-    Hq = np.round(H / step) * step
-    H = H + (Hq - H) * 0.35 * steep
+    # RELIEF: scale height about the mean. 0 = flat plain, 1 = default,
+    # >1 = dramatic mountains. Lets the user dial "how mountainous".
+    base = float(np.percentile(H, 30))
+    H = base + (H - base) * float(max(relief, 0.0))
 
     # water level from the POST-erosion terrain, or it drowns the map
     water_z = None
@@ -741,17 +745,26 @@ def import_fbx_object(path):
     return main
 
 
-def scan_megascans_folders(root, max_depth=5):
-    """Walk root; every dir directly containing a .fbx is an asset folder."""
+MESH_EXTS = (".fbx", ".obj")
+
+
+def scan_megascans_folders(root, max_depth=8):
+    """Walk root; every dir directly containing a mesh file is an asset
+    folder. Prints a diagnostic summary so an unfamiliar library layout is
+    visible in the console (how many mesh folders, and why they classified
+    or didn't)."""
     assets = []
     root = os.path.abspath(root)
     base = root.rstrip(os.sep).count(os.sep)
+    n_mesh_dirs = 0
+    unclassified = []
     for dirpath, dirnames, filenames in os.walk(root):
         if dirpath.count(os.sep) - base > max_depth:
             dirnames[:] = []
             continue
-        if not any(f.lower().endswith(".fbx") for f in filenames):
+        if not any(f.lower().endswith(MESH_EXTS) for f in filenames):
             continue
+        n_mesh_dirs += 1
         text = os.path.basename(dirpath).lower()
         for f in filenames:
             if f.lower().endswith(".json"):
@@ -765,7 +778,21 @@ def scan_megascans_folders(root, max_depth=5):
         cat = classify_asset_text(text)
         if cat:
             assets.append((dirpath, cat, filenames))
+        else:
+            unclassified.append(os.path.basename(dirpath))
         dirnames[:] = []           # don't descend into an asset's LOD subdirs
+    if n_mesh_dirs:
+        by_cat = {}
+        for _, c, _ in assets:
+            by_cat[c] = by_cat.get(c, 0) + 1
+        print(f"[fantasy] megascans scan: {n_mesh_dirs} mesh folders under "
+              f"{root} -> classified {by_cat or '{}'}")
+        if unclassified:
+            print(f"[fantasy]   {len(unclassified)} unclassified, e.g. "
+                  f"{unclassified[:6]}")
+    else:
+        print(f"[fantasy] megascans scan: no .fbx/.obj folders found under "
+              f"{root} (check the path, or that meshes are extracted)")
     return assets
 
 
@@ -1091,46 +1118,83 @@ def analyze_hdri(path):
                 contrast=contrast, sun_elev=sun_elev, sun_azim=sun_azim)
 
 
-def classify_hdri(info):
-    fname = os.path.basename(info["path"]).lower()
-    for mood in MOODS:
-        if mood in fname or mood.replace("_", "-") in fname:
-            return mood
-    w, s, c = info["warmth"], info["sat"], info["contrast"]
-    if info["mean_lum"] < 0.05:
-        return "moonlit"
-    if w > 0.25 and s > 0.3:
-        return "golden_hour" if c > 20 else "blue_hour"
-    if w < 0.0 and s > 0.25:
-        return "blue_hour"
-    if s < 0.18 and c < 12:
-        return "misty_dawn" if info["mean_lum"] > 0.35 else "stormy"
-    if s > 0.45:
-        return "alien_dusk"
-    return "stormy" if info["mean_lum"] < 0.25 else "golden_hour"
+# Filename hints. HDRI names rarely encode a mood reliably, so we pick by
+# filename only: filter out interiors, then (absent an explicit --hdri-match)
+# gently prefer names that hint at the mood. The user steers with HDRI_MATCH.
+INTERIOR_HINTS = ("interior", "indoor", "room", "studio", "hall", "office",
+                  "garage", "workshop", "locker", "cellar", "basement",
+                  "theater", "theatre", "museum", "lobby", "kitchen",
+                  "bathroom", "bedroom", "stairwell", "corridor", "shop",
+                  "restaurant", "cafe", "church", "hangar", "warehouse",
+                  "attic", "gym", "tunnel_interior")
+MOOD_HDRI_HINTS = {
+    "golden_hour": ("sunset", "sunrise", "golden", "evening", "dusk", "dawn"),
+    "misty_dawn": ("misty", "fog", "foggy", "morning", "overcast", "cloudy"),
+    "stormy": ("storm", "overcast", "cloudy", "dramatic", "rain"),
+    "blue_hour": ("blue", "dusk", "twilight", "evening", "sunset"),
+    "moonlit": ("night", "moon", "star", "midnight"),
+    "alien_dusk": ("sunset", "dusk", "dramatic", "sky"),
+}
 
 
-def index_hdris(hdri_dir):
+def gather_hdris(hdri_dir):
+    """Every .hdr/.exr under hdri_dir (recursive), preferring smaller
+    (1k/2k) variants of the same name for fast loading."""
     if not hdri_dir or not os.path.isdir(hdri_dir):
-        return {}
-    by_mood = {}
-    for fname in sorted(os.listdir(hdri_dir)):
-        if not fname.lower().endswith((".hdr", ".exr")):
-            continue
-        try:
-            info = analyze_hdri(os.path.join(hdri_dir, fname))
-        except Exception as exc:
-            print(f"[fantasy] hdri skip {fname}: {exc}")
-            continue
-        by_mood.setdefault(classify_hdri(info), []).append(info)
-    if by_mood:
-        print("[fantasy] hdris:",
-              {k: len(v) for k, v in by_mood.items()})
-    return by_mood
+        return []
+    files = []
+    for dp, _, fnames in os.walk(hdri_dir):
+        for f in fnames:
+            if f.lower().endswith((".hdr", ".exr")):
+                files.append(os.path.join(dp, f))
+    return files
 
 
-def apply_hdri(scene, mood, info, desired_azim, rng, coll):
-    """World = HDRI env; returns a sun lamp aligned with the HDRI sun."""
+def _res_key(path):        # sort key: prefer 1k, then 2k, then bigger
+    low = os.path.basename(path).lower()
+    for i, r in enumerate(("_1k", "_2k", "_4k", "_8k", "_16k")):
+        if r in low:
+            return i
+    return 2
+
+
+def pick_hdri(hdri_dir, mood, match, rng):
+    files = gather_hdris(hdri_dir)
+    if not files:
+        return None
+    if match:
+        pool = [f for f in files if match in os.path.basename(f).lower()]
+        tag = f"match '{match}'"
+    else:
+        outdoor = [f for f in files if not any(
+            k in os.path.basename(f).lower() for k in INTERIOR_HINTS)]
+        hinted = [f for f in outdoor if any(
+            k in os.path.basename(f).lower() for k in MOOD_HDRI_HINTS[mood])]
+        pool = hinted or outdoor or files
+        tag = f"mood '{mood}'" if hinted else "outdoor"
+    if not pool:
+        return None
+    # collapse duplicate names to the lowest-res variant, then choose
+    by_stem = {}
+    for f in pool:
+        stem = re.sub(r"_\d+k", "", os.path.basename(f).lower())
+        if stem not in by_stem or _res_key(f) < _res_key(by_stem[stem]):
+            by_stem[stem] = f
+    choice = rng.choice(sorted(by_stem.values()))
+    print(f"[fantasy] hdri pool: {len(by_stem)} unique ({tag}) of "
+          f"{len(files)} files -> {os.path.basename(choice)}")
+    return choice
+
+
+def apply_hdri(scene, path, desired_azim, rng):
+    """Set the world to an HDRI environment. Returns (sun_elev, sun_azim)
+    describing where the HDRI's sun sits after alignment (for cloud gaps).
+    No extra sun lamp is created -- the HDRI itself lights the scene."""
+    try:
+        info = analyze_hdri(path)
+    except Exception as exc:
+        print(f"[fantasy] hdri analyze failed: {exc}")
+        info = dict(sun_elev=math.radians(25), sun_azim=0.0, mean_lum=0.25)
     world = bpy.data.worlds.new("FantasyHDRI")
     world.use_nodes = True
     scene.world = world
@@ -1139,34 +1203,22 @@ def apply_hdri(scene, mood, info, desired_azim, rng, coll):
     out = nt.nodes.new("ShaderNodeOutputWorld")
     bg = nt.nodes.new("ShaderNodeBackground")
     env = nt.nodes.new("ShaderNodeTexEnvironment")
-    env.image = bpy.data.images.load(info["path"])
+    env.image = bpy.data.images.load(path)
     mapping = nt.nodes.new("ShaderNodeMapping")
     texco = nt.nodes.new("ShaderNodeTexCoord")
-    rot = info["sun_azim"] - desired_azim
-    mapping.inputs["Rotation"].default_value = (0, 0, rot)
+    # rotate so the HDRI's sun lands at the composition's desired azimuth
+    mapping.inputs["Rotation"].default_value = (0, 0,
+                                                desired_azim - info["sun_azim"])
     nt.links.new(texco.outputs["Generated"], mapping.inputs["Vector"])
     nt.links.new(mapping.outputs["Vector"], env.inputs["Vector"])
     nt.links.new(env.outputs["Color"], bg.inputs["Color"])
     nt.links.new(bg.outputs["Background"], out.inputs["Surface"])
-    # normalize wildly different HDRI exposures to the mood's target level
-    target = 0.22 * sum(rng.uniform(*MOODS[mood]["sky_strength"])
-                        for _ in (1,)) / max(MOODS[mood]["sky_strength"][0], 1e-6)
-    bg.inputs["Strength"].default_value = min(
-        4.0, 0.35 / max(info["mean_lum"], 1e-4))
-
-    sun_data = bpy.data.lights.new("Sun", "SUN")
-    mood_p = MOODS[mood]
-    sun_data.energy = rng.uniform(*mood_p["sun_energy"])
-    sun_data.color = mood_p["sun_color"]
-    sun_data.angle = math.radians(rng.uniform(0.5, 2.0))
-    sun = bpy.data.objects.new("Sun", sun_data)
-    link_obj(sun, coll)
-    elev = max(info["sun_elev"], math.radians(2.0))
-    sun["elev"] = elev
-    if info["contrast"] < 8:        # overcast HDRI: soft top light
-        sun_data.energy *= 0.5
-        sun_data.angle = math.radians(15)
-    return sun
+    # HDRI Haven maps are physically calibrated; gently normalize toward a
+    # mid exposure so dim and bright skies land in the same ballpark
+    bg.inputs["Strength"].default_value = float(
+        np.clip(0.28 / max(info["mean_lum"], 1e-3), 0.35, 2.5))
+    scene.view_settings.exposure = 0.0     # HDRI brightness set above, not here
+    return max(info["sun_elev"], math.radians(3.0)), desired_azim
 
 
 # --------------------------------------------------------------------------
@@ -1208,10 +1260,15 @@ def build_volume_clouds(mood, rng, coll, cam, sun_azim, sun_elev, top_z,
     gout = n.new("NodeGroupOutput")
 
     cube = n.new("GeometryNodeVolumeCube")
-    cube.inputs["Min"].default_value = (-16000, -16000, base_z)
-    cube.inputs["Max"].default_value = (16000, 16000, base_z + thick)
-    for axis, res in (("Resolution X", 192), ("Resolution Y", 192),
-                      ("Resolution Z", 24)):
+    # domain sized to what the camera can see; a 32 km cube at fine voxels
+    # can exhaust CPU memory (crash) when no GPU is available
+    span = 9000.0
+    cube.inputs["Min"].default_value = (cam.location.x - span,
+                                        cam.location.y - span, base_z)
+    cube.inputs["Max"].default_value = (cam.location.x + span,
+                                        cam.location.y + span, base_z + thick)
+    for axis, res in (("Resolution X", 128), ("Resolution Y", 128),
+                      ("Resolution Z", 16)):
         cube.inputs[axis].default_value = res
 
     pos = n.new("GeometryNodeInputPosition")
@@ -1548,7 +1605,7 @@ def terrain_material(mood, rng, water_z, snow_z, rock_hue=None):
 
     # horizontal strata bands darken the cliff faces
     smap = nt.nodes.new("ShaderNodeMapping")
-    smap.inputs["Scale"].default_value = (0.02, 0.02, 0.30)
+    smap.inputs["Scale"].default_value = (0.02, 0.02, 0.12)
     nt.links.new(geo.outputs["Position"], smap.inputs["Vector"])
     strata_noise = nt.nodes.new("ShaderNodeTexNoise")
     strata_noise.inputs["Scale"].default_value = 1.0
@@ -1558,11 +1615,11 @@ def terrain_material(mood, rng, water_z, snow_z, rock_hue=None):
     nt.links.new(strata_noise.outputs["Fac"], strata_band.inputs["Value"])
     strata_band.inputs["From Min"].default_value = 0.47
     strata_band.inputs["From Max"].default_value = 0.62
-    strata_band.inputs["To Max"].default_value = 0.55
+    strata_band.inputs["To Max"].default_value = 0.28
     steep2 = nt.nodes.new("ShaderNodeMath")   # strata only on true cliffs
     steep2.operation = "POWER"
     nt.links.new(slope_ramp.outputs["Result"], steep2.inputs[0])
-    steep2.inputs[1].default_value = 2.2
+    steep2.inputs[1].default_value = 3.0
     strata_f = nt.nodes.new("ShaderNodeMath")
     strata_f.operation = "MULTIPLY"
     nt.links.new(strata_band.outputs["Result"], strata_f.inputs[0])
@@ -1658,9 +1715,9 @@ def terrain_material(mood, rng, water_z, snow_z, rock_hue=None):
     camd = nt.nodes.new("ShaderNodeCameraData")
     haze_rng = nt.nodes.new("ShaderNodeMapRange")
     nt.links.new(camd.outputs["View Distance"], haze_rng.inputs["Value"])
-    haze_rng.inputs["From Min"].default_value = 900.0
-    haze_rng.inputs["From Max"].default_value = 14000.0
-    haze_rng.inputs["To Max"].default_value = 0.75
+    haze_rng.inputs["From Min"].default_value = 2600.0   # keep near/mid ground
+    haze_rng.inputs["From Max"].default_value = 16000.0  # crisp; only the far
+    haze_rng.inputs["To Max"].default_value = 0.5        # shell truly hazes
     haze_mix = nt.nodes.new("ShaderNodeMix")
     haze_mix.data_type = "RGBA"
     nt.links.new(haze_rng.outputs["Result"], haze_mix.inputs["Factor"])
@@ -2694,7 +2751,7 @@ def main():
     # ---- terrain -----------------------------------------------------------
     size = 3000.0
     H, water_z = generate_heightfield(archetype, opts["grid"], size, nk, rng,
-                                      nrng)
+                                      nrng, relief=opts["relief"])
     terrain = Terrain(H, size)
     # snowline: genuinely high ground only, never rolling lowlands
     relief = float(H.max() - H.min())
@@ -2796,33 +2853,29 @@ def main():
     azim = sun_azimuth_for(mood, cam, focal, rng)
     va = math.atan2(focal.y - cam.location.y, focal.x - cam.location.x)
 
-    # HDRI environment (explicit file, or auto-picked from the folder)
-    hdri_used = None
-    if opts["hdri"]:
-        try:
-            hdri_used = analyze_hdri(opts["hdri"])
-        except Exception as exc:
-            print(f"[fantasy] hdri load failed: {exc}")
-    else:
-        bank = index_hdris(opts["hdri_dir"] or
-                           os.path.join(script_dir, "hdri"))
-        pool = bank.get(mood_name) or []
-        if pool:
-            hdri_used = rng.choice(pool)
+    # HDRI environment (explicit file, or picked from the folder by name).
+    # When an HDRI is used it lights the scene by itself -- no sun lamp, and
+    # no procedural clouds (the HDRI already carries a sky).
+    hdri_path = opts["hdri"]
+    if not hdri_path:
+        hdri_path = pick_hdri(opts["hdri_dir"] or os.path.join(script_dir,
+                              "hdri"), mood_name, opts["hdri_match"], rng)
+    hdri_used = bool(hdri_path)
     if hdri_used:
         bpy.data.objects.remove(sun, do_unlink=True)
-        sun = apply_hdri(scene, mood_name, hdri_used, azim, rng, c_atmos)
-        sky = None
-        print(f"[fantasy] hdri: {os.path.basename(hdri_used['path'])}")
-    aim_sun(sun, sky, sun["elev"], azim)
+        sun_elev, azim = apply_hdri(scene, hdri_path, azim, rng)
+    else:
+        sun_elev = sun["elev"]
+        aim_sun(sun, sky, sun_elev, azim)
 
     cloud_mode = "deck" if opts["fast"] else opts["clouds"]
-    if cloud_mode == "volume":
-        build_volume_clouds(mood, rng, c_atmos, cam, azim, sun["elev"],
-                            float(H.max()), view_azim=va)
-    elif cloud_mode == "deck" and not hdri_used:
-        build_cloud_deck(mood, rng, c_atmos, cam, azim, sun["elev"],
-                         float(H.max()), view_azim=va)
+    if not hdri_used:
+        if cloud_mode == "volume":
+            build_volume_clouds(mood, rng, c_atmos, cam, azim, sun_elev,
+                                float(H.max()), view_azim=va)
+        elif cloud_mode == "deck":
+            build_cloud_deck(mood, rng, c_atmos, cam, azim, sun_elev,
+                             float(H.max()), view_azim=va)
 
     view_azim = math.atan2(focal.y - cam.location.y, focal.x - cam.location.x)
     if "ships" in chosen:
@@ -2838,7 +2891,7 @@ def main():
     print(f"[fantasy] elements: {', '.join(present) if present else 'none'} | "
           f"scatter: rocks={'assets' if rock_real else 'procedural'} "
           f"trees={'assets' if tree_real else 'procedural'} | "
-          f"clouds={cloud_mode}{' +hdri' if hdri_used else ''} | "
+          f"sky={'hdri' if hdri_used else cloud_mode} | "
           f"water={'yes' if water_z is not None else 'no'} | "
           f"lens={int(cam.data.lens)}mm | built in {time.time() - t0:.1f}s")
     print(f"[fantasy] recipe: --seed {seed} --mood {mood_name} "

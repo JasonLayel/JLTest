@@ -1,4 +1,4 @@
-"""
+r"""
 run_in_blender.py  --  beginner-friendly launcher for fantasy_landscape.py
 ===========================================================================
 
@@ -36,7 +36,18 @@ HDRI_DIR  = r"F:\HDRI\HDRI Haven"        # your .hdr / .exr skies
 SEED   = 7        # any number = a repeatable world;  None = random each run
 MOOD   = ""       # "" = random, or one of:
                   # golden_hour  misty_dawn  stormy  blue_hour  moonlit  alien_dusk
-CLOUDS = "deck"   # "deck" = fast cloud layer, "volume" = volumetric (slower), "off"
+
+# Landscape shape:
+ARCHETYPE = ""    # "" = random, or:  alpine  highlands  coast  canyon
+RELIEF    = 1.0   # how mountainous:  0.3 = gentle plains, 1.0 = default,
+                  #                   1.6 = dramatic peaks
+
+# Sky:
+CLOUDS = "deck"   # only used when NO HDRI is loaded:
+                  # "deck" = fast cloud layer, "volume" = volumetric, "off"
+HDRI_MATCH = ""   # pick skies whose FILENAME contains this text, e.g.
+                  # "sunset", "field", "kloppenheim". "" = auto (outdoor).
+                  # Interiors are filtered out automatically.
 
 # Quality. Start here; raise GRID / lower it for speed.
 GRID    = 384     # terrain detail:  256 = fast,  384 = balanced,  512 = detailed
@@ -80,15 +91,19 @@ if not os.path.exists(main_script):
 
 argv = ["fantasy_landscape.py", "--", "--grid", str(GRID),
         "--clouds", CLOUDS, "--lod", str(LOD), "--tex-res", TEXRES,
-        "--res", RES, "--samples", str(SAMPLES)]
+        "--res", RES, "--samples", str(SAMPLES), "--relief", str(RELIEF)]
 if ASSET_LIB:
     argv += ["--asset-lib", ASSET_LIB]
 if HDRI_DIR:
     argv += ["--hdri-dir", HDRI_DIR]
+if HDRI_MATCH:
+    argv += ["--hdri-match", HDRI_MATCH]
 if SEED is not None:
     argv += ["--seed", str(SEED)]
 if MOOD:
     argv += ["--mood", MOOD]
+if ARCHETYPE:
+    argv += ["--archetype", ARCHETYPE]
 if RENDER_TO:
     argv += ["--render", RENDER_TO]
 sys.argv = argv
