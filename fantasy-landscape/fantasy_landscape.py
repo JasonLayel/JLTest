@@ -69,6 +69,8 @@ def parse_args():
         "hdri_dir": os.environ.get("FANTASY_HDRI_DIR"),
         "hdri": None, "clouds": "deck", "lod": 2, "tex_res": "2k",
         "relief": 1.0, "hdri_match": None,
+        "heightmap": None, "heightmap_dir": None, "height_scale": 650.0,
+        "size": 3000.0,
     }
     i = 0
     while i < len(argv):
@@ -114,6 +116,14 @@ def parse_args():
             opts["relief"] = float(nxt())
         elif a == "--hdri-match":
             opts["hdri_match"] = nxt().lower()
+        elif a == "--heightmap":
+            opts["heightmap"] = nxt()
+        elif a == "--heightmap-dir":
+            opts["heightmap_dir"] = nxt()
+        elif a == "--height-scale":
+            opts["height_scale"] = float(nxt())
+        elif a == "--size":
+            opts["size"] = float(nxt())
         elif a == "--with":
             opts["force_on"] |= set(nxt().split(","))
         elif a == "--without":
@@ -297,6 +307,54 @@ def blur(H, passes=1):
 
 
 ARCHETYPES = ["alpine", "highlands", "coast", "canyon"]
+
+
+def load_heightmap_image(path, n):
+    """Load a 16-bit/float heightmap (EXR, PNG16, TIFF) and resample it to an
+    n x n float array normalized to 0..1. Red channel is treated as height."""
+    img = bpy.data.images.load(path)
+    try:
+        img.colorspace_settings.name = "Non-Color"
+    except Exception:
+        pass
+    w, h = img.size
+    ch = img.channels
+    px = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, ch)
+    bpy.data.images.remove(img)
+    hgt = px[..., 0][::-1]                 # image row 0 is the bottom
+    # bilinear resample to n x n
+    ys = np.linspace(0, h - 1, n)
+    xs = np.linspace(0, w - 1, n)
+    Y, X = np.meshgrid(ys, xs, indexing="ij")
+    x0 = np.floor(X).astype(np.int64)
+    y0 = np.floor(Y).astype(np.int64)
+    x1 = np.clip(x0 + 1, 0, w - 1)
+    y1 = np.clip(y0 + 1, 0, h - 1)
+    fx, fy = X - x0, Y - y0
+    top = hgt[y0, x0] * (1 - fx) + hgt[y0, x1] * fx
+    bot = hgt[y1, x0] * (1 - fx) + hgt[y1, x1] * fx
+    H = top * (1 - fy) + bot * fy
+    rng_h = H.max() - H.min()
+    if rng_h > 1e-9:
+        H = (H - H.min()) / rng_h
+    return H.astype(np.float64)
+
+
+def heightfield_from_map(path, n, size, rng, nrng, height_scale, relief=1.0,
+                         erode=False):
+    """Terrain from an external heightmap. Gaea/World Creator maps are already
+    eroded, so erosion is off by default; a light thermal pass is optional."""
+    H = load_heightmap_image(path, n) * height_scale
+    cell = size / (n - 1)
+    if erode:
+        Hs = thermal_erosion(H / cell, iterations=12,
+                             talus=math.tan(math.radians(38)), k=0.3)
+        H = Hs * cell
+    H = blur(H, 1)
+    base = float(np.percentile(H, 30))
+    H = base + (H - base) * float(max(relief, 0.0))
+    water_z = None
+    return H.astype(np.float64), water_z
 
 
 def generate_heightfield(kind, n, size, nk, rng, nrng, relief=1.0):
@@ -998,8 +1056,8 @@ def gn_scatter_group():
     cscale = n.new("ShaderNodeMath")            # noise Scale expects ~1/m
     cscale.operation = "MULTIPLY"
     lk(gin.outputs["Clump Scale"], cscale.inputs[0])
-    cscale.inputs[1].default_value = 1000.0
-    lk(cscale.outputs["Value"], clump.inputs["Scale"])
+    cscale.inputs[1].default_value = 1.0    # Clump Scale IS the noise scale
+    lk(cscale.outputs["Value"], clump.inputs["Scale"])   # ~0.004 => 250 m fields
     thresh = n.new("ShaderNodeMath")
     thresh.operation = "SUBTRACT"
     thresh.inputs[0].default_value = 1.0
@@ -1291,7 +1349,7 @@ def build_volume_clouds(mood, rng, coll, cam, sun_azim, sun_elev, top_z,
     iface = ng.interface
     for sname, default in (("Coverage", cover), ("Noise Scale", 0.00035),
                            ("Warp", rng.uniform(0.5, 1.5)),
-                           ("Density", rng.uniform(0.004, 0.010)),
+                           ("Density", rng.uniform(0.005, 0.011)),
                            ("Gap Radius", gap_r)):
         s = iface.new_socket(sname, in_out="INPUT",
                              socket_type="NodeSocketFloat")
@@ -1407,6 +1465,13 @@ def build_volume_clouds(mood, rng, coll, cam, sun_azim, sun_elev, top_z,
     link_obj(host, coll)
     mod = host.modifiers.new("Clouds", "NODES")
     mod.node_group = ng
+    # let the clouds be seen but not shadow the whole terrain into darkness
+    # under a low sun (they read as lit puffs in the sky; the emissive deck
+    # is the mode that does dramatic god-rays)
+    try:
+        host.visible_shadow = False
+    except Exception:
+        pass
     return host
 
 
@@ -2798,9 +2863,23 @@ def main():
     c_cam = new_collection("Cameras")
 
     # ---- terrain -----------------------------------------------------------
-    size = 3000.0
-    H, water_z = generate_heightfield(archetype, opts["grid"], size, nk, rng,
-                                      nrng, relief=opts["relief"])
+    size = opts["size"]
+    hmap = opts["heightmap"]
+    if not hmap and opts["heightmap_dir"] and os.path.isdir(opts["heightmap_dir"]):
+        maps = [os.path.join(opts["heightmap_dir"], f)
+                for f in sorted(os.listdir(opts["heightmap_dir"]))
+                if f.lower().endswith((".exr", ".png", ".tif", ".tiff", ".hdr"))]
+        if maps:
+            hmap = rng.choice(maps)
+    if hmap:
+        print(f"[fantasy] heightmap: {os.path.basename(hmap)} "
+              f"scale={opts['height_scale']}m grid={opts['grid']}")
+        H, water_z = heightfield_from_map(hmap, opts["grid"], size, rng, nrng,
+                                          opts["height_scale"],
+                                          relief=opts["relief"])
+    else:
+        H, water_z = generate_heightfield(archetype, opts["grid"], size, nk,
+                                          rng, nrng, relief=opts["relief"])
     terrain = Terrain(H, size)
     # snowline: genuinely high ground only, never rolling lowlands
     relief = float(H.max() - H.min())
@@ -2911,20 +2990,27 @@ def main():
                               "hdri"), mood_name, opts["hdri_match"], rng)
     hdri_used = bool(hdri_path)
     if hdri_used:
-        bpy.data.objects.remove(sun, do_unlink=True)
-        sun_elev, azim = apply_hdri(scene, hdri_path, azim, rng)
+        try:
+            sun_elev, azim = apply_hdri(scene, hdri_path, azim, rng)
+            bpy.data.objects.remove(sun, do_unlink=True)
+        except Exception as exc:      # bad/corrupt HDRI -> keep procedural sky
+            print(f"[fantasy] hdri failed ({exc}); using procedural sky")
+            hdri_used = False
+            sun_elev = sun["elev"]
+            aim_sun(sun, sky, sun_elev, azim)
     else:
         sun_elev = sun["elev"]
         aim_sun(sun, sky, sun_elev, azim)
 
     cloud_mode = "deck" if opts["fast"] else opts["clouds"]
-    if not hdri_used:
-        if cloud_mode == "volume":
-            build_volume_clouds(mood, rng, c_atmos, cam, azim, sun_elev,
-                                float(H.max()), view_azim=va)
-        elif cloud_mode == "deck":
-            build_cloud_deck(mood, rng, c_atmos, cam, azim, sun_elev,
-                             float(H.max()), view_azim=va)
+    # volumetric clouds are real 3D geometry -> fine over any sky, incl. HDRI.
+    # the emissive deck is a flat card, so it stays off when an HDRI is used.
+    if cloud_mode == "volume":
+        build_volume_clouds(mood, rng, c_atmos, cam, azim, sun_elev,
+                            float(H.max()), view_azim=va)
+    elif cloud_mode == "deck" and not hdri_used:
+        build_cloud_deck(mood, rng, c_atmos, cam, azim, sun_elev,
+                         float(H.max()), view_azim=va)
 
     view_azim = math.atan2(focal.y - cam.location.y, focal.x - cam.location.x)
     if "ships" in chosen:

@@ -42,6 +42,15 @@ ARCHETYPE = ""    # "" = random, or:  alpine  highlands  coast  canyon
 RELIEF    = 1.0   # how mountainous:  0.3 = gentle plains, 1.0 = default,
                   #                   1.6 = dramatic peaks
 
+# Heightmaps (for far higher fidelity -- export 16-bit from Gaea / World
+# Creator). Point HEIGHTMAP_DIR at a folder of .exr/.png16/.tif maps and one
+# is picked per run, OR set HEIGHTMAP to a single file. "" = use built-in
+# procedural terrain. Raise GRID (below) to actually resolve their detail.
+HEIGHTMAP     = r""
+HEIGHTMAP_DIR = r""       # e.g.  r"F:\Heightmaps\Gaea"
+HEIGHT_SCALE  = 650       # metres from the map's lowest to highest point
+TERRAIN_SIZE  = 3000      # metres across the playable terrain
+
 # Sky:
 CLOUDS = "deck"   # only used when NO HDRI is loaded:
                   # "deck" = fast cloud layer, "volume" = volumetric, "off"
@@ -50,7 +59,8 @@ HDRI_MATCH = ""   # pick skies whose FILENAME contains this text, e.g.
                   # Interiors are filtered out automatically.
 
 # Quality. Start here; raise GRID / lower it for speed.
-GRID    = 384     # terrain detail:  256 = fast,  384 = balanced,  512 = detailed
+GRID    = 512     # terrain mesh resolution:  384 = fast, 512 = detailed,
+                  # 1024 = crisp (great with a heightmap), 2048 = very heavy
 LOD     = 2       # Megascans detail level to load:  0 = highest, 3 = lightest
 TEXRES  = "2K"    # texture resolution to prefer:  "1K"  "2K"  "4K"
 RES     = "1280x720"   # render size. "960x540" previews fast; "1920x1080" for finals
@@ -125,6 +135,11 @@ if HDRI_DIR:
     argv += ["--hdri-dir", HDRI_DIR]
 if HDRI_MATCH:
     argv += ["--hdri-match", HDRI_MATCH]
+if HEIGHTMAP:
+    argv += ["--heightmap", HEIGHTMAP]
+if HEIGHTMAP_DIR:
+    argv += ["--heightmap-dir", HEIGHTMAP_DIR]
+argv += ["--height-scale", str(HEIGHT_SCALE), "--size", str(TERRAIN_SIZE)]
 if SEED is not None:
     argv += ["--seed", str(SEED)]
 if MOOD:
