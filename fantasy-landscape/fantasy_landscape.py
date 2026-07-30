@@ -559,9 +559,14 @@ def emissive_material(name, color, strength):
 # --------------------------------------------------------------------------
 
 ASSET_KEYWORDS = {
-    "rock": ("rock", "cliff", "stone", "boulder", "scree", "rubble", "crag"),
-    "tree": ("tree", "pine", "spruce", "fir", "birch", "oak", "juniper",
-             "cypress", "poplar"),
+    # trees/plants checked first so a "3dplant" path never falls through to
+    # the broad rock words
+    "tree": ("tree", "3dplant", "plant", "vegetation", "foliage", "bush",
+             "shrub", "fern", "pine", "spruce", "fir", "birch", "oak",
+             "juniper", "cypress", "poplar", "willow", "maple", "aspen",
+             "trunk", "stump", "log", "branch"),
+    "rock": ("rock", "cliff", "stone", "boulder", "scree", "rubble", "crag",
+             "granite", "sandstone", "limestone"),
 }
 
 
@@ -610,27 +615,54 @@ def pick_lod_fbx(folder, filenames, prefer_lod):
     return best[1]
 
 
-def collect_textures(folder, filenames, res_pref):
-    imgs = [f for f in filenames if f.lower().endswith(_TEX_EXT)]
+def _list_images(d):
+    try:
+        return [(os.path.join(d, f), f) for f in os.listdir(d)
+                if f.lower().endswith(_TEX_EXT)]
+    except Exception:
+        return []
+
+
+def collect_textures(folder, res_pref):
+    """Find one texture per PBR role. Textures usually sit beside the FBX;
+    some libraries put them one level up or in a 'Textures' subfolder, so we
+    search the folder first, then the neighborhood for anything missing."""
     order = (res_pref.lower(),) + tuple(r for r in _RES_PREF
                                         if r != res_pref.lower())
 
-    def res_rank(fname):
-        low = fname.lower()
+    def res_rank(name):
+        low = name.lower()
         for i, r in enumerate(order):
             if r in low:
                 return i
         return len(order)
 
+    here = _list_images(folder)
+    near = []
+    near += _list_images(os.path.dirname(folder))
+    try:
+        for e in os.listdir(folder):
+            p = os.path.join(folder, e)
+            if os.path.isdir(p):
+                near += _list_images(p)
+    except Exception:
+        pass
+
+    def match(role, keys, pool):
+        cands = [(p, f) for (p, f) in pool if any(k in f.lower() for k in keys)]
+        if role == "normal":     # keep 'ao'/'col' substrings from stealing it
+            cands = [(p, f) for (p, f) in cands if "normal" in f.lower()
+                     or "_nrm" in f.lower() or "_nor" in f.lower()]
+        if not cands:
+            return None
+        cands.sort(key=lambda pf: (res_rank(pf[1]), len(pf[1])))
+        return cands[0][0]
+
     tex = {}
     for role, keys in MEGA_TEX_ROLES.items():
-        cands = [f for f in imgs if any(k in f.lower() for k in keys)]
-        if role == "normal":   # don't let 'ao'/'col' substrings steal normals
-            cands = [f for f in cands if "normal" in f.lower()
-                     or "_nrm" in f.lower() or "_nor" in f.lower()]
-        if cands:
-            cands.sort(key=lambda f: (res_rank(f), len(f)))
-            tex[role] = os.path.join(folder, cands[0])
+        hit = match(role, keys, here) or match(role, keys, near)
+        if hit:
+            tex[role] = hit
     return tex
 
 
@@ -748,11 +780,11 @@ def import_fbx_object(path):
 MESH_EXTS = (".fbx", ".obj")
 
 
-def scan_megascans_folders(root, max_depth=8):
+def scan_megascans_folders(root, max_depth=12):
     """Walk root; every dir directly containing a mesh file is an asset
-    folder. Prints a diagnostic summary so an unfamiliar library layout is
-    visible in the console (how many mesh folders, and why they classified
-    or didn't)."""
+    folder. Classification uses the WHOLE relative path (so a parent folder
+    like '3dplant' or 'rock' is enough) plus any JSON metadata and the file
+    names. Prints a diagnostic so an unfamiliar layout is visible."""
     assets = []
     root = os.path.abspath(root)
     base = root.rstrip(os.sep).count(os.sep)
@@ -765,7 +797,8 @@ def scan_megascans_folders(root, max_depth=8):
         if not any(f.lower().endswith(MESH_EXTS) for f in filenames):
             continue
         n_mesh_dirs += 1
-        text = os.path.basename(dirpath).lower()
+        # full path from the library root: catches '.../Downloaded/3dplant/...'
+        text = os.path.relpath(dirpath, root).replace(os.sep, " ").lower()
         for f in filenames:
             if f.lower().endswith(".json"):
                 try:
@@ -776,8 +809,19 @@ def scan_megascans_folders(root, max_depth=8):
                     pass
         text += " " + " ".join(filenames).lower()
         cat = classify_asset_text(text)
+        fallback = False
+        if cat is None:
+            # Megascans/FAB 3D scans with ID-named folders and no useful
+            # metadata: non-plant scans scattered on terrain are almost
+            # always rocks/debris, so default them to rock rather than drop
+            is_mega = any(k in text for k in ("3d", "megascans", "quixel",
+                                              "fab", "scan"))
+            if is_mega:
+                cat, fallback = "rock", True
         if cat:
             assets.append((dirpath, cat, filenames))
+            if fallback:
+                unclassified.append(os.path.basename(dirpath) + " ->rock")
         else:
             unclassified.append(os.path.basename(dirpath))
         dirnames[:] = []           # don't descend into an asset's LOD subdirs
@@ -842,7 +886,7 @@ def load_asset_library(lib_dir, rng=None, max_per_cat=8, prefer_lod=2,
             obj = import_fbx_object(os.path.join(folder, fbx))
             if obj is None:
                 continue
-            tex = collect_textures(folder, filenames, tex_res)
+            tex = collect_textures(folder, tex_res)
             if tex:
                 mat = build_pbr_material(os.path.basename(folder), tex)
                 obj.data.materials.clear()
@@ -1478,13 +1522,18 @@ def configure_render(scene, opts, mood, rng):
             try:
                 prefs.compute_device_type = dev_type
                 prefs.get_devices()
-                if any(d.type != "CPU" for d in prefs.devices):
-                    for d in prefs.devices:
-                        d.use = True
+                gpus = [d for d in prefs.devices if d.type != "CPU"]
+                if gpus:
+                    for d in prefs.devices:      # GPU(s) on, CPU off (OptiX
+                        d.use = (d.type != "CPU")  # + CPU can be slower)
                     cycles.device = "GPU"
+                    print(f"[fantasy] render device: {dev_type} -> "
+                          f"{', '.join(d.name for d in gpus)}")
                     break
             except Exception:
                 continue
+        else:
+            print("[fantasy] render device: CPU (no GPU backend found)")
     except Exception:
         pass
     vs = scene.view_settings
