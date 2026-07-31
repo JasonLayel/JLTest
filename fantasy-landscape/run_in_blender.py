@@ -51,12 +51,17 @@ HEIGHTMAP_DIR = r""       # e.g.  r"F:\Heightmaps\Gaea"
 HEIGHT_SCALE  = 650       # metres from the map's lowest to highest point
 TERRAIN_SIZE  = 3000      # metres across the playable terrain
 
-# Sky:
-CLOUDS = "deck"   # only used when NO HDRI is loaded:
-                  # "deck" = fast cloud layer, "volume" = volumetric, "off"
-HDRI_MATCH = ""   # pick skies whose FILENAME contains this text, e.g.
-                  # "sunset", "field", "kloppenheim". "" = auto (outdoor).
-                  # Interiors are filtered out automatically.
+# Sky & clouds:
+SKY = "dynamic"   # "dynamic" = procedural sky with full sun/mood control
+                  # (recommended default). "hdri" = use a photo sky from
+                  # HDRI_DIR instead (it also does the lighting).
+CLOUDS = "volume" # "volume" = drop in your cloud volumes from CLOUD_DIR,
+                  # "deck" = fast built-in cloud layer, "off" = clear sky.
+CLOUD_DIR = r""   # folder holding your cloud .blend/.vdb files, e.g.
+                  # r"F:\Clouds". Name them so the script knows their role:
+                  # include "hero", "puffy", or "streaky" in each filename.
+HDRI_MATCH = ""   # only when SKY="hdri": pick skies whose FILENAME contains
+                  # this text (e.g. "sunset"). "" = auto (outdoor).
 
 # Quality. Start here; raise GRID / lower it for speed.
 GRID    = 512     # terrain mesh resolution:  384 = fast, 512 = detailed,
@@ -80,6 +85,10 @@ SCRIPT_FOLDER = r""
 # ==========================================================================
 # You don't need to edit anything below here.
 # ==========================================================================
+
+LAUNCHER_BUILD = 9   # bumped when new settings are added; the main script
+                     # warns in the console if this is older than it expects
+
 
 def _find_folder():
     if SCRIPT_FOLDER:
@@ -128,9 +137,12 @@ if not os.path.exists(main_script):
 
 argv = ["fantasy_landscape.py", "--", "--grid", str(GRID),
         "--clouds", CLOUDS, "--lod", str(LOD), "--tex-res", TEXRES,
-        "--res", RES, "--samples", str(SAMPLES), "--relief", str(RELIEF)]
+        "--res", RES, "--samples", str(SAMPLES), "--relief", str(RELIEF),
+        "--sky", SKY, "--launcher-build", str(LAUNCHER_BUILD)]
 if ASSET_LIB:
     argv += ["--asset-lib", ASSET_LIB]
+if CLOUD_DIR:
+    argv += ["--clouds-dir", CLOUD_DIR]
 if HDRI_DIR:
     argv += ["--hdri-dir", HDRI_DIR]
 if HDRI_MATCH:

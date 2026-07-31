@@ -50,8 +50,11 @@ from mathutils import noise as mnoise
 
 # Bumped on every push. Compare the "[fantasy] script build" line in the
 # console against the number Claude tells you to confirm auto-update works.
-SCRIPT_BUILD = 8
-SCRIPT_DATE = "2026-07-30"
+SCRIPT_BUILD = 9
+SCRIPT_DATE = "2026-07-31"
+# The launcher tells us its build via --launcher-build; warn if it's older
+# than this (i.e. missing settings this script now expects).
+MIN_LAUNCHER_BUILD = 9
 
 # --------------------------------------------------------------------------
 # Arguments
@@ -75,7 +78,9 @@ def parse_args():
         "hdri": None, "clouds": "deck", "lod": 2, "tex_res": "2k",
         "relief": 1.0, "hdri_match": None,
         "heightmap": None, "heightmap_dir": None, "height_scale": 650.0,
-        "size": 3000.0,
+        "size": 3000.0, "sky": "dynamic",
+        "clouds_dir": os.environ.get("FANTASY_CLOUDS_DIR"),
+        "launcher_build": 0,
     }
     i = 0
     while i < len(argv):
@@ -129,6 +134,12 @@ def parse_args():
             opts["height_scale"] = float(nxt())
         elif a == "--size":
             opts["size"] = float(nxt())
+        elif a == "--sky":
+            opts["sky"] = nxt().lower()      # dynamic | hdri
+        elif a == "--clouds-dir":
+            opts["clouds_dir"] = nxt()
+        elif a == "--launcher-build":
+            opts["launcher_build"] = int(nxt())
         elif a == "--with":
             opts["force_on"] |= set(nxt().split(","))
         elif a == "--without":
@@ -1326,6 +1337,119 @@ def apply_hdri(scene, path, desired_azim, rng):
         np.clip(0.28 / max(info["mean_lum"], 1e-3), 0.35, 2.5))
     scene.view_settings.exposure = 0.0     # HDRI brightness set above, not here
     return max(info["sun_elev"], math.radians(3.0)), desired_azim
+
+
+# --------------------------------------------------------------------------
+# Custom cloud volumes: user-authored .blend (volume objects, GN-driven or
+# VDB-backed) or raw .vdb files, dropped into every scene. Kept on disk
+# (F:\...), never committed -- cloud volumes are large. Classified by name:
+#   hero   -> big foreground feature cloud, placed toward the camera
+#   puffy  -> scene-covering cumulus deck   (either used for coverage)
+#   streaky-> scene-covering wispy/cirrus    (either used for coverage)
+# --------------------------------------------------------------------------
+
+CLOUD_KEYWORDS = {
+    "hero": ("hero", "foreground", "feature"),
+    "puffy": ("puffy", "puff", "cumulus", "billow"),
+    "streaky": ("streaky", "streak", "cirrus", "wispy", "wisp", "stratus"),
+}
+
+
+def classify_cloud(name):
+    low = name.lower()
+    for kind, keys in CLOUD_KEYWORDS.items():
+        if any(k in low for k in keys):
+            return kind
+    return "puffy"        # unlabelled -> treat as a coverage cloud
+
+
+def index_cloud_files(clouds_dir):
+    if not clouds_dir or not os.path.isdir(clouds_dir):
+        return {}
+    by_kind = {}
+    for f in sorted(os.listdir(clouds_dir)):
+        if f.lower().endswith((".blend", ".vdb")):
+            by_kind.setdefault(classify_cloud(f), []).append(
+                os.path.join(clouds_dir, f))
+    if by_kind:
+        print("[fantasy] cloud files:",
+              {k: [os.path.basename(p) for p in v] for k, v in by_kind.items()})
+    return by_kind
+
+
+def _append_cloud_objects(path, coll):
+    """Bring the cloud object(s) from a .blend or .vdb into the scene.
+    Returns the list of linked objects (empty on failure)."""
+    objs = []
+    if path.lower().endswith(".blend"):
+        try:
+            with bpy.data.libraries.load(path, link=False) as (dfrom, dto):
+                dto.objects = list(dfrom.objects)
+            for o in dto.objects:
+                if o and o.type in {"VOLUME", "MESH"}:
+                    coll.objects.link(o)
+                    objs.append(o)
+        except Exception as exc:
+            print(f"[fantasy] cloud append failed {os.path.basename(path)}: {exc}")
+    elif path.lower().endswith(".vdb"):
+        try:
+            vol = bpy.data.volumes.new(os.path.basename(path))
+            vol.filepath = path
+            ob = bpy.data.objects.new(os.path.basename(path), vol)
+            coll.objects.link(ob)
+            objs.append(ob)
+        except Exception as exc:
+            print(f"[fantasy] vdb load failed {os.path.basename(path)}: {exc}")
+    return objs
+
+
+def place_custom_clouds(clouds, rng, coll, cam, focal, terrain, top_z):
+    """Drop the user's cloud volumes in as-authored: a coverage cloud high
+    over the whole terrain, and (sometimes) the hero cloud toward the camera.
+    Positioned only -- scale/rotation are left to the source file for now."""
+    placed = []
+
+    def bbox_center_z(objs):
+        zs = [o.location.z for o in objs]
+        return sum(zs) / len(zs) if zs else 0.0
+
+    # coverage: one of puffy/streaky, centered high above the terrain
+    cover_pool = clouds.get("puffy", []) + clouds.get("streaky", [])
+    if cover_pool:
+        objs = _append_cloud_objects(rng.choice(cover_pool), coll)
+        if objs:
+            root = min(objs, key=lambda o: o.location.z)   # anchor lowest obj
+            dx = -root.location.x
+            dy = -root.location.y
+            dz = (top_z + rng.uniform(500, 1200)) - bbox_center_z(objs)
+            for o in objs:
+                o.location = (o.location.x + dx, o.location.y + dy,
+                              o.location.z + dz)
+                try:
+                    o.visible_shadow = False
+                except Exception:
+                    pass
+            placed += objs
+            print(f"[fantasy] coverage cloud: {root.name}")
+
+    # hero: sometimes, in the middle distance toward the focal point
+    hero_pool = clouds.get("hero", [])
+    if hero_pool and rng.random() < 0.6:
+        objs = _append_cloud_objects(rng.choice(hero_pool), coll)
+        if objs:
+            t = rng.uniform(0.4, 0.8)
+            hx = cam.location.x + (focal.x - cam.location.x) * t
+            hy = cam.location.y + (focal.y - cam.location.y) * t
+            hz = top_z + rng.uniform(150, 500)
+            root = min(objs, key=lambda o: o.location.z)
+            dx, dy = hx - root.location.x, hy - root.location.y
+            dz = hz - root.location.z
+            for o in objs:
+                o.location = (o.location.x + dx, o.location.y + dy,
+                              o.location.z + dz)
+            placed += objs
+            print(f"[fantasy] hero cloud: {root.name}")
+    return placed
 
 
 # --------------------------------------------------------------------------
@@ -2844,6 +2968,11 @@ def main():
     t0 = time.time()
     print(f"[fantasy] script build {SCRIPT_BUILD} ({SCRIPT_DATE})")
     opts = parse_args()
+    if opts["launcher_build"] < MIN_LAUNCHER_BUILD:
+        print(f"[fantasy] NOTE: your launcher is out of date "
+              f"(has {opts['launcher_build']}, needs {MIN_LAUNCHER_BUILD}). "
+              f"Re-download run_in_blender.py for the newest settings "
+              f"(heightmaps, clouds, dynamic sky).")
     seed = opts["seed"] if opts["seed"] is not None else random.randrange(10 ** 6)
     rng = random.Random(seed)
     nrng = np.random.default_rng(seed)
@@ -2987,11 +3116,12 @@ def main():
     azim = sun_azimuth_for(mood, cam, focal, rng)
     va = math.atan2(focal.y - cam.location.y, focal.x - cam.location.x)
 
-    # HDRI environment (explicit file, or picked from the folder by name).
-    # When an HDRI is used it lights the scene by itself -- no sun lamp, and
-    # no procedural clouds (the HDRI already carries a sky).
+    # Sky. Default is the DYNAMIC procedural sky (full control of sun/mood).
+    # An HDRI is used only when explicitly requested: --hdri FILE, or
+    # --sky hdri, or an --hdri-match filter. When used it lights the scene by
+    # itself (no sun lamp) and no procedural clouds are added.
     hdri_path = opts["hdri"]
-    if not hdri_path:
+    if not hdri_path and (opts["sky"] == "hdri" or opts["hdri_match"]):
         hdri_path = pick_hdri(opts["hdri_dir"] or os.path.join(script_dir,
                               "hdri"), mood_name, opts["hdri_match"], rng)
     hdri_used = bool(hdri_path)
@@ -3009,12 +3139,21 @@ def main():
         aim_sun(sun, sky, sun_elev, azim)
 
     cloud_mode = "deck" if opts["fast"] else opts["clouds"]
-    # volumetric clouds are real 3D geometry -> fine over any sky, incl. HDRI.
-    # the emissive deck is a flat card, so it stays off when an HDRI is used.
+    cloud_note = cloud_mode
     if cloud_mode == "volume":
-        build_volume_clouds(mood, rng, c_atmos, cam, azim, sun_elev,
-                            float(H.max()), view_azim=va)
+        # prefer the user's authored cloud volumes when a library is given;
+        # otherwise fall back to the built-in procedural volume
+        clouds = index_cloud_files(opts["clouds_dir"] or
+                                   os.path.join(script_dir, "clouds"))
+        if clouds:
+            place_custom_clouds(clouds, rng, c_atmos, cam, focal, terrain,
+                                float(H.max()))
+            cloud_note = "volume(custom)"
+        else:
+            build_volume_clouds(mood, rng, c_atmos, cam, azim, sun_elev,
+                                float(H.max()), view_azim=va)
     elif cloud_mode == "deck" and not hdri_used:
+        # emissive deck is a flat card -> only for the procedural sky
         build_cloud_deck(mood, rng, c_atmos, cam, azim, sun_elev,
                          float(H.max()), view_azim=va)
 
@@ -3032,7 +3171,7 @@ def main():
     print(f"[fantasy] elements: {', '.join(present) if present else 'none'} | "
           f"scatter: rocks={'assets' if rock_real else 'procedural'} "
           f"trees={'assets' if tree_real else 'procedural'} | "
-          f"sky={'hdri' if hdri_used else cloud_mode} | "
+          f"sky={'hdri' if hdri_used else 'dynamic'} clouds={cloud_note} | "
           f"water={'yes' if water_z is not None else 'no'} | "
           f"lens={int(cam.data.lens)}mm | built in {time.time() - t0:.1f}s")
     print(f"[fantasy] recipe: --seed {seed} --mood {mood_name} "
