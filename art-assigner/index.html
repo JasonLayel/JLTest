@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0f1115">
-  <meta name="description" content="A random art task assigner — matches a creative exercise, inspiration words and a color palette to your energy and medium.">
-  <title>Muse — Art Task Assigner</title>
+  <meta name="description" content="Ignite — a random art task assigner that matches a creative exercise, inspiration words and a color palette to your fire level and medium.">
+  <title>Ignite — Art Task Assigner</title>
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -15,14 +15,13 @@
   <header class="app-header">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 3a9 9 0 1 0 0 18c1 0 1.6-.8 1.6-1.7 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-.9.7-1.6 1.6-1.6H16a5 5 0 0 0 5-5c0-3.9-4-7.5-9-7.5Z"/>
-          <circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16.5" cy="10.5" r="1"/>
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+          <path d="M13.5 1.5c.6 3-1 4.6-2.6 6.1C9.1 9.3 7.4 11 7.4 13.8a4.6 4.6 0 0 0 1.5 3.4c-.2-.5-.3-1-.3-1.6 0-1.6 1-2.7 2-3.7.4 2 1.6 2.7 2.4 3.6.8.9 1.3 1.8 1.3 3a3.2 3.2 0 0 1-.6 1.9A5.8 5.8 0 0 0 17.9 13c0-3.2-2-5-3.2-6.7-1-1.4-1.6-3-1.2-4.8Z"/>
         </svg>
       </span>
       <div>
-        <h1>Muse</h1>
-        <p class="tagline">Your daily art task, chosen for you</p>
+        <h1>Ignite</h1>
+        <p class="tagline">Catch fire. Make something.</p>
       </div>
     </div>
     <button id="streak-chip" class="streak-chip" title="Your current streak">
@@ -34,6 +33,7 @@
     <button class="tab-btn active" data-tab="create" role="tab">✦ Create</button>
     <button class="tab-btn" data-tab="calendar" role="tab">◆ Calendar</button>
     <button class="tab-btn" data-tab="log" role="tab">☰ Log</button>
+    <button class="tab-btn" data-tab="settings" role="tab">⚙ Settings</button>
   </nav>
 
   <main>
@@ -65,8 +65,9 @@
         </details>
 
         <button id="generate-btn" class="btn-primary generate-btn">
-          <span class="dice">🎲</span> Assign my task
+          <span class="dice">🔥</span> Assign my task
         </button>
+        <button id="lucky-btn" class="lucky-btn">⚡ Feeling lucky — surprise me completely</button>
       </div>
 
       <!-- Result -->
@@ -166,6 +167,7 @@
       <div class="stats-row">
         <div class="stat card"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">🔥 Current streak</div></div>
         <div class="stat card"><div class="stat-num" id="stat-best">0</div><div class="stat-label">Best streak</div></div>
+        <div class="stat card"><div class="stat-num" id="stat-week">0</div><div class="stat-label">This week</div></div>
         <div class="stat card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">Total sessions</div></div>
       </div>
       <div class="card cal-card">
@@ -190,6 +192,9 @@
       </div>
       <div id="log-list" class="log-list"></div>
     </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section id="tab-settings" class="tab-panel"></section>
   </main>
 
   <!-- Toast -->

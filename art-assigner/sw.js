@@ -1,5 +1,5 @@
-/* Muse — service worker (offline cache) */
-const CACHE = 'muse-art-v1';
+/* Ignite — service worker (offline cache) */
+const CACHE = 'ignite-art-v2';
 const ASSETS = [
   './',
   './index.html',

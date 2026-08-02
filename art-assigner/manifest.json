@@ -1,7 +1,7 @@
 {
-  "name": "Muse — Art Task Assigner",
-  "short_name": "Muse",
-  "description": "A random art task assigner that matches a creative exercise, inspiration words and a color palette to your energy and medium.",
+  "name": "Ignite — Art Task Assigner",
+  "short_name": "Ignite",
+  "description": "A random art task assigner that matches a creative exercise, inspiration words and a color palette to your fire level and medium.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",

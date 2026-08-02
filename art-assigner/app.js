@@ -13,12 +13,12 @@ const rf = (min, max) => Math.random() * (max - min) + min;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
-/* ---------- Effort levels ---------- */
+/* ---------- Fire levels (energy) ---------- */
 const EFFORTS = [
-  { id: 1, name: 'Spark',     sub: '5–15 min',  minutes: 12 },
-  { id: 2, name: 'Warm-Up',   sub: '15–30 min', minutes: 25 },
-  { id: 3, name: 'Session',   sub: '30–60 min', minutes: 45 },
-  { id: 4, name: 'Deep Dive', sub: '60+ min',   minutes: 75 },
+  { id: 1, name: 'Ember',   sub: '5–15 min',  minutes: 12, heat: 0.35 },
+  { id: 2, name: 'Kindle',  sub: '15–30 min', minutes: 25, heat: 0.55 },
+  { id: 3, name: 'Blaze',   sub: '30–60 min', minutes: 45, heat: 0.78 },
+  { id: 4, name: 'Inferno', sub: '60+ min',   minutes: 75, heat: 1.0 },
 ];
 
 /* ---------- Task database ----------
@@ -191,6 +191,57 @@ const TASKS = [
   { t: 'Fill a small box with 5 tiny thumbnails', c: 'Warm-Up', m: 'TD', e: '1' },
   { t: 'Warm-up circles, lines and ellipses drill', c: 'Warm-Up', m: 'TD', e: '1' },
   { t: 'Draw a simple object from memory, then check it', c: 'Warm-Up', m: 'TD', e: '12' },
+
+  // More figure & portrait
+  { t: 'Foreshortened hand reaching toward the viewer', c: 'Anatomy', m: 'TD', e: '34' },
+  { t: 'Back and shoulder-blade study of the figure', c: 'Figure', m: 'TD', e: '34' },
+  { t: 'Full-figure study in a seated pose', c: 'Figure', m: 'TD', e: '34' },
+  { t: 'Two figures interacting — staging and contact', c: 'Figure', m: 'TD', e: '4' },
+  { t: 'Aging study — the same face young and old', c: 'Portrait', m: 'TD', e: '34' },
+  { t: 'Portrait in dramatic single-source light', c: 'Portrait', m: 'TD', e: '34' },
+  { t: 'Study of hair as flowing masses, not strands', c: 'Portrait', m: 'TD', e: '23' },
+
+  // More still life & texture
+  { t: 'Backlit bottle — glass and glow', c: 'Still Life', m: 'TD', e: '34' },
+  { t: 'A pile of keys — overlapping metal shapes', c: 'Still Life', m: 'TD', e: '23' },
+  { t: 'Open book with turning pages', c: 'Still Life', m: 'TD', e: '23' },
+  { t: 'A candle flame and its cast light', c: 'Still Life', m: 'TD', e: '23' },
+  { t: 'Rendered study of a soap bubble', c: 'Texture', m: 'TD', e: '34' },
+  { t: 'Rope, chain and knot texture study', c: 'Texture', m: 'TD', e: '23' },
+  { t: 'Study of ice or a melting ice cube', c: 'Texture', m: 'TD', e: '34' },
+
+  // More landscape & environment
+  { t: 'Foggy morning scene — lost edges', c: 'Landscape', m: 'TD', e: '34' },
+  { t: 'City skyline at dusk, silhouette-first', c: 'Landscape', m: 'TD', e: '23' },
+  { t: 'Rocky coastline with crashing waves', c: 'Landscape', m: 'TD', e: '34' },
+  { t: 'Desert dunes — soft light and long shadows', c: 'Landscape', m: 'TD', e: '34' },
+  { t: 'Rainy street with reflections and neon', c: 'Concept', m: 'D', e: '34' },
+  { t: 'A cozy interior lit only by a fireplace', c: 'Concept', m: 'TD', e: '34' },
+  { t: 'Underwater scene — light shafts and haze', c: 'Concept', m: 'TD', e: '34' },
+  { t: 'Alien planet vista from imagination', c: 'Concept', m: 'TD', e: '34' },
+
+  // More color & value
+  { t: 'Paint a scene using only a triad of primaries', c: 'Color', m: 'TD', e: '34' },
+  { t: 'Same subject in golden hour vs blue hour', c: 'Color', m: 'TD', e: '34' },
+  { t: 'Gouache color-block study of a photo', c: 'Color', m: 'T', e: '23' },
+  { t: 'Bounce-light study — colored light in shadows', c: 'Value & Light', m: 'TD', e: '34' },
+  { t: 'Silhouette-and-rim-light study at night', c: 'Value & Light', m: 'TD', e: '23' },
+
+  // More character & concept
+  { t: 'Design a villain from a single color', c: 'Character', m: 'TD', e: '34' },
+  { t: 'Anthropomorphize an everyday object', c: 'Character', m: 'TD', e: '23' },
+  { t: 'Creature mashup of two animals', c: 'Character', m: 'TD', e: '34' },
+  { t: 'Design a weapon or tool with a backstory', c: 'Concept', m: 'TD', e: '34' },
+  { t: 'Emblem or crest for an invented faction', c: 'Concept', m: 'TD', e: '23' },
+  { t: 'Design a hat that tells you who wears it', c: 'Character', m: 'TD', e: '23' },
+
+  // More quick & expressive
+  { t: 'Draw five facial expressions from memory', c: 'Warm-Up', m: 'TD', e: '12' },
+  { t: 'Scribble, then find a figure inside it', c: 'Abstract', m: 'TD', e: '1' },
+  { t: 'One-minute silhouettes of objects around you', c: 'Warm-Up', m: 'TD', e: '1' },
+  { t: 'Draw the same cup five times, faster each time', c: 'Warm-Up', m: 'TD', e: '12' },
+  { t: 'Value-only thumbnail of the room you\'re in', c: 'Composition', m: 'TD', e: '12' },
+  { t: 'Fill a page edge-to-edge with overlapping leaves', c: 'Pattern', m: 'TD', e: '23' },
 ];
 
 /* ---------- Inspiration word bank ---------- */
@@ -627,6 +678,14 @@ function renderStreakChip() {
   const s = computeStreaks();
   $('#streak-chip-count').textContent = s.current;
 }
+function sessionsThisWeek() {
+  const now = new Date(todayKey() + 'T00:00:00').getTime();
+  const wk = now - 6 * 86400000;
+  return state.history.filter((h) => {
+    const t = new Date(h.date + 'T00:00:00').getTime();
+    return t >= wk && t <= now;
+  }).length;
+}
 
 /* ---------- Calendar ---------- */
 let calView = new Date();
@@ -642,6 +701,7 @@ function renderCalendar() {
   $('#stat-streak').textContent = s.current;
   $('#stat-best').textContent = s.best;
   $('#stat-total').textContent = s.total;
+  $('#stat-week').textContent = sessionsThisWeek();
 
   $('#cal-title').textContent = MONTHS[calView.getMonth()] + ' ' + calView.getFullYear();
   const grid = $('#cal-grid');
@@ -755,14 +815,152 @@ function toast(msg) {
   clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 1800);
 }
 
+/* ---------- Feeling lucky ---------- */
+function feelingLucky() {
+  state.prefs.effort = ri(1, 4);
+  state.prefs.medium = pick(['T', 'D']);
+  save();
+  syncSegments();
+  generate();
+}
+
+/* ---------- Theme ---------- */
+function applyTheme() {
+  const t = state.prefs.theme || 'system';
+  if (t === 'system') delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = t;
+}
+
+/* ---------- Daily reminder ---------- */
+function checkReminder() {
+  const r = state.prefs.reminder;
+  if (!r || !r.enabled || !r.time) return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const today = todayKey();
+  if (state.prefs.lastReminded === today) return;
+  if (state.history.some((h) => h.date === today)) return;
+  const now = new Date();
+  const hhmm = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  if (hhmm >= r.time) {
+    try { new Notification('Ignite 🔥', { body: 'You haven\'t made anything today — time to start.', icon: 'icons/icon-192.png' }); } catch (e) {}
+    state.prefs.lastReminded = today; save();
+  }
+}
+
+/* ---------- Data backup ---------- */
+function exportData() {
+  const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'ignite-backup-' + todayKey() + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('Backup downloaded');
+}
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const d = JSON.parse(reader.result);
+      if (!d || typeof d !== 'object') throw new Error('bad');
+      state.history = Array.isArray(d.history) ? d.history : [];
+      state.favorites = Array.isArray(d.favorites) ? d.favorites : [];
+      state.prefs = d.prefs && typeof d.prefs === 'object' ? d.prefs : {};
+      save();
+      applyTheme(); refreshControls(); buildSettings();
+      renderStreakChip(); renderCalendar(); renderLog();
+      toast('Data imported');
+    } catch (e) { toast('Could not read that backup file'); }
+  };
+  reader.readAsText(file);
+}
+function clearData() {
+  if (!confirm('Delete all sessions, favorites and settings? This cannot be undone.')) return;
+  state = { history: [], favorites: [], prefs: {} };
+  save();
+  applyTheme(); refreshControls(); buildSettings();
+  renderStreakChip(); renderCalendar(); renderLog();
+  toast('All data cleared');
+}
+
+/* ---------- Settings panel ---------- */
+function buildSettings() {
+  const el = $('#tab-settings');
+  const theme = state.prefs.theme || 'system';
+  const r = state.prefs.reminder || { enabled: false, time: '18:00' };
+  el.innerHTML = `
+    <div class="card settings-card">
+      <div class="settings-group">
+        <div class="settings-label">Appearance</div>
+        <div class="segmented theme-seg">
+          <button data-theme-opt="system"${theme === 'system' ? ' class="active"' : ''}>System</button>
+          <button data-theme-opt="dark"${theme === 'dark' ? ' class="active"' : ''}>Dark</button>
+          <button data-theme-opt="light"${theme === 'light' ? ' class="active"' : ''}>Light</button>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-label">Daily reminder</div>
+        <label class="opt toggle"><input type="checkbox" id="reminder-toggle"${r.enabled ? ' checked' : ''}><span>Nudge me if I haven't created yet</span></label>
+        <div class="reminder-time-row"><span>Remind me at</span><input type="time" id="reminder-time" value="${r.time || '18:00'}"></div>
+        <div class="settings-hint">Fires while the app is open or installed as an app. Needs notification permission.</div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-label">Your data</div>
+        <div class="settings-hint">Everything lives only on this device. Export a backup to keep it safe or move it to another device.</div>
+        <div class="settings-actions">
+          <button id="export-btn" class="btn-mini">⬇ Export backup</button>
+          <button id="import-btn" class="btn-mini">⬆ Import backup</button>
+          <input type="file" id="import-file" accept="application/json" class="hidden">
+          <button id="clear-btn" class="btn-mini danger">Clear all data</button>
+        </div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-label">About</div>
+        <div class="settings-hint">Ignite — a random art task assigner that helps you start. All data stays on your device.</div>
+      </div>
+    </div>`;
+
+  $$('[data-theme-opt]', el).forEach((b) => b.addEventListener('click', () => {
+    state.prefs.theme = b.dataset.themeOpt; save(); applyTheme();
+    $$('[data-theme-opt]', el).forEach((x) => x.classList.toggle('active', x === b));
+  }));
+  $('#reminder-toggle', el).addEventListener('change', async (e) => {
+    const on = e.target.checked;
+    state.prefs.reminder = state.prefs.reminder || { time: '18:00' };
+    state.prefs.reminder.enabled = on;
+    if (on && 'Notification' in window && Notification.permission === 'default') {
+      try { await Notification.requestPermission(); } catch (err) {}
+    }
+    if (on && (!('Notification' in window) || Notification.permission !== 'granted')) {
+      toast('Allow notifications to receive reminders');
+    }
+    save();
+  });
+  $('#reminder-time', el).addEventListener('change', (e) => {
+    state.prefs.reminder = state.prefs.reminder || {};
+    state.prefs.reminder.time = e.target.value; save();
+  });
+  $('#export-btn', el).addEventListener('click', exportData);
+  $('#import-btn', el).addEventListener('click', () => $('#import-file', el).click());
+  $('#import-file', el).addEventListener('change', (e) => { if (e.target.files[0]) importData(e.target.files[0]); });
+  $('#clear-btn', el).addEventListener('click', clearData);
+}
+
 /* ---------- Build controls ---------- */
+function refreshControls() {
+  if (state.prefs.effort == null) state.prefs.effort = 2;
+  if (state.prefs.medium == null) state.prefs.medium = 'TD';
+  syncSegments();
+  const f = $('#focus-select'); if (f) f.value = focusFilter();
+  const c = $('#challenge-toggle'); if (c) c.checked = challengeOn();
+}
 function buildControls() {
   // energy
   const eSeg = $('#energy-seg');
   EFFORTS.forEach((e) => {
     const b = document.createElement('button');
     b.dataset.effort = e.id;
-    b.innerHTML = `<span>${e.name}</span><span class="seg-sub">${e.sub}</span>`;
+    b.innerHTML = `<span class="seg-flame" style="opacity:${e.heat}">🔥</span><span>${e.name}</span><span class="seg-sub">${e.sub}</span>`;
     b.addEventListener('click', () => { state.prefs.effort = e.id; save(); syncSegments(); });
     eSeg.appendChild(b);
   });
@@ -792,9 +990,7 @@ function buildControls() {
     }
   });
 
-  if (state.prefs.effort == null) state.prefs.effort = 2;
-  if (state.prefs.medium == null) state.prefs.medium = 'TD';
-  syncSegments();
+  refreshControls();
 }
 function syncSegments() {
   $$('#energy-seg button').forEach((b) => b.classList.toggle('active', +b.dataset.effort === state.prefs.effort));
@@ -825,10 +1021,13 @@ function initTabs() {
 
 /* ---------- Wire up ---------- */
 function init() {
+  applyTheme();
   buildControls();
+  buildSettings();
   initTabs();
 
   $('#generate-btn').addEventListener('click', () => generate());
+  $('#lucky-btn').addEventListener('click', feelingLucky);
   $('#reroll-all-btn').addEventListener('click', () => generate());
   $('#done-btn').addEventListener('click', openNoteModal);
   $('#fav-btn').addEventListener('click', saveFavorite);
@@ -851,6 +1050,9 @@ function init() {
   $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') { $('#modal').classList.add('hidden'); pendingSession = null; } });
 
   renderStreakChip();
+
+  checkReminder();
+  setInterval(checkReminder, 60000);
 
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
