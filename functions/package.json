@@ -1,0 +1,13 @@
+{
+  "name": "ignite-functions",
+  "description": "Cloud Functions for the Ignite art task assigner (AI backstory)",
+  "private": true,
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.30.0",
+    "firebase-functions": "^5.0.0"
+  }
+}

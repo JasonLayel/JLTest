@@ -28,6 +28,10 @@ and it works offline.
   **Monochrome**, **Greyscale / Grisaille**, **Complementary**,
   **Split-Complementary**, **Triadic**, **Warm/Cool limited**, and **Earthen**.
   Tap any swatch to copy its hex.
+- **AI backstory** (optional) — on character/concept tasks, a "Write a backstory"
+  button asks Claude Haiku for 2–3 unique sentences built from your task and
+  inspiration words. Requires the Cloud Function below; everything else works
+  offline without it.
 - **Feeling lucky** — one tap randomizes fire level, medium and everything else.
 - **Optional challenge modifier** — creative constraints ("non-dominant hand",
   "3 values only", "one continuous line"…).
@@ -55,6 +59,26 @@ python3 -m http.server 8000
 
 Or host it on any static host and open the URL on your phone or PC. PWA install
 and offline support require HTTPS (or localhost).
+
+## AI backstory (optional Cloud Function)
+
+The **Write a backstory** button calls a Firebase Cloud Function (`functions/`
+at the repo root) that talks to the Anthropic API using **Claude Haiku 4.5** and
+returns 2–3 sentences. The API key stays server-side; the app calls the function
+same-origin through the `/api/backstory` hosting rewrite in `firebase.json`.
+
+One-time setup (needs the Firebase **Blaze** pay-as-you-go plan for functions):
+
+```sh
+npm install -g firebase-tools          # if not installed
+firebase login
+firebase functions:secrets:set ANTHROPIC_API_KEY   # paste your Anthropic key
+firebase deploy --only functions,hosting
+```
+
+Get an Anthropic key at console.anthropic.com. Cost is ~$0.001 per backstory
+(Haiku 4.5, ~a tenth of a cent). Without the deployed function the button simply
+shows a friendly "needs connection" message and the rest of the app is unaffected.
 
 ## Files
 

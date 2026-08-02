@@ -13,6 +13,10 @@ const rf = (min, max) => Math.random() * (max - min) + min;
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
+/* ---------- AI backstory config ---------- */
+const BACKSTORY_ENDPOINT = '/api/backstory'; // Firebase Hosting rewrite → Cloud Function
+const BACKSTORY_CATEGORIES = new Set(['Character', 'Concept']); // tasks that make a character or place
+
 /* ---------- Fire levels (energy) ---------- */
 const EFFORTS = [
   { id: 1, name: 'Ember',   sub: '5–15 min',  minutes: 12, heat: 0.35 },
@@ -493,6 +497,7 @@ function generate() {
   if (!locks.task || !current.task) {
     const tf = genTaskField();
     current.task = tf.task; current.category = tf.category; current.mediumLabel = tf.mediumLabel;
+    current.backstory = null; // new task → old backstory no longer applies
   }
   // Effort/duration always mirror the current selector (not a lockable field).
   current.effortId = eff.id;
@@ -514,7 +519,7 @@ function generate() {
 
 function rerollField(field) {
   if (!current) return;
-  if (field === 'task') { const tf = genTaskField(); current.task = tf.task; current.category = tf.category; current.mediumLabel = tf.mediumLabel; }
+  if (field === 'task') { const tf = genTaskField(); current.task = tf.task; current.category = tf.category; current.mediumLabel = tf.mediumLabel; current.backstory = null; }
   else if (field === 'primary') current.primary = genWordField(current.secondary);
   else if (field === 'secondary') current.secondary = genWordField(current.primary);
   else if (field === 'palette') current.palette = generatePalette();
@@ -556,6 +561,8 @@ function renderResult(pop) {
   if (current.constraint) { cRow.classList.remove('hidden'); $('#r-constraint').textContent = current.constraint; }
   else cRow.classList.add('hidden');
 
+  renderBackstory();
+
   // reflect locks
   $$('.lock-btn').forEach((b) => {
     const on = locks[b.dataset.lock];
@@ -564,6 +571,60 @@ function renderResult(pop) {
   });
 
   resetTimer();
+}
+
+/* ---------- AI backstory ---------- */
+function renderBackstory() {
+  const row = $('#backstory-row');
+  if (!current || !BACKSTORY_CATEGORIES.has(current.category)) { row.classList.add('hidden'); return; }
+  row.classList.remove('hidden');
+  const txt = $('#backstory-text');
+  const btn = $('#backstory-btn');
+  txt.classList.remove('loading');
+  btn.disabled = false;
+  if (current.backstory) {
+    txt.textContent = current.backstory;
+    txt.classList.remove('hidden');
+    btn.textContent = '↻ Rewrite backstory';
+  } else {
+    txt.textContent = '';
+    txt.classList.add('hidden');
+    btn.textContent = '✨ Write a backstory';
+  }
+}
+async function generateBackstory() {
+  if (!current) return;
+  const txt = $('#backstory-text');
+  const btn = $('#backstory-btn');
+  btn.disabled = true;
+  btn.textContent = '✨ Summoning…';
+  txt.classList.remove('hidden');
+  txt.classList.add('loading');
+  txt.textContent = 'Writing a short backstory…';
+  try {
+    const res = await fetch(BACKSTORY_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        task: current.task,
+        category: current.category,
+        primary: current.primary,
+        secondary: current.secondary,
+        palette: current.palette ? current.palette.type + ' — ' + current.palette.name : '',
+      }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    if (!data || !data.backstory) throw new Error('empty');
+    current.backstory = String(data.backstory).trim();
+    renderBackstory();
+    toast('✨ Backstory ready');
+  } catch (e) {
+    txt.classList.add('hidden');
+    txt.classList.remove('loading');
+    renderBackstory();
+    toast('Couldn’t reach the writer — needs connection + the deployed function');
+  }
 }
 
 /* ---------- Timer ---------- */
@@ -616,6 +677,7 @@ function snapshot() {
     secondary: current.secondary,
     palette: current.palette,
     constraint: current.constraint || null,
+    backstory: current.backstory || null,
     note: '',
   };
 }
@@ -760,6 +822,7 @@ function logItemHTML(it, deletable) {
     <div class="li-meta"><span>${it.effort}</span><span>·</span><span>${it.medium}</span><span>·</span>
       <span>${escapeHTML(it.primary)} + ${escapeHTML(it.secondary)}</span></div>
     ${it.constraint ? `<div class="li-meta">⚡ ${escapeHTML(it.constraint)}</div>` : ''}
+    ${it.backstory ? `<div class="li-note">✨ ${escapeHTML(it.backstory)}</div>` : ''}
     ${sw}${note}
   </div>`;
 }
@@ -789,6 +852,7 @@ function currentAsText() {
   s += `• Primary word: ${current.primary}\n• Secondary word: ${current.secondary}\n`;
   s += `• Palette (${current.palette.type} — “${current.palette.name}”): ${current.palette.colors.map((c) => c.hex).join(', ')}\n`;
   if (current.constraint) s += `• Challenge: ${current.constraint}\n`;
+  if (current.backstory) s += `\nBackstory: ${current.backstory}\n`;
   return s.trim();
 }
 async function copyCurrent() {
@@ -1037,6 +1101,8 @@ function init() {
     const f = b.dataset.lock; locks[f] = !locks[f];
     b.classList.toggle('locked', locks[f]); b.textContent = locks[f] ? '🔒' : '🔓';
   }));
+
+  $('#backstory-btn').addEventListener('click', generateBackstory);
 
   $('#timer-start').addEventListener('click', toggleTimer);
   $('#timer-reset').addEventListener('click', resetTimer);
