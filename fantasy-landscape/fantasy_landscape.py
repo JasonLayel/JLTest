@@ -50,8 +50,8 @@ from mathutils import noise as mnoise
 
 # Bumped on every push. Compare the "[fantasy] script build" line in the
 # console against the number Claude tells you to confirm auto-update works.
-SCRIPT_BUILD = 9
-SCRIPT_DATE = "2026-07-31"
+SCRIPT_BUILD = 10
+SCRIPT_DATE = "2026-08-01"
 # The launcher tells us its build via --launcher-build; warn if it's older
 # than this (i.e. missing settings this script now expects).
 MIN_LAUNCHER_BUILD = 9
@@ -326,34 +326,47 @@ ARCHETYPES = ["alpine", "highlands", "coast", "canyon"]
 
 
 def load_heightmap_image(path, n):
-    """Load a 16-bit/float heightmap (EXR, PNG16, TIFF) and resample it to an
-    n x n float array normalized to 0..1. Red channel is treated as height."""
+    """Load a heightmap (EXR/PNG16/TIFF) as an n x n array normalized to 0..1.
+    The image is downsampled to the grid resolution in Blender's C core FIRST,
+    so a 16k map never has to be read into a multi-GB Python buffer, and a
+    higher grid directly captures more of the map's detail."""
     img = bpy.data.images.load(path)
     try:
         img.colorspace_settings.name = "Non-Color"
     except Exception:
         pass
     w, h = img.size
-    ch = img.channels
-    px = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, ch)
+    name = os.path.basename(path).lower()
+    if any(k in name for k in ("diffuse", "albedo", "basecolor", "_col",
+                               "normal", "roughness")):
+        print(f"[fantasy] WARNING: '{os.path.basename(path)}' looks like a "
+              f"COLOR/material map, not a height/displacement map. Terrain "
+              f"will look like noise. Use a Displacement/Height export.")
+    # downscale in C to the grid (only when the source is larger)
+    tw = min(n, w) if w else n
+    th = min(n, h) if h else n
+    if (w, h) != (tw, th):
+        img.scale(tw, th)
+        w, h = tw, th
+    px = np.array(img.pixels[:], dtype=np.float32).reshape(h, w, img.channels)
     bpy.data.images.remove(img)
-    hgt = px[..., 0][::-1]                 # image row 0 is the bottom
-    # bilinear resample to n x n
-    ys = np.linspace(0, h - 1, n)
-    xs = np.linspace(0, w - 1, n)
-    Y, X = np.meshgrid(ys, xs, indexing="ij")
-    x0 = np.floor(X).astype(np.int64)
-    y0 = np.floor(Y).astype(np.int64)
-    x1 = np.clip(x0 + 1, 0, w - 1)
-    y1 = np.clip(y0 + 1, 0, h - 1)
-    fx, fy = X - x0, Y - y0
-    top = hgt[y0, x0] * (1 - fx) + hgt[y0, x1] * fx
-    bot = hgt[y1, x0] * (1 - fx) + hgt[y1, x1] * fx
-    H = top * (1 - fy) + bot * fy
-    rng_h = H.max() - H.min()
+    hgt = px[..., 0][::-1].astype(np.float64)   # image row 0 is the bottom
+    if (h, w) != (n, n):                        # final resample to square grid
+        ys = np.linspace(0, h - 1, n)
+        xs = np.linspace(0, w - 1, n)
+        Y, X = np.meshgrid(ys, xs, indexing="ij")
+        x0 = np.floor(X).astype(np.int64)
+        y0 = np.floor(Y).astype(np.int64)
+        x1 = np.clip(x0 + 1, 0, w - 1)
+        y1 = np.clip(y0 + 1, 0, h - 1)
+        fx, fy = X - x0, Y - y0
+        top = hgt[y0, x0] * (1 - fx) + hgt[y0, x1] * fx
+        bot = hgt[y1, x0] * (1 - fx) + hgt[y1, x1] * fx
+        hgt = top * (1 - fy) + bot * fy
+    rng_h = hgt.max() - hgt.min()
     if rng_h > 1e-9:
-        H = (H - H.min()) / rng_h
-    return H.astype(np.float64)
+        hgt = (hgt - hgt.min()) / rng_h
+    return hgt
 
 
 def heightfield_from_map(path, n, size, rng, nrng, height_scale, relief=1.0,
@@ -977,13 +990,27 @@ def load_asset_library(lib_dir, rng=None, max_per_cat=8, prefer_lod=2,
     return None
 
 
+def _mesh_max_dim(mesh):
+    """Largest bounding-box side of a mesh, computed straight from its verts.
+    (object.dimensions returns 0 for scene-unlinked objects, which silently
+    defeated size normalization and let real scans scatter huge.)"""
+    nv = len(mesh.vertices)
+    if nv == 0:
+        return 1.0
+    co = np.empty(nv * 3, dtype=np.float64)
+    mesh.vertices.foreach_get("co", co)
+    co = co.reshape(-1, 3)
+    d = float((co.max(axis=0) - co.min(axis=0)).max())
+    return d if d > 1e-6 else 1.0
+
+
 def build_proto_collection(name, objs, target_size):
-    """Hidden prototype collection; objects normalized to target_size."""
+    """Hidden prototype collection; each object normalized so its largest
+    dimension equals target_size (metres)."""
     coll = bpy.data.collections.new(name)     # not linked to the scene:
     for i, src in enumerate(objs):            # originals never render
         ob = bpy.data.objects.new(f"{name}.{i}", src.data)
-        dim = max(src.dimensions[:] or [1.0]) or 1.0
-        s = target_size / dim
+        s = target_size / _mesh_max_dim(src.data)
         ob.scale = (s, s, s)
         coll.objects.link(ob)
     return coll
@@ -1022,7 +1049,9 @@ def gn_scatter_group():
             ("Clump Scale", "NodeSocketFloat", 0.003),
             ("Clump Keep", "NodeSocketFloat", 1.0),
             ("Tilt", "NodeSocketFloat", 0.05),
-            ("Sink", "NodeSocketFloat", 0.1)):
+            ("Sink", "NodeSocketFloat", 0.1),
+            ("Edge Start", "NodeSocketFloat", 1e9),   # world |x|,|y| where
+            ("Edge End", "NodeSocketFloat", 1e9)):    # density fades to 0
         s = iface.new_socket(sname, in_out="INPUT", socket_type=stype)
         if default is not None:
             try:
@@ -1037,9 +1066,31 @@ def gn_scatter_group():
     gin = n.new("NodeGroupInput")
     gout = n.new("NodeGroupOutput")
 
+    # edge feather: fade density to zero as max(|x|,|y|) crosses Edge Start..
+    # Edge End, so a small inner terrain doesn't read as a hard-edged square
+    epos = n.new("GeometryNodeInputPosition")
+    esep = n.new("ShaderNodeSeparateXYZ")
+    lk(epos.outputs["Position"], esep.inputs["Vector"])
+    eax = n.new("ShaderNodeMath"); eax.operation = "ABSOLUTE"
+    lk(esep.outputs["X"], eax.inputs[0])
+    eay = n.new("ShaderNodeMath"); eay.operation = "ABSOLUTE"
+    lk(esep.outputs["Y"], eay.inputs[0])
+    emax = n.new("ShaderNodeMath"); emax.operation = "MAXIMUM"
+    lk(eax.outputs["Value"], emax.inputs[0])
+    lk(eay.outputs["Value"], emax.inputs[1])
+    efade = n.new("ShaderNodeMapRange")
+    lk(emax.outputs["Value"], efade.inputs["Value"])
+    lk(gin.outputs["Edge Start"], efade.inputs["From Min"])
+    lk(gin.outputs["Edge End"], efade.inputs["From Max"])
+    efade.inputs["To Min"].default_value = 1.0
+    efade.inputs["To Max"].default_value = 0.0
+    edens = n.new("ShaderNodeMath"); edens.operation = "MULTIPLY"
+    lk(gin.outputs["Density"], edens.inputs[0])
+    lk(efade.outputs["Result"], edens.inputs[1])
+
     dist = n.new("GeometryNodeDistributePointsOnFaces")
     lk(gin.outputs["Geometry"], dist.inputs["Mesh"])
-    lk(gin.outputs["Density"], dist.inputs["Density"])
+    lk(edens.outputs["Value"], dist.inputs["Density"])
     lk(gin.outputs["Seed"], dist.inputs["Seed"])
 
     pos = n.new("GeometryNodeInputPosition")
@@ -3018,9 +3069,9 @@ def main():
     terrain = Terrain(H, size)
     # snowline: genuinely high ground only, never rolling lowlands
     relief = float(H.max() - H.min())
-    snow_z = max(float(np.percentile(H, rng.uniform(90, 97))),
-                 float(H.min() + 0.62 * relief))
-    if relief < 330:          # low country: no snow at all
+    snow_z = max(float(np.percentile(H, rng.uniform(93, 98))),
+                 float(H.min() + 0.72 * relief))
+    if relief < 400:          # low country: no snow at all
         snow_z = float(H.max() + 500)
     mat = terrain_material(mood, rng, water_z, snow_z)
     terrain_obj = build_terrain_mesh("Terrain", H, size, c_terrain, mat)
@@ -3087,13 +3138,17 @@ def main():
     dens_mul = 0.4 if opts["fast"] else 1.0
     floor_z = (water_z + 3.0) if water_z is not None else float(H.min())
     treeline = float(np.percentile(H, 80))
+    half = size / 2.0
+    edge_start, edge_end = half * 0.6, half * 0.97   # feather the outer ring
+    # rocks are sparse accents (scans are large): far lower density than before
     add_scatter(terrain_obj, "FL Rocks", rock_coll,
-                Density=rng.uniform(1.2e-4, 3e-4) * dens_mul,
+                Density=rng.uniform(1.5e-5, 4e-5) * dens_mul,
                 Seed=seed % 10000, **{
-                    "Scale Min": 0.5, "Scale Max": 2.6,
+                    "Scale Min": 0.5, "Scale Max": 2.2,
                     "Min Normal Z": 0.0, "Min Z": floor_z,
-                    "Clump Scale": 0.004, "Clump Keep": rng.uniform(0.4, 0.7),
-                    "Tilt": 0.25, "Sink": rng.uniform(0.2, 0.4)})
+                    "Clump Scale": 0.005, "Clump Keep": rng.uniform(0.35, 0.6),
+                    "Tilt": 0.25, "Sink": rng.uniform(0.2, 0.4),
+                    "Edge Start": edge_start, "Edge End": edge_end})
     add_scatter(terrain_obj, "FL Trees", tree_coll,
                 Density=rng.uniform(3e-4, 8e-4) * dens_mul,
                 Seed=(seed + 7) % 10000, **{
@@ -3101,7 +3156,8 @@ def main():
                     "Min Normal Z": 0.8, "Min Z": floor_z + 1.0,
                     "Max Z": treeline,
                     "Clump Scale": 0.002, "Clump Keep": rng.uniform(0.25, 0.5),
-                    "Tilt": 0.03, "Sink": 0.05})
+                    "Tilt": 0.03, "Sink": 0.05,
+                    "Edge Start": edge_start, "Edge End": edge_end})
 
     # ---- camera, sun aim, figures -----------------------------------------
     priority = ["castle", "spire", "ruins", "stones", "fields"]

@@ -64,8 +64,10 @@ HDRI_MATCH = ""   # only when SKY="hdri": pick skies whose FILENAME contains
                   # this text (e.g. "sunset"). "" = auto (outdoor).
 
 # Quality. Start here; raise GRID / lower it for speed.
-GRID    = 512     # terrain mesh resolution:  384 = fast, 512 = detailed,
-                  # 1024 = crisp (great with a heightmap), 2048 = very heavy
+GRID    = 1024    # terrain mesh resolution (verts per side). Higher = more
+                  # of a heightmap's detail is tessellated into the mesh:
+                  # 512 = fast, 1024 = crisp, 2048 = very detailed,
+                  # 4096 = extreme (slow build, needs the GPU for the render)
 LOD     = 2       # Megascans detail level to load:  0 = highest, 3 = lightest
 TEXRES  = "2K"    # texture resolution to prefer:  "1K"  "2K"  "4K"
 RES     = "1280x720"   # render size. "960x540" previews fast; "1920x1080" for finals
