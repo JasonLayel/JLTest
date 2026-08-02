@@ -6,20 +6,10 @@
       ".firebaserc",
       "**/.*",
       "**/node_modules/**",
-      "functions/**",
+      "ignite/**",
       "README.md",
       "*.jpg",
       "*.jpeg"
-    ],
-    "rewrites": [
-      {
-        "source": "/api/backstory",
-        "function": { "functionId": "backstory", "region": "us-central1" }
-      }
     ]
-  },
-  "functions": {
-    "source": "functions",
-    "runtime": "nodejs20"
   }
 }

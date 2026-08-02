@@ -3,8 +3,8 @@
 `backstory` — a 2nd-gen HTTPS function that generates a 2–3 sentence backstory
 for a character/place art task using **Claude Haiku 4.5**.
 
-The Ignite app (`../art-assigner/`) calls it at `/api/backstory`, mapped to this
-function by the Hosting rewrite in `../firebase.json`, so requests are
+The Ignite app (in the parent folder) calls it at `/api/backstory`, mapped to
+this function by the Hosting rewrite in `../firebase.json`, so requests are
 same-origin and the API key never reaches the browser.
 
 ## Setup & deploy

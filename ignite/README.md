@@ -47,38 +47,43 @@ and it works offline.
 - **Settings** — light/dark/system theme, an optional daily reminder, and data
   backup (export / import / clear). Everything stays on your device.
 
-## Running it
+This is a **standalone project** — the app is at the folder root and it has its
+own `firebase.json` / `.firebaserc`, independent of any other project.
 
-Serve the folder with any static file server and open it in a browser:
+## Running it locally
+
+Serve this folder with any static file server and open it in a browser:
 
 ```sh
-cd art-assigner
 python3 -m http.server 8000
 # then visit http://localhost:8000
 ```
 
 Or host it on any static host and open the URL on your phone or PC. PWA install
-and offline support require HTTPS (or localhost).
+and offline support require HTTPS (or localhost). The AI backstory button needs
+the Cloud Function below (it's disabled/graceful without it).
 
-## AI backstory (optional Cloud Function)
+## Deploying to Firebase (its own project)
 
-The **Write a backstory** button calls a Firebase Cloud Function (`functions/`
-at the repo root) that talks to the Anthropic API using **Claude Haiku 4.5** and
-returns 2–3 sentences. The API key stays server-side; the app calls the function
-same-origin through the `/api/backstory` hosting rewrite in `firebase.json`.
+The app is hosted at the domain root and the **Write a backstory** button calls a
+Firebase Cloud Function (`functions/`) that talks to the Anthropic API using
+**Claude Haiku 4.5**. The API key stays server-side; the app reaches the function
+same-origin via the `/api/backstory` hosting rewrite in `firebase.json`.
 
-One-time setup (needs the Firebase **Blaze** pay-as-you-go plan for functions):
+One-time setup (Cloud Functions require the Firebase **Blaze** pay-as-you-go plan):
 
 ```sh
-npm install -g firebase-tools          # if not installed
+npm install -g firebase-tools                 # if not installed
 firebase login
+firebase use --add                            # pick/create your new Firebase project
 firebase functions:secrets:set ANTHROPIC_API_KEY   # paste your Anthropic key
 firebase deploy --only functions,hosting
 ```
 
-Get an Anthropic key at console.anthropic.com. Cost is ~$0.001 per backstory
-(Haiku 4.5, ~a tenth of a cent). Without the deployed function the button simply
-shows a friendly "needs connection" message and the rest of the app is unaffected.
+Run these from inside this `ignite/` folder. Get an Anthropic key at
+console.anthropic.com. Cost is ~$0.001 per backstory (Haiku 4.5, ~a tenth of a
+cent). Without the deployed function the button simply shows a friendly "needs
+connection" message and the rest of the app is unaffected.
 
 ## Files
 
