@@ -24,21 +24,17 @@
         <p class="tagline">Catch fire. Make something.</p>
       </div>
     </div>
-    <button id="streak-chip" class="streak-chip" title="Your current streak">
-      <span class="flame">🔥</span><span id="streak-chip-count">0</span>
-    </button>
+    <div class="header-actions">
+      <button id="streak-chip" class="streak-chip" title="Jump to your streak calendar">
+        <span class="flame">🔥</span><span id="streak-chip-count">0</span>
+      </button>
+      <button id="settings-btn" class="icon-btn" title="Settings" aria-label="Settings">⚙</button>
+    </div>
   </header>
-
-  <nav class="tab-bar" role="tablist">
-    <button class="tab-btn active" data-tab="create" role="tab">✦ Create</button>
-    <button class="tab-btn" data-tab="calendar" role="tab">◆ Calendar</button>
-    <button class="tab-btn" data-tab="log" role="tab">☰ Log</button>
-    <button class="tab-btn" data-tab="settings" role="tab">⚙ Settings</button>
-  </nav>
 
   <main>
     <!-- ============ CREATE ============ -->
-    <section id="tab-create" class="tab-panel active">
+    <section id="sec-create" class="page-section">
       <div class="controls card">
         <div class="control-group">
           <label class="control-label">How much energy do you have?</label>
@@ -163,7 +159,8 @@
     </section>
 
     <!-- ============ CALENDAR ============ -->
-    <section id="tab-calendar" class="tab-panel">
+    <section id="sec-calendar" class="page-section">
+      <h2 class="section-title">◆ Your calendar &amp; streak</h2>
       <div class="stats-row">
         <div class="stat card"><div class="stat-num" id="stat-streak">0</div><div class="stat-label">🔥 Current streak</div></div>
         <div class="stat card"><div class="stat-num" id="stat-best">0</div><div class="stat-label">Best streak</div></div>
@@ -185,20 +182,29 @@
     </section>
 
     <!-- ============ LOG ============ -->
-    <section id="tab-log" class="tab-panel">
+    <section id="sec-log" class="page-section">
+      <h2 class="section-title">☰ Log</h2>
       <div class="segmented log-seg">
         <button class="log-tab active" data-log="history">History</button>
         <button class="log-tab" data-log="favorites">Favorites</button>
       </div>
       <div id="log-list" class="log-list"></div>
     </section>
-
-    <!-- ============ SETTINGS ============ -->
-    <section id="tab-settings" class="tab-panel"></section>
   </main>
 
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
+
+  <!-- Settings modal -->
+  <div id="settings-modal" class="modal hidden">
+    <div class="modal-box card settings-modal-box">
+      <div class="settings-modal-head">
+        <h3>Settings</h3>
+        <button id="settings-close" class="icon-btn" aria-label="Close settings">✕</button>
+      </div>
+      <div id="tab-settings"></div>
+    </div>
+  </div>
 
   <!-- Notes modal -->
   <div id="modal" class="modal hidden">

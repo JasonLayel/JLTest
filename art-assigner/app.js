@@ -997,22 +997,22 @@ function syncSegments() {
   $$('#medium-seg button').forEach((b) => b.classList.toggle('active', b.dataset.medium === state.prefs.medium));
 }
 
-/* ---------- Tabs ---------- */
-function initTabs() {
-  $$('.tab-btn').forEach((b) => b.addEventListener('click', () => {
-    $$('.tab-btn').forEach((x) => x.classList.remove('active'));
-    $$('.tab-panel').forEach((x) => x.classList.remove('active'));
-    b.classList.add('active');
-    $('#tab-' + b.dataset.tab).classList.add('active');
-    if (b.dataset.tab === 'calendar') renderCalendar();
-    if (b.dataset.tab === 'log') renderLog();
-  }));
+/* ---------- Navigation (single page) ---------- */
+function openSettings() {
+  buildSettings();
+  $('#settings-modal').classList.remove('hidden');
+}
+function closeSettings() { $('#settings-modal').classList.add('hidden'); }
+function initNav() {
+  // Streak chip scrolls to the calendar section
   $('#streak-chip').addEventListener('click', () => {
-    $$('.tab-btn').forEach((x) => x.classList.toggle('active', x.dataset.tab === 'calendar'));
-    $$('.tab-panel').forEach((x) => x.classList.remove('active'));
-    $('#tab-calendar').classList.add('active');
-    renderCalendar();
+    $('#sec-calendar').scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
+  // Settings modal (cog)
+  $('#settings-btn').addEventListener('click', openSettings);
+  $('#settings-close').addEventListener('click', closeSettings);
+  $('#settings-modal').addEventListener('click', (e) => { if (e.target.id === 'settings-modal') closeSettings(); });
+  // Log sub-tabs
   $$('.log-tab').forEach((b) => b.addEventListener('click', () => {
     $$('.log-tab').forEach((x) => x.classList.remove('active'));
     b.classList.add('active'); currentLogTab = b.dataset.log; renderLog();
@@ -1023,8 +1023,7 @@ function initTabs() {
 function init() {
   applyTheme();
   buildControls();
-  buildSettings();
-  initTabs();
+  initNav();
 
   $('#generate-btn').addEventListener('click', () => generate());
   $('#lucky-btn').addEventListener('click', feelingLucky);
@@ -1050,6 +1049,8 @@ function init() {
   $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') { $('#modal').classList.add('hidden'); pendingSession = null; } });
 
   renderStreakChip();
+  renderCalendar();
+  renderLog();
 
   checkReminder();
   setInterval(checkReminder, 60000);
