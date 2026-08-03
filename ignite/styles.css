@@ -380,6 +380,20 @@ select {
 .settings-modal-head .icon-btn { width: 36px; height: 36px; font-size: 1rem; }
 .settings-modal-box .settings-card { border: 0; box-shadow: none; background: transparent; padding: 4px 18px 18px; }
 .settings-hint { font-size: .8rem; color: var(--text-faint); margin-top: 10px; line-height: 1.5; }
+.link-btn { border: 0; background: transparent; color: var(--accent); font-size: .75rem; font-weight: 600; cursor: pointer; padding: 0 4px; text-transform: none; letter-spacing: 0; }
+.link-btn:hover { text-decoration: underline; }
+.tools-sub { font-size: .72rem; color: var(--text-faint); margin: 12px 0 6px; text-transform: uppercase; letter-spacing: .08em; }
+.tool-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tool-chip {
+  padding: 6px 11px; border-radius: 999px; font-size: .82rem; cursor: pointer;
+  border: 1px solid var(--border); background: var(--card); color: var(--text);
+  transition: .12s; user-select: none; line-height: 1.2;
+}
+.tool-chip[data-state="off"] { opacity: .45; text-decoration: line-through; color: var(--text-faint); background: transparent; }
+.tool-chip[data-state="rare"] { color: var(--text-dim); background: var(--bg-2); border-style: dashed; }
+.tool-chip[data-state="normal"] { }
+.tool-chip[data-state="often"] { background: var(--accent-soft); color: var(--accent-soft-text); border-color: transparent; font-weight: 700; }
+.tool-chip[data-state="often"]::before { content: "★ "; }
 .settings-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .btn-mini.danger { color: var(--danger); }
 .btn-mini.danger:hover { border-color: var(--danger); }

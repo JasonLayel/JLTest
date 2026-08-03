@@ -30,7 +30,12 @@ and it works offline.
   media in Traditional mode (charcoal, soft pastels, watercolor, watercolor
   pencils, acrylics, graphite, colored pencil, alcohol markers, fineliners,
   gouache, oil, ink, brush pen, ballpoint, oil pastels, conté) or digital brush
-  equivalents in Digital mode. Lock or reroll it like any other field.
+  equivalents in Digital mode. Lock or reroll it like any other field. It's never
+  biased by task — just random within your kit.
+- **My tools** (Settings) — tap each tool to cycle **Off · Rare · Normal ·
+  Often**. Turn off what you don't own so it only ever suggests your kit, and set
+  favorites to Often. Off = 0, Rare = 1, Normal = 3, Often = 8 (weights are in
+  `TOOL_WEIGHT` in `app.js`).
 - **Two inspiration words** — a primary focus word and a secondary word to weave
   in, from a large evocative word bank.
 - **Limited color palette** — generated with a poetic name and copyable hex

@@ -337,8 +337,23 @@ const DIGITAL_TOOLS = [
   'Smudge / blender', 'Lasso fill + hard brush', 'One big soft speedpaint brush',
   'Pixel brush (1px)', 'Grease pencil / lineart',
 ];
+// Per-tool weighting the user sets in Settings → My tools. Each tool cycles
+// Off / Rare / Normal / Often; unset defaults to Normal, so out of the box every
+// tool is uniform-random within its medium. The suggester never biases by task.
+const TOOL_STATES = ['off', 'rare', 'normal', 'often'];
+const TOOL_WEIGHT = { off: 0, rare: 1, normal: 3, often: 8 };
+function toolState(name) {
+  const tw = state.prefs.toolWeights;
+  return (tw && tw[name]) || 'normal';
+}
 function genToolField(mediumLabel) {
-  return pick(mediumLabel === 'Digital' ? DIGITAL_TOOLS : TRADITIONAL_TOOLS);
+  const pool = mediumLabel === 'Digital' ? DIGITAL_TOOLS : TRADITIONAL_TOOLS;
+  const entries = pool.map((t) => [t, TOOL_WEIGHT[toolState(t)] || 0]).filter(([, w]) => w > 0);
+  if (!entries.length) return pick(pool); // whole medium turned off → fall back so a tool still shows
+  let total = 0; for (const [, w] of entries) total += w;
+  let r = Math.random() * total;
+  for (const [t, w] of entries) { if (r < w) return t; r -= w; }
+  return entries[entries.length - 1][0];
 }
 
 /* ---------- Palette generation ---------- */
@@ -1056,6 +1071,12 @@ function clearData() {
 }
 
 /* ---------- Settings panel ---------- */
+function toolChipsHTML(list) {
+  return list.map((t) => {
+    const st = toolState(t);
+    return `<button class="tool-chip" data-tool="${escapeHTML(t)}" data-state="${st}" title="${st}">${escapeHTML(t)}</button>`;
+  }).join('');
+}
 function buildSettings() {
   const el = $('#tab-settings');
   const theme = state.prefs.theme || 'system';
@@ -1071,6 +1092,14 @@ function buildSettings() {
           <button data-emph="wildcard"${emph === 'wildcard' ? ' class="active"' : ''}>Wildcard</button>
         </div>
         <div class="settings-hint"><b>My pillars</b> leans hard toward character/portrait, environment/landscape, 3D&nbsp;blockout, and combinations of them. <b>Balanced</b> evens things out; <b>Wildcard</b> brings back more of the long tail (leaves, still life, patterns…). Everything can still appear — this just changes how often.</div>
+      </div>
+      <div class="settings-group">
+        <div class="settings-label">My tools <button id="tools-reset" class="link-btn">reset</button></div>
+        <div class="settings-hint">Tap a tool to cycle <b>Off</b> · <b>Rare</b> · <b>Normal</b> · <b>Often</b>. Turn off what you don't own and the suggester only picks from your kit; set favorites to <b>Often</b>. It never picks by task type — just this weighting.</div>
+        <div class="tools-sub">Traditional</div>
+        <div class="tool-chips" data-pool="traditional">${toolChipsHTML(TRADITIONAL_TOOLS)}</div>
+        <div class="tools-sub">Digital</div>
+        <div class="tool-chips" data-pool="digital">${toolChipsHTML(DIGITAL_TOOLS)}</div>
       </div>
       <div class="settings-group">
         <div class="settings-label">Appearance</div>
@@ -1106,6 +1135,19 @@ function buildSettings() {
     state.prefs.emphasis = b.dataset.emph; save();
     $$('[data-emph]', el).forEach((x) => x.classList.toggle('active', x === b));
   }));
+  $$('.tool-chip', el).forEach((chip) => chip.addEventListener('click', () => {
+    const name = chip.dataset.tool;
+    const next = TOOL_STATES[(TOOL_STATES.indexOf(toolState(name)) + 1) % TOOL_STATES.length];
+    state.prefs.toolWeights = state.prefs.toolWeights || {};
+    state.prefs.toolWeights[name] = next;
+    save();
+    chip.dataset.state = next; chip.title = next;
+  }));
+  $('#tools-reset', el).addEventListener('click', () => {
+    state.prefs.toolWeights = {}; save();
+    $$('.tool-chip', el).forEach((c) => { c.dataset.state = 'normal'; c.title = 'normal'; });
+    toast('Tools reset to Normal');
+  });
   $$('[data-theme-opt]', el).forEach((b) => b.addEventListener('click', () => {
     state.prefs.theme = b.dataset.themeOpt; save(); applyTheme();
     $$('[data-theme-opt]', el).forEach((x) => x.classList.toggle('active', x === b));
