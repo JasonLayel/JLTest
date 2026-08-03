@@ -26,6 +26,11 @@ and it works offline.
   the way you want: **My pillars** (~75% character/portrait · environment/
   landscape · 3D blockout · combos), **Balanced**, or **Wildcard** (more of the
   long tail). Tune the weights in one commented table (`EMPHASIS` in `app.js`).
+- **Recommended tool** — a medium-appropriate tool to make it with: physical
+  media in Traditional mode (charcoal, soft pastels, watercolor, watercolor
+  pencils, acrylics, graphite, colored pencil, alcohol markers, fineliners,
+  gouache, oil, ink, brush pen, ballpoint, oil pastels, conté) or digital brush
+  equivalents in Digital mode. Lock or reroll it like any other field.
 - **Two inspiration words** — a primary focus word and a secondary word to weave
   in, from a large evocative word bank.
 - **Limited color palette** — generated with a poetic name and copyable hex

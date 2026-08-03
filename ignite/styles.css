@@ -253,6 +253,8 @@ select {
 .swatch:hover .hex { opacity: 1; }
 
 .constraint-text { font-size: 1.02rem; font-weight: 600; color: var(--accent-3); }
+.tool-text { font-size: 1.12rem; font-weight: 700; letter-spacing: -.01em; }
+.tool-text::before { content: "🖌 "; }
 
 /* Backstory (AI) */
 .backstory-row { flex-direction: column; }

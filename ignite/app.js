@@ -320,6 +320,27 @@ const CONSTRAINTS = [
   'Leave 30% of the page intentionally empty',
 ];
 
+/* ---------- Recommended tools ---------- */
+// Physical media (shown when the medium resolves to Traditional).
+const TRADITIONAL_TOOLS = [
+  'Charcoal', 'Soft pastels', 'Watercolor', 'Watercolor pencils', 'Acrylics',
+  'Graphite pencil', 'Colored pencil', 'Alcohol markers', 'Fineliners',
+  'Gouache', 'Oil paint', 'Ink & dip pen', 'Brush pen', 'Ballpoint pen',
+  'Oil pastels', 'Conté on toned paper',
+];
+// Digital brushes/tools (shown when the medium resolves to Digital) — echoes the
+// physical media where it makes sense, plus a few native-digital options.
+const DIGITAL_TOOLS = [
+  'Hard round brush', 'Textured charcoal brush', 'Soft airbrush',
+  'Digital watercolor brush', 'Digital gouache brush', 'Blocky flat brush',
+  'Colored-pencil brush', 'Inking / lineart pen', 'Alcohol-marker brush',
+  'Smudge / blender', 'Lasso fill + hard brush', 'One big soft speedpaint brush',
+  'Pixel brush (1px)', 'Grease pencil / lineart',
+];
+function genToolField(mediumLabel) {
+  return pick(mediumLabel === 'Digital' ? DIGITAL_TOOLS : TRADITIONAL_TOOLS);
+}
+
 /* ---------- Palette generation ---------- */
 function hslToHex(h, s, l) {
   s /= 100; l /= 100;
@@ -471,7 +492,7 @@ function save() { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
 
 /* ---------- Current generation ---------- */
 let current = null;              // the active generated prompt (unsaved)
-const locks = { task: false, primary: false, secondary: false, palette: false, constraint: false };
+const locks = { task: false, tool: false, primary: false, secondary: false, palette: false, constraint: false };
 
 function selectedEffort() {
   return EFFORTS.find((e) => e.id === (state.prefs.effort || 2)) || EFFORTS[1];
@@ -583,6 +604,7 @@ function generate() {
   current.minutes = eff.minutes;
   current.durationLabel = eff.sub;
 
+  if (!locks.tool || !current.tool) current.tool = genToolField(current.mediumLabel);
   if (!locks.primary || !current.primary) current.primary = genWordField(current.secondary);
   if (!locks.secondary || !current.secondary) current.secondary = genWordField(current.primary);
   if (!locks.palette || !current.palette) current.palette = generatePalette();
@@ -597,7 +619,12 @@ function generate() {
 
 function rerollField(field) {
   if (!current) return;
-  if (field === 'task') { const tf = genTaskField(); current.task = tf.task; current.category = tf.category; current.mediumLabel = tf.mediumLabel; current.backstory = null; }
+  if (field === 'task') {
+    const tf = genTaskField();
+    current.task = tf.task; current.category = tf.category; current.mediumLabel = tf.mediumLabel; current.backstory = null;
+    if (!locks.tool) current.tool = genToolField(current.mediumLabel); // keep tool matching the new medium
+  }
+  else if (field === 'tool') current.tool = genToolField(current.mediumLabel);
   else if (field === 'primary') current.primary = genWordField(current.secondary);
   else if (field === 'secondary') current.secondary = genWordField(current.primary);
   else if (field === 'palette') current.palette = generatePalette();
@@ -618,6 +645,7 @@ function renderResult(pop) {
   $('#r-duration').textContent = current.durationLabel;
   $('#r-category').textContent = current.category;
   $('#r-task').textContent = current.task;
+  $('#r-tool').textContent = current.tool || '';
   $('#r-primary').textContent = current.primary;
   $('#r-secondary').textContent = current.secondary;
 
@@ -754,6 +782,7 @@ function snapshot() {
     primary: current.primary,
     secondary: current.secondary,
     palette: current.palette,
+    tool: current.tool || null,
     constraint: current.constraint || null,
     backstory: current.backstory || null,
     note: '',
@@ -897,7 +926,7 @@ function logItemHTML(it, deletable) {
   return `<div class="card log-item">
     <div class="li-top"><div class="li-date">${dateStr}</div>${del}</div>
     <div class="li-task">${escapeHTML(it.task)}</div>
-    <div class="li-meta"><span>${it.effort}</span><span>·</span><span>${it.medium}</span><span>·</span>
+    <div class="li-meta"><span>${it.effort}</span><span>·</span><span>${it.medium}</span>${it.tool ? `<span>·</span><span>🖌 ${escapeHTML(it.tool)}</span>` : ''}<span>·</span>
       <span>${escapeHTML(it.primary)} + ${escapeHTML(it.secondary)}</span></div>
     ${it.constraint ? `<div class="li-meta">⚡ ${escapeHTML(it.constraint)}</div>` : ''}
     ${it.backstory ? `<div class="li-note">✨ ${escapeHTML(it.backstory)}</div>` : ''}
@@ -927,6 +956,7 @@ function currentAsText() {
   if (!current) return '';
   let s = `🎨 ${current.task}\n`;
   s += `• ${current.effortName} (${current.durationLabel}) · ${current.mediumLabel} · ${current.category}\n`;
+  if (current.tool) s += `• Recommended tool: ${current.tool}\n`;
   s += `• Primary word: ${current.primary}\n• Secondary word: ${current.secondary}\n`;
   s += `• Palette (${current.palette.type} — “${current.palette.name}”): ${current.palette.colors.map((c) => c.hex).join(', ')}\n`;
   if (current.constraint) s += `• Challenge: ${current.constraint}\n`;
