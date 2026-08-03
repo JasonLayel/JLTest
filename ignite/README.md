@@ -17,10 +17,15 @@ and it works offline.
 - **Fire level (energy)** — Ember (5–15 min) · Kindle (15–30) · Blaze (30–60) ·
   Inferno (60+). Drives which tasks match and the suggested duration.
 - **Medium selector** — Traditional · Digital · Surprise me.
-- **Randomized task** from a database of ~200 exercises across figure, portrait,
-  anatomy, still life, landscape, botanical, animals, perspective, composition,
-  value & light, color, character, concept, abstract, pattern, lettering, master
-  studies, imagination and more — filtered to your fire level + medium.
+- **Weighted-random task** from a database of ~230 exercises across figure,
+  portrait, anatomy, landscape, environment, **3D render / blockout**, **fusion**
+  (character + environment + render combos), still life, botanical, animals,
+  perspective, composition, value & light, color, abstract, pattern, lettering,
+  master studies and more — filtered to your fire level + medium.
+- **Task emphasis** (Settings) — everything stays possible, but the mix leans
+  the way you want: **My pillars** (~75% character/portrait · environment/
+  landscape · 3D blockout · combos), **Balanced**, or **Wildcard** (more of the
+  long tail). Tune the weights in one commented table (`EMPHASIS` in `app.js`).
 - **Two inspiration words** — a primary focus word and a secondary word to weave
   in, from a large evocative word bank.
 - **Limited color palette** — generated with a poetic name and copyable hex

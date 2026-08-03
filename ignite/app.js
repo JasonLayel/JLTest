@@ -246,6 +246,34 @@ const TASKS = [
   { t: 'Draw the same cup five times, faster each time', c: 'Warm-Up', m: 'TD', e: '12' },
   { t: 'Value-only thumbnail of the room you\'re in', c: 'Composition', m: 'TD', e: '12' },
   { t: 'Fill a page edge-to-edge with overlapping leaves', c: 'Pattern', m: 'TD', e: '23' },
+
+  // 3D render / blockout studies (pillar)
+  { t: 'Greyscale environment blockout — big shapes only, 3 values', c: 'Render', m: 'TD', e: '23' },
+  { t: 'Primitive blockout of a character from basic 3D forms', c: 'Render', m: 'TD', e: '23' },
+  { t: 'Orthographic blockout (front + side) to model from', c: 'Render', m: 'TD', e: '34' },
+  { t: 'Lighting study — one form, three setups (key, fill, rim)', c: 'Render', m: 'TD', e: '23' },
+  { t: 'Material render study — the same sphere as clay, metal, glass', c: 'Render', m: 'TD', e: '34' },
+  { t: 'Block out a room in one-point perspective, then value it', c: 'Render', m: 'TD', e: '34' },
+  { t: 'Hard-surface prop blockout from primitives', c: 'Render', m: 'D', e: '34' },
+  { t: 'Grey-box a level layout from a top-down view', c: 'Render', m: 'TD', e: '23' },
+  { t: 'Ambient-occlusion pass — shade only the contact shadows', c: 'Render', m: 'TD', e: '2' },
+  { t: 'Turnaround blockout of a vehicle in simple volumes', c: 'Render', m: 'TD', e: '4' },
+  { t: 'Clay-render portrait — planes of the head, no detail', c: 'Render', m: 'TD', e: '23' },
+  { t: 'Camera study — block one scene from three focal lengths', c: 'Render', m: 'TD', e: '3' },
+
+  // Fusion — combine character / environment / render (pillar)
+  { t: 'Character + environment: a figure placed in a landscape, block out both', c: 'Fusion', m: 'TD', e: '34' },
+  { t: 'Portrait lit by its environment — a face catching a scene’s light', c: 'Fusion', m: 'TD', e: '34' },
+  { t: 'Block out a scene, then render one character into its focal point', c: 'Fusion', m: 'TD', e: '4' },
+  { t: 'Design a character and the room they live in — both tell one story', c: 'Fusion', m: 'TD', e: '34' },
+  { t: 'Greyscale 3D-style blockout of a figure in a landscape', c: 'Fusion', m: 'TD', e: '34' },
+  { t: 'Environment concept with a figure for scale and mood', c: 'Fusion', m: 'TD', e: '34' },
+  { t: 'Character silhouette read against a blocked-out environment', c: 'Fusion', m: 'TD', e: '23' },
+  { t: 'Costume material render — one figure’s cloth, metal and skin', c: 'Fusion', m: 'TD', e: '34' },
+  { t: 'Block out a landscape, then place a creature that belongs there', c: 'Fusion', m: 'TD', e: '34' },
+  { t: 'Portrait of a place — make a landscape feel like a character', c: 'Fusion', m: 'TD', e: '34' },
+  { t: 'Three-in-one: block out a scene, add a figure, render the light', c: 'Fusion', m: 'TD', e: '4' },
+  { t: 'Thumbnail three shots of a character moving through an environment', c: 'Fusion', m: 'TD', e: '23' },
 ];
 
 /* ---------- Inspiration word bank ---------- */
@@ -452,6 +480,55 @@ function selectedMedium() { return state.prefs.medium || 'TD'; } // 'T', 'D', or
 function focusFilter() { return state.prefs.focus || 'Any'; }
 function challengeOn() { return !!state.prefs.challenge; }
 
+/* ---------- Task weighting ----------
+   Tasks are grouped, and each group has a weight per emphasis preset. A task is
+   picked by first choosing a group (proportional to its weight among the groups
+   that actually have eligible tasks right now), then a random task within it.
+   Everything stays possible — favored themes just come up far more often.
+   To retune, edit the numbers in EMPHASIS below, or the CATEGORY_GROUP map. */
+const CATEGORY_GROUP = {
+  // character / portrait pillar
+  Portrait: 'character', Character: 'character', Figure: 'character',
+  Anatomy: 'character', Animals: 'character',
+  // environment / landscape pillar
+  Landscape: 'environment', Concept: 'environment', Perspective: 'environment',
+  // 3D render / blockout pillar
+  Render: 'render',
+  // combinations of the three pillars
+  Fusion: 'fusion',
+  // everything else falls through to 'longtail'
+};
+const groupOf = (cat) => CATEGORY_GROUP[cat] || 'longtail';
+
+const EMPHASIS = {
+  // ~75% of rolls land on the three pillars + fusion; the rest is the long tail
+  pillars:  { character: 26, environment: 26, render: 16, fusion: 10, longtail: 22 },
+  // a clear lean, but healthier variety
+  balanced: { character: 20, environment: 20, render: 13, fusion: 8, longtail: 39 },
+  // more surprise — the long tail shows up much more
+  wildcard: { character: 16, environment: 16, render: 10, fusion: 8, longtail: 50 },
+};
+const emphasisWeights = () => EMPHASIS[state.prefs.emphasis] || EMPHASIS.pillars;
+
+function pickWeightedTask(pool) {
+  const w = emphasisWeights();
+  const byGroup = {};
+  for (const t of pool) (byGroup[groupOf(t.c)] = byGroup[groupOf(t.c)] || []).push(t);
+  let total = 0;
+  const cum = [];
+  for (const g of Object.keys(byGroup)) {
+    const weight = w[g] || 0;
+    if (weight <= 0) continue;
+    total += weight;
+    cum.push([total, g]);
+  }
+  if (!total) return pick(pool); // no weighted group eligible → uniform fallback
+  const r = Math.random() * total;
+  let chosen = cum[cum.length - 1][1];
+  for (const [c, g] of cum) { if (r < c) { chosen = g; break; } }
+  return pick(byGroup[chosen]);
+}
+
 function matchingTasks() {
   const eff = selectedEffort().id;
   const med = selectedMedium();
@@ -475,7 +552,8 @@ function genTaskField() {
     if (!pool.length) pool = TASKS.filter((t) => t.e.includes(String(eff)));
     if (!pool.length) pool = TASKS;
   }
-  const t = pick(pool);
+  // Weighted pick when no specific focus is chosen; a focus is an explicit hard filter.
+  const t = focusFilter() === 'Any' ? pickWeightedTask(pool) : pick(pool);
   // resolve concrete medium label for display
   let medLabel;
   const med = selectedMedium();
@@ -952,8 +1030,18 @@ function buildSettings() {
   const el = $('#tab-settings');
   const theme = state.prefs.theme || 'system';
   const r = state.prefs.reminder || { enabled: false, time: '18:00' };
+  const emph = state.prefs.emphasis || 'pillars';
   el.innerHTML = `
     <div class="card settings-card">
+      <div class="settings-group">
+        <div class="settings-label">Task emphasis</div>
+        <div class="segmented emphasis-seg">
+          <button data-emph="pillars"${emph === 'pillars' ? ' class="active"' : ''}>My pillars</button>
+          <button data-emph="balanced"${emph === 'balanced' ? ' class="active"' : ''}>Balanced</button>
+          <button data-emph="wildcard"${emph === 'wildcard' ? ' class="active"' : ''}>Wildcard</button>
+        </div>
+        <div class="settings-hint"><b>My pillars</b> leans hard toward character/portrait, environment/landscape, 3D&nbsp;blockout, and combinations of them. <b>Balanced</b> evens things out; <b>Wildcard</b> brings back more of the long tail (leaves, still life, patterns…). Everything can still appear — this just changes how often.</div>
+      </div>
       <div class="settings-group">
         <div class="settings-label">Appearance</div>
         <div class="segmented theme-seg">
@@ -984,6 +1072,10 @@ function buildSettings() {
       </div>
     </div>`;
 
+  $$('[data-emph]', el).forEach((b) => b.addEventListener('click', () => {
+    state.prefs.emphasis = b.dataset.emph; save();
+    $$('[data-emph]', el).forEach((x) => x.classList.toggle('active', x === b));
+  }));
   $$('[data-theme-opt]', el).forEach((b) => b.addEventListener('click', () => {
     state.prefs.theme = b.dataset.themeOpt; save(); applyTheme();
     $$('[data-theme-opt]', el).forEach((x) => x.classList.toggle('active', x === b));
@@ -1014,6 +1106,7 @@ function buildSettings() {
 function refreshControls() {
   if (state.prefs.effort == null) state.prefs.effort = 2;
   if (state.prefs.medium == null) state.prefs.medium = 'TD';
+  if (state.prefs.emphasis == null) state.prefs.emphasis = 'pillars';
   syncSegments();
   const f = $('#focus-select'); if (f) f.value = focusFilter();
   const c = $('#challenge-toggle'); if (c) c.checked = challengeOn();
