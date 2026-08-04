@@ -50,7 +50,7 @@ from mathutils import noise as mnoise
 
 # Bumped on every push. Compare the "[fantasy] script build" line in the
 # console against the number Claude tells you to confirm auto-update works.
-SCRIPT_BUILD = 10
+SCRIPT_BUILD = 11
 SCRIPT_DATE = "2026-08-01"
 # The launcher tells us its build via --launcher-build; warn if it's older
 # than this (i.e. missing settings this script now expects).
@@ -2852,11 +2852,7 @@ def build_scatter_protos(kind, assets, mood, rng):
 # Camera
 # --------------------------------------------------------------------------
 
-def place_camera(scene, terrain, focal, rng, coll, water_z):
-    # aim below the focal's top so the land holds most of the frame
-    ground_f = terrain.height(focal.x, focal.y)
-    aim = Vector((focal.x, focal.y,
-                  ground_f + (focal.z - ground_f) * 0.45 + 4))
+def place_camera(scene, terrain, focal, rng, coll, water_z, far_top=1000.0):
     cam_data = bpy.data.cameras.new("CineCam")
     cam_data.lens = rng.choice([35, 35, 50, 50, 50, 85])
     cam_data.sensor_width = 36
@@ -2868,10 +2864,24 @@ def place_camera(scene, terrain, focal, rng, coll, water_z):
 
     base_dist = {35: (350, 700), 50: (450, 950), 85: (700, 1400)}[int(cam_data.lens)]
     lim = terrain.size * 0.47
+
+    def skyline_pitch(cx, cy, cz, azim):
+        """Elevation angle of the tallest ridge along the view direction --
+        inner terrain plus the distant far-shell mountains. Aiming here puts
+        the skyline at the frame centre, i.e. ~50% sky above it."""
+        p = math.radians(-1.5)
+        for d in np.linspace(80, terrain.size * 0.5, 34):
+            sx, sy = cx + math.cos(azim) * d, cy + math.sin(azim) * d
+            if abs(sx) < lim and abs(sy) < lim:
+                p = max(p, math.atan2(terrain.height(sx, sy) - cz, d))
+        for d in (5000.0, 7500.0, 10000.0):     # far-shell ring estimate
+            p = max(p, math.atan2(far_top * 0.7 - cz, d))
+        return p
+
     ax = max(-lim * 0.7, min(lim * 0.7, focal.x))
     ay = max(-lim * 0.7, min(lim * 0.7, focal.y))
     best = None
-    for _ in range(80):
+    for _ in range(70):
         ang = rng.uniform(0, 2 * math.pi)
         dist = rng.uniform(*base_dist)
         cx = ax + math.cos(ang) * dist
@@ -2880,28 +2890,26 @@ def place_camera(scene, terrain, focal, rng, coll, water_z):
             continue
         ground = terrain.height(cx, cy)
         if water_z is not None and ground < water_z + 2:
-            continue          # keep the camera on dry land
-        cz = ground + rng.uniform(6, 55)
-        # keep the horizon in a cinematic band: not staring at the ground
-        horiz = math.hypot(aim.x - cx, aim.y - cy)
-        pitch = math.atan2(aim.z - cz, max(horiz, 1.0))
-        pitch_pen = max(0.0, -0.30 - pitch) + max(0.0, pitch - 0.18)
-        # line-of-sight: sample along the ray, count blocked samples
+            continue
+        cz = ground + rng.uniform(20, 110)
+        azim = math.atan2(focal.y - cy, focal.x - cx)
+        horiz = math.hypot(focal.x - cx, focal.y - cy)
+        pitch = max(math.radians(1.0), min(math.radians(15.0),
+                                           skyline_pitch(cx, cy, cz, azim)))
+        # is the subject buried behind near terrain before we reach it?
         blocked = 0
-        for t in np.linspace(0.08, 0.92, 18):
-            sx = cx + (aim.x - cx) * t
-            sy = cy + (aim.y - cy) * t
-            sz = cz + (aim.z - cz) * t
-            if terrain.height(sx, sy) > sz + 2:
+        for t in np.linspace(0.1, 0.92, 16):
+            d = horiz * t
+            sx, sy = cx + math.cos(azim) * d, cy + math.sin(azim) * d
+            if terrain.height(sx, sy) > cz + math.tan(pitch) * d + 8:
                 blocked += 1
-        score = -blocked * 10 - pitch_pen * 60 + rng.uniform(0, 1)
+        # favour framing the subject near the skyline (not tiny at the bottom)
+        subj_pitch = math.atan2(focal.z - cz, max(horiz, 1.0))
+        subj_pen = max(0.0, pitch - subj_pitch - math.radians(9))
+        score = -blocked * 8 - subj_pen * 40 + rng.uniform(0, 1)
         if best is None or score > best[0]:
             best = (score, cx, cy, cz)
-        if blocked == 0 and pitch_pen == 0:
-            break
     if best is None:
-        # guaranteed dry-land fallback: nearest in-bounds cell to the
-        # preferred shooting distance
         n = terrain.n
         b = int(n * 0.16)
         yy, xx = np.mgrid[b:n - b, b:n - b]
@@ -2913,19 +2921,23 @@ def place_camera(scene, terrain, focal, rng, coll, water_z):
         d = np.where(Hs > wz + 2, np.abs(d - base_dist[0]), 1e12)
         k = np.argmin(d)
         cx, cy = float(gx.ravel()[k]), float(gy.ravel()[k])
-        best = (0, cx, cy, terrain.height(cx, cy) + 25)
+        best = (0, cx, cy, terrain.height(cx, cy) + 40)
     _, cx, cy, cz = best
     cam.location = (cx, cy, cz)
 
-    # aim with a gentle rule-of-thirds offset
-    look = aim - cam.location
-    rot = look.to_track_quat("-Z", "Y").to_euler()
-    cam.rotation_euler = rot
-    cam_data.shift_x = rng.uniform(-0.07, 0.07)
-    cam_data.shift_y = rng.uniform(-0.03, 0.06)
+    # aim: azimuth toward the subject, pitch at the skyline -> horizon centred
+    azim = math.atan2(focal.y - cy, focal.x - cx)
+    pitch = max(math.radians(1.0), min(math.radians(15.0),
+                                       skyline_pitch(cx, cy, cz, azim)))
+    fwd = Vector((math.cos(azim) * math.cos(pitch),
+                  math.sin(azim) * math.cos(pitch), math.sin(pitch)))
+    target = cam.location + fwd * 1000.0
+    cam.rotation_euler = (target - cam.location).to_track_quat("-Z", "Y").to_euler()
+    cam_data.shift_x = rng.uniform(-0.06, 0.06)
+    cam_data.shift_y = rng.uniform(-0.02, 0.05)
     if rng.random() < 0.2:
         cam_data.dof.use_dof = True
-        cam_data.dof.focus_distance = look.length
+        cam_data.dof.focus_distance = math.hypot(focal.x - cx, focal.y - cy)
         cam_data.dof.aperture_fstop = rng.uniform(5.6, 11)
     return cam
 
@@ -3087,6 +3099,7 @@ def main():
     r = np.maximum(np.abs(X2), np.abs(Y2))
     mask = smoothstep(size * 0.42, size * 0.85, r)
     far = far * mask - 40 * (1 - mask)
+    far_top = float(np.percentile(far, 99))    # typical far-ridge height
     build_terrain_mesh("FarShell", far, far_size, c_terrain, mat, z_offset=-2)
 
     if water_z is not None:
@@ -3168,7 +3181,8 @@ def main():
         fx, fy = terrain.grid_to_world(ix, iy)
         focal = Vector((fx, fy, float(H.max())))
 
-    cam = place_camera(scene, terrain, focal, rng, c_cam, water_z)
+    cam = place_camera(scene, terrain, focal, rng, c_cam, water_z,
+                       far_top=far_top)
     azim = sun_azimuth_for(mood, cam, focal, rng)
     va = math.atan2(focal.y - cam.location.y, focal.x - cam.location.x)
 
