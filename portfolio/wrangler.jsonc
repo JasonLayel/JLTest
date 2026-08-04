@@ -1,0 +1,11 @@
+{
+  // Cloudflare Workers config for serving this Astro site as static assets.
+  // `npm run build` outputs to ./dist, and Cloudflare serves that folder
+  // directly — no Worker script needed (the `main` key is intentionally omitted).
+  // Static-asset requests are free and don't count against the Workers request limit.
+  "name": "jasonlayel-portfolio",
+  "compatibility_date": "2026-08-04",
+  "assets": {
+    "directory": "./dist"
+  }
+}
