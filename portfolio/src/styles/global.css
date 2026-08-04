@@ -13,7 +13,7 @@
   --accent: #ff5a2d;
 
   --font-sans: 'Archivo Variable', system-ui, sans-serif;
-  --font-display: 'Big Shoulders Variable', 'Archivo Variable', system-ui, sans-serif;
+  --font-display: 'Jost Variable', 'Archivo Variable', system-ui, sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
 
   --gutter: clamp(1.25rem, 4vw, 3.5rem);
@@ -68,17 +68,17 @@ a {
 
 h1, h2, h3 {
   font-family: var(--font-display);
-  font-weight: 700;
-  line-height: 0.98;
-  letter-spacing: 0.005em;
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: 0.03em;
   text-wrap: balance;
 }
 
 .display {
   font-size: var(--step-4);
-  font-weight: 700;
+  font-weight: 200;
   text-transform: uppercase;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.14em;
 }
 
 .kicker {
@@ -130,6 +130,7 @@ h1, h2, h3 {
 .section-head h2 {
   font-size: var(--step-3);
   text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 
 /* --- links with intent --------------------------------------------------- */
