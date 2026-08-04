@@ -274,6 +274,69 @@ const TASKS = [
   { t: 'Portrait of a place — make a landscape feel like a character', c: 'Fusion', m: 'TD', e: '34' },
   { t: 'Three-in-one: block out a scene, add a figure, render the light', c: 'Fusion', m: 'TD', e: '4' },
   { t: 'Thumbnail three shots of a character moving through an environment', c: 'Fusion', m: 'TD', e: '23' },
+
+  // ── Curated prompts (yours) ──
+  { t: 'D.va bust portrait', c: 'Portrait', m: 'TD', e: '234' },
+  { t: 'Momo bust portrait', c: 'Portrait', m: 'TD', e: '234' },
+  { t: 'Frieren landscape', c: 'Landscape', m: 'TD', e: '34' },
+  { t: 'Pokemon portrait', c: 'Portrait', m: 'TD', e: '23' },
+  { t: 'Mythical creature portrait', c: 'Character', m: 'TD', e: '34' },
+  { t: 'Anime influencer bust selfie', c: 'Portrait', m: 'TD', e: '23' },
+  { t: 'Blender to paint landscape — architectural', c: 'Fusion', m: 'D', e: '4' },
+  { t: 'Cyberpunk girl in space loft — Midjourney sketchover', c: 'Fusion', m: 'D', e: '34' },
+  { t: 'Random Henri Prestes landscape — Midjourney paintover', c: 'Landscape', m: 'D', e: '34' },
+  { t: 'Chibi character fanart', c: 'Character', m: 'TD', e: '23' },
+  { t: 'Ghost of Yhotei landscape — painterly and loose, value and color', c: 'Landscape', m: 'TD', e: '34' },
+  { t: 'Watercolor ink and wash — flower with bokeh (DOF) background', c: 'Botanical', m: 'T', e: '34' },
+  { t: 'solringen (twitter) paintover — digital', c: 'Character', m: 'D', e: '34' },
+  { t: 'Grady Frederick ArtStation tutorial — environment painting', c: 'Concept', m: 'D', e: '34' },
+  { t: 'Marc Brunet “Why your paintings look FLAT!” follow-along — digital', c: 'Value & Light', m: 'D', e: '34' },
+  { t: 'Portrait sketch from the r/drawme subreddit', c: 'Portrait', m: 'TD', e: '23' },
+
+  // ── More in the same veins ──
+  // named-character busts / portraits
+  { t: '2B (NieR) bust portrait', c: 'Portrait', m: 'TD', e: '234' },
+  { t: 'Makima bust portrait', c: 'Portrait', m: 'TD', e: '234' },
+  { t: 'Jinx (Arcane) portrait', c: 'Portrait', m: 'TD', e: '234' },
+  { t: 'Genshin Impact character portrait', c: 'Portrait', m: 'TD', e: '234' },
+  { t: 'Studio Ghibli character portrait', c: 'Portrait', m: 'TD', e: '23' },
+  { t: 'Original character (OC) bust portrait', c: 'Character', m: 'TD', e: '34' },
+  { t: 'Favorite villain — bust portrait', c: 'Portrait', m: 'TD', e: '34' },
+  { t: 'Chibi version of a game boss', c: 'Character', m: 'TD', e: '23' },
+  // franchise / game landscapes
+  { t: 'Elden Ring vista — painterly landscape', c: 'Landscape', m: 'TD', e: '34' },
+  { t: 'Zelda: Breath of the Wild landscape', c: 'Landscape', m: 'TD', e: '34' },
+  { t: 'Studio Ghibli countryside landscape', c: 'Landscape', m: 'TD', e: '34' },
+  { t: 'Cyberpunk 2077 rainy street', c: 'Concept', m: 'D', e: '34' },
+  { t: 'Sci-fi space-station interior', c: 'Concept', m: 'D', e: '34' },
+  // AI sketchover / paintover workflows
+  { t: 'Midjourney paintover — mecha in a rainy alley', c: 'Fusion', m: 'D', e: '34' },
+  { t: 'Nijijourney anime character — paintover', c: 'Character', m: 'D', e: '34' },
+  { t: 'AI sketchover — creature concept, then redraw it clean', c: 'Character', m: 'D', e: '34' },
+  { t: 'Midjourney environment paintover — alien jungle', c: 'Landscape', m: 'D', e: '34' },
+  // artist studies / paintovers
+  { t: 'Ilya Kuvshinov–style portrait study', c: 'Portrait', m: 'D', e: '34' },
+  { t: 'RossDraws-style character', c: 'Character', m: 'D', e: '34' },
+  { t: 'WLOP-style rendered portrait', c: 'Portrait', m: 'D', e: '4' },
+  { t: 'Craig Mullins atmospheric environment study', c: 'Concept', m: 'D', e: '34' },
+  { t: 'Sparth-style minimal environment', c: 'Concept', m: 'D', e: '34' },
+  // tutorial follow-alongs
+  { t: 'Proko figure / anatomy follow-along', c: 'Anatomy', m: 'TD', e: '34' },
+  { t: 'Marco Bucci light & color follow-along', c: 'Value & Light', m: 'D', e: '34' },
+  { t: 'Sinix painting tutorial follow-along', c: 'Portrait', m: 'D', e: '34' },
+  { t: 'Ctrl+Paint fundamentals lesson', c: 'Value & Light', m: 'D', e: '23' },
+  { t: 'Drawabox lesson (r/ArtFundamentals)', c: 'Perspective', m: 'TD', e: '23' },
+  { t: 'FZD-style design tutorial follow-along', c: 'Concept', m: 'D', e: '4' },
+  // community / subreddit prompts
+  { t: 'r/redditgetsdrawn portrait', c: 'Portrait', m: 'TD', e: '23' },
+  { t: 'r/SketchDaily prompt of the day', c: 'Imagination', m: 'TD', e: '23' },
+  // media / technique specifics
+  { t: 'Ink and wash cityscape with a bokeh background', c: 'Concept', m: 'T', e: '34' },
+  { t: 'Gouache landscape master study', c: 'Landscape', m: 'T', e: '34' },
+  // 3D → paint workflows
+  { t: 'Blender blockout → paintover of an interior', c: 'Fusion', m: 'D', e: '4' },
+  { t: 'Kitbash a 3D scene, then paint over it', c: 'Fusion', m: 'D', e: '4' },
+  { t: 'Greybox an environment in Blender, then value it', c: 'Render', m: 'TD', e: '34' },
 ];
 
 /* ---------- Inspiration word bank ---------- */
