@@ -4,7 +4,6 @@ import { Image } from 'astro:assets';
 import type { ImageMetadata } from 'astro';
 import Base from '../layouts/Base.astro';
 import WorkCard from '../components/WorkCard.astro';
-import ImageSlot from '../components/ImageSlot.astro';
 import StillsGallery from '../components/StillsGallery.astro';
 import VimeoFilm from '../components/VimeoFilm.astro';
 
@@ -29,29 +28,6 @@ const tools = [
   'Rhino / Grasshopper',
   'Adobe Suite',
   'DaVinci Resolve',
-];
-
-const timeline = [
-  {
-    years: '2005–12',
-    what: 'Architecture school, twice over — B.Des at Florida (high honors), M.Arch at UVA. Learned to draw by hand and never really stopped: watercolor, charcoal, physical models.',
-  },
-  {
-    years: '2013–14',
-    what: 'Freelance 3D artist. Renderings and real-time assets in early Unreal and Unity, built from whatever clients had — sketches, CAD files, sometimes just a phone call.',
-  },
-  {
-    years: '2014–18',
-    what: 'Illustrate My Design. Started as a 3D artist, ended up managing a team of five across 100+ architecture and interiors projects.',
-  },
-  {
-    years: '2018–22',
-    what: 'MG2, architectural designer. Project Architect on retail and grocery work — Revit, code, permitting, construction admin. The years that make my renders read like buildings instead of backdrops.',
-  },
-  {
-    years: '2022–now',
-    what: 'MG2, Design Visualization Specialist. Built the firm’s end-to-end viz pipeline from scratch; art direction and QA standards across 100+ projects a year; training curricula for 300+ designers; a fleet of 15+ VR headsets across six offices.',
-  },
 ];
 
 const capabilities = [
@@ -129,31 +105,20 @@ const capabilities = [
       title="Featured film"
       poster="stills/film-frame-forest-tower.png"
     />
-    <div class="slot" style="margin-top: 1.5rem;">
-      <strong>Film details.</strong> Give this film a real title and a
-      one-line description, and send more Vimeo links to grow this section
-      into a reel grid. Poster frames can be swapped by changing the
-      <code>poster</code> path in src/pages/index.astro.
-    </div>
   </section>
 
-  <!-- XR / VR / AR -->
+  {/* PHASE 2 — XR / VR / AR. Hidden until a real video lands (end of week).
+     Restore this section and its nav link (Nav.astro) then, and give the
+     VimeoFilm a `vimeoId` and `poster`:
+
   <section id="immersive" class="section wrap">
     <div class="section-head">
       <h2>XR / VR / AR</h2>
-      <p class="kicker">Immersive &amp; real-time</p>
+      <p class="kicker">Immersive and real-time</p>
     </div>
-    <VimeoFilm
-      title="Immersive experience"
-      slotNote="Drop a Vimeo link to an immersive / VR / real-time capture here and it becomes a click-to-play film, just like Cinematics."
-    />
-    <div class="slot" style="margin-top: 1.5rem;">
-      <strong>XR reel.</strong> Send a Vimeo link (headset capture,
-      walkthrough, or real-time demo) plus a poster frame, and this slot
-      becomes a click-to-play film. Add <code>vimeoId</code> and <code>poster</code>
-      props to the <code>VimeoFilm</code> above in src/pages/index.astro.
-    </div>
+    <VimeoFilm vimeoId="..." title="Immersive experience" poster="stills/....png" />
   </section>
+  */}
 
   <!-- CAPABILITIES -->
   <section id="capabilities" class="section wrap">
@@ -177,7 +142,10 @@ const capabilities = [
     </ul>
   </section>
 
-  <!-- WORK -->
+  {/* PHASE 2 — Work / case studies. Hidden until the case studies are
+     written (WorkCard + content/work/*.md are all kept ready). Restore this
+     section and its nav link (Nav.astro) then:
+
   <section id="work" class="section wrap">
     <div class="section-head">
       <h2>Work</h2>
@@ -187,68 +155,33 @@ const capabilities = [
       {work.map((entry, i) => <WorkCard entry={entry} index={i} />)}
     </div>
   </section>
+  */}
 
   <!-- ABOUT -->
   <section id="about" class="section wrap">
     <div class="section-head">
       <h2>About</h2>
-      <p class="kicker">Background &amp; experience</p>
+      <p class="kicker">Background</p>
     </div>
-    <div class="about-grid">
-      <div class="about-text">
-        <p class="lede">
-          Design Visualization Specialist with fourteen years spanning
-          architectural design and 3D visualization production, and a
-          professional foundation as a licensed-track Project Architect.
-        </p>
-        <p>
-          I founded and lead the Visualization Technology department at MG2, a
-          450-person architecture firm, as its sole practitioner &mdash; owning
-          strategy, pipeline architecture, and production across still
-          rendering, cinematic film, VR/AR/XR, and interactive media. I built
-          the firm&rsquo;s end-to-end visualization pipeline from the ground up,
-          established firm-wide QA and art-direction standards enforced across
-          100+ client and public deliverables a year, and authored training
-          curricula in seven visualization and rendering tools for 300+ design
-          staff. I also manage a fleet of 15+ VR headsets supporting
-          interactive tours and design reviews across six regional offices.
-        </p>
-        <p>
-          Before specializing in visualization, I spent four years at MG2 as an
-          architectural designer and Project Architect on retail, grocery, and
-          food &amp; beverage projects &mdash; managing design intent, code
-          compliance, entitlements, and construction administration across all
-          project phases. That grounding in real practice is why the work reads
-          as architecture, not just imagery: I read drawings fluently, hold my
-          own in design crits, and know which details make a space convincing.
-        </p>
-        <p>
-          I hold a Master of Architecture from the University of Virginia and a
-          Bachelor of Design in Architecture (high honors) from the University
-          of Florida.
-        </p>
-        <dl class="timeline">
-          {
-            timeline.map((t) => (
-              <div class="tl-row">
-                <dt class="kicker">{t.years}</dt>
-                <dd>{t.what}</dd>
-              </div>
-            ))
-          }
-        </dl>
-        <p>
-          The formal version lives in the <a class="underline-link" href={`${import.meta.env.BASE_URL}jason-layel-resume.pdf`}>resume (PDF)</a>.
-        </p>
-      </div>
-      <div class="about-side">
-        <ImageSlot
-          src="about/portrait.jpg"
-          alt="Portrait of Jason Layel"
-          ratio="4 / 5"
-          hint="Portrait or working-at-desk photo, min 1200px wide"
-        />
-      </div>
+    <div class="about-text">
+      <p>
+        I founded and run the visualization department at MG2, a 450-person
+        architecture firm, as its sole practitioner — turning live design
+        models into the renderings, films, and immersive experiences that win
+        pursuits and move review boards.
+      </p>
+      <p>
+        I'm a licensed-track architect (Master of Architecture, University of
+        Virginia) who spent years as a project architect before specializing,
+        which is why the work reads as buildings, not backdrops. I build
+        visualization pipelines end to end, set the art-direction and QA
+        standards behind 100+ deliverables a year, and scale them across the
+        firm — authoring training in seven tools for 300+ designers and running
+        VR design reviews across six offices.
+      </p>
+      <p>
+        The full background lives in the <a class="underline-link" href={`${import.meta.env.BASE_URL}jason-layel-resume.pdf`}>resume (PDF)</a>.
+      </p>
     </div>
   </section>
 
@@ -268,7 +201,8 @@ const capabilities = [
     <div class="contact-links">
       <a class="arrow-link" href={`${import.meta.env.BASE_URL}jason-layel-resume.pdf`}>Download resume</a>
       <a class="arrow-link" href="https://www.linkedin.com/in/jasonlayel" rel="me">LinkedIn</a>
-      <a class="arrow-link" href="https://www.artstation.com/jasonlayel" rel="me">Portfolio (ArtStation)</a>
+      <a class="arrow-link" href="https://www.artstation.com/jasonlayel" rel="me">ArtStation</a>
+      <a class="arrow-link" href="https://www.behance.net/jasonlayel" rel="me">Behance</a>
     </div>
   </section>
 </Base>
