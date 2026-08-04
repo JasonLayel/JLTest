@@ -20,12 +20,12 @@
   --measure: 38rem;
   --site-max: 90rem;
 
-  --step--1: clamp(0.78rem, 0.74rem + 0.2vw, 0.89rem);
-  --step-0: clamp(1rem, 0.95rem + 0.25vw, 1.13rem);
-  --step-1: clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
-  --step-2: clamp(1.7rem, 1.45rem + 1.25vw, 2.4rem);
-  --step-3: clamp(2.4rem, 1.9rem + 2.5vw, 3.8rem);
-  --step-4: clamp(3.2rem, 2.2rem + 5vw, 6.2rem);
+  --step--1: clamp(0.68rem, 0.65rem + 0.14vw, 0.76rem);
+  --step-0: clamp(0.86rem, 0.83rem + 0.16vw, 0.95rem);
+  --step-1: clamp(1rem, 0.94rem + 0.3vw, 1.18rem);
+  --step-2: clamp(1.25rem, 1.1rem + 0.75vw, 1.7rem);
+  --step-3: clamp(1.5rem, 1.25rem + 1.25vw, 2.3rem);
+  --step-4: clamp(2rem, 1.5rem + 2.6vw, 3.4rem);
 }
 
 * {
@@ -115,7 +115,7 @@ h1, h2, h3 {
 }
 
 .section {
-  padding-block: clamp(4rem, 10vw, 8rem);
+  padding-block: clamp(3rem, 7vw, 5.5rem);
   border-top: 1px solid var(--line);
 }
 
@@ -124,7 +124,7 @@ h1, h2, h3 {
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: clamp(2rem, 5vw, 3.5rem);
+  margin-bottom: clamp(1.5rem, 3.5vw, 2.5rem);
 }
 
 .section-head h2 {
