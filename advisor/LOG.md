@@ -8,6 +8,18 @@ what happened, what it changes.
 
 ---
 
+## 2026-08-04 — Portfolio site building & deploying on Cloudflare
+
+Site now builds and deploys via Cloudflare Workers (static-assets flow, not
+Pages — CF funnels static sites through Workers now). Committed
+`portfolio/wrangler.jsonc` (assets-only, ./dist) and added `noindex` to
+Base.astro. Two gotchas that cost rounds, recorded so we don't repeat them:
+(1) CF Workers root-directory field wants a LEADING SLASH — `/portfolio`,
+not `portfolio`; (2) the dashboard Worker name must exactly match the
+`name` in wrangler.jsonc (`jasonlayel-portfolio`). Live on
+`*.workers.dev`. Remaining: attach custom domain jasonlayel.com; then the
+content work (case studies, imagery clearance, portrait, XR video).
+
 ## 2026-07-14 — Found the near-complete portfolio site
 
 Jason revealed a portfolio site is already built in a separate Code session
