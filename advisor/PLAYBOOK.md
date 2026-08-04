@@ -53,17 +53,16 @@ session. As of 2026-07-14 it lives in this same repo on branch
   - Featured film needs a real title/description.
   - About portrait image missing (`src/assets/about/portrait.jpg`).
   - `astro.config.mjs` `site:` still needs the real domain.
-- **CRITICAL OPEN QUESTION — imagery provenance.** Several of the 21 stills
-  have names that read like real commercial projects (`1319-14th-street`,
-  `37-l-street-tower`, `credit-union-branch`, `food-market-dusk`,
-  `alpha-industries-showroom`). If these are MG2/client work, the site
-  can't go PUBLIC until the MG2 portfolio-policy question (below) is
-  resolved — this is exactly the concern Jason raised. Personal pieces
-  (e.g. `tree-art-final`, `surf-boardwalk`, `stone-estate-pond`) are safe.
-  Advisor must resolve provenance per-image before public launch.
-- **Still true:** get the MG2 portfolio policy in writing (email principal/
-  HR: credit, released-projects-only, private-vs-public tiers). The site
-  can launch on personal/cleared work; MG2 work gets added once approved.
+- **Imagery provenance — RESOLVED (2026-08-04).** Jason confirms all 21
+  current stills are cleared to send. The big launch blocker is gone; the
+  site is safe to share with recruiters. (A formal MG2 written policy is
+  still worth having on file for future additions, but no longer gates the
+  current site.)
+- **Pending content drop — end of week (~2026-08-08):** more images + video
+  coming. Stills drop into `portfolio/src/assets/stills/` (auto-appear in
+  gallery). Video goes into the Cinematics and/or XR sections as Vimeo
+  embeds (`<VimeoFilm vimeoId="..." poster="stills/....png" />` in
+  `index.astro`). Advisor/other session to wire these when they arrive.
 - **Coordination:** two sessions now touch this repo. This (advisor) session
   owns strategy/content/deploy guidance; the other session owns the site
   build. Don't push to `claude/cool-wright-ys0p7w` without coordinating.
