@@ -8,6 +8,21 @@ what happened, what it changes.
 
 ---
 
+## 2026-08-04 — Portfolio content tweaks (pre-send polish)
+
+Round of site tweaks on Jason's request: stills now click-to-zoom
+(dependency-free lightbox); removed the dashed description slots; About
+rewritten much shorter and recruiter-focused for a viz-LEADERSHIP hire
+(creativity + design chops + pipeline/workflow depth + scaling across a
+450-person firm), unified to one body font size; added a Behance link.
+Hid the Work/case-studies and XR/VR/AR sections (no real content yet) —
+kept as PHASE 2 comments so they restore with an uncomment; case-study
+pages stop generating while entries are slots. Note: the OTHER session is
+actively editing this same branch (pushed font/type-scale commits mid-
+edit) — rebased cleanly, but two-session churn on `cool-wright` is a live
+coordination risk. Current visible sections: Stills, Cinematics, About,
+Contact. Pending EOW: more stills + video (restores XR).
+
 ## 2026-08-04 — Portfolio site building & deploying on Cloudflare
 
 Site now builds and deploys via Cloudflare Workers (static-assets flow, not
