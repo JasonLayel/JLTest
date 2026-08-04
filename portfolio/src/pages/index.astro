@@ -15,6 +15,20 @@ const heroFiles = import.meta.glob<{ default: ImageMetadata }>(
 );
 const heroImage = Object.values(heroFiles)[0]?.default ?? null;
 
+// About photos — drop files into src/assets/about/ and the About section
+// switches to a two-column layout with the portrait (and optional family
+// photo). Absent → About stays single-column text, no placeholders.
+const aboutFiles = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/about/*.{jpg,jpeg,png,webp,avif}',
+  { eager: true }
+);
+const aboutImg = (stem: string) =>
+  Object.entries(aboutFiles).find(([p]) =>
+    p.toLowerCase().includes(`/about/${stem}.`)
+  )?.[1].default ?? null;
+const portrait = aboutImg('portrait');
+const family = aboutImg('family');
+
 const work = (await getCollection('work')).sort(
   (a, b) => a.data.order - b.data.order
 );
@@ -163,25 +177,51 @@ const capabilities = [
       <h2>About</h2>
       <p class="kicker">Background</p>
     </div>
-    <div class="about-text">
-      <p>
-        I founded and run the visualization department at MG2, a 450-person
-        architecture firm, as its sole practitioner — turning live design
-        models into the renderings, films, and immersive experiences that win
-        pursuits and move review boards.
-      </p>
-      <p>
-        I'm a licensed-track architect (Master of Architecture, University of
-        Virginia) who spent years as a project architect before specializing,
-        which is why the work reads as buildings, not backdrops. I build
-        visualization pipelines end to end, set the art-direction and QA
-        standards behind 100+ deliverables a year, and scale them across the
-        firm — authoring training in seven tools for 300+ designers and running
-        VR design reviews across six offices.
-      </p>
-      <p>
-        The full background lives in the <a class="underline-link" href={`${import.meta.env.BASE_URL}jason-layel-resume.pdf`}>resume (PDF)</a>.
-      </p>
+    <div class:list={['about-body', { 'about-grid': portrait }]}>
+      <div class="about-text">
+        <p>
+          I founded and run the visualization department at MG2, a 450-person
+          architecture firm, as its sole practitioner — turning live design
+          models into the renderings, films, and immersive experiences that win
+          pursuits and move review boards.
+        </p>
+        <p>
+          I'm a licensed-track architect (Master of Architecture, University of
+          Virginia) who spent years as a project architect before specializing,
+          which is why the work reads as buildings, not backdrops. I build
+          visualization pipelines end to end, set the art-direction and QA
+          standards behind 100+ deliverables a year, and scale them across the
+          firm — authoring training in seven tools for 300+ designers and
+          running VR design reviews across six offices.
+        </p>
+        <p>
+          The full background lives in the <a class="underline-link" href={`${import.meta.env.BASE_URL}jason-layel-resume.pdf`}>resume (PDF)</a>.
+        </p>
+      </div>
+      {
+        portrait && (
+          <div class="about-media">
+            <figure class="frame portrait">
+              <Image
+                src={portrait}
+                alt="Jason Layel"
+                widths={[400, 800, 1100]}
+                sizes="(max-width: 48rem) 100vw, 40vw"
+              />
+            </figure>
+            {family && (
+              <figure class="frame family">
+                <Image
+                  src={family}
+                  alt="Jason Layel with his family"
+                  widths={[600, 1200, 1800]}
+                  sizes="(max-width: 48rem) 100vw, 40vw"
+                />
+              </figure>
+            )}
+          </div>
+        )
+      }
     </div>
   </section>
 
@@ -309,6 +349,7 @@ const capabilities = [
     display: grid;
     grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
     gap: clamp(2rem, 5vw, 4rem);
+    align-items: start;
   }
 
   .about-text {
@@ -318,9 +359,50 @@ const capabilities = [
     max-width: var(--measure);
   }
 
+  .about-media {
+    display: grid;
+    gap: clamp(0.9rem, 2vw, 1.4rem);
+    align-content: start;
+    /* sticks alongside the text as it scrolls on wide screens */
+    position: sticky;
+    top: 6rem;
+  }
+
+  .about-media .frame {
+    margin: 0;
+    overflow: hidden;
+    border-radius: 2px;
+    background: var(--bg-raised);
+    border: 1px solid var(--line);
+  }
+
+  .about-media .frame.portrait {
+    aspect-ratio: 4 / 5;
+  }
+
+  .about-media .frame.family {
+    aspect-ratio: 3 / 2;
+  }
+
+  .about-media .frame :global(img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .about-media .frame.portrait :global(img) {
+    object-position: 50% 32%;
+  }
+
   @media (max-width: 48rem) {
     .about-grid {
       grid-template-columns: 1fr;
+    }
+
+    .about-media {
+      position: static;
+      max-width: 22rem;
     }
   }
 
