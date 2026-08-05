@@ -261,7 +261,7 @@ const capabilities = [
     position: relative;
     display: grid;
     align-content: end;
-    min-height: clamp(26rem, 50vw, 46rem);
+    min-height: clamp(32rem, 56vw, 62rem);
     overflow: hidden;
   }
 
@@ -271,13 +271,15 @@ const capabilities = [
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: 50% 100%;
     z-index: -2;
-    filter: brightness(1.1) saturate(1.03);
+    filter: brightness(1.2) saturate(1.05);
     /* parallax + zoom is driven by --p (0 at top to 1 when hero scrolled past),
-       set by a scroll listener; falls back to a static image if JS/motion off */
+       set by a scroll listener; falls back to a static image if JS/motion off.
+       Origin is the bottom so the foreground figure stays put as it zooms. */
     transform: scale(calc(1 + var(--p, 0) * 0.18))
       translateY(calc(var(--p, 0) * 4vh));
-    transform-origin: 50% 42%;
+    transform-origin: 50% 100%;
     will-change: transform;
   }
 
@@ -294,9 +296,9 @@ const capabilities = [
     z-index: -1;
     background: linear-gradient(
       to bottom,
-      rgba(12, 12, 13, 0.1),
-      rgba(12, 12, 13, 0.3) 55%,
-      rgba(12, 12, 13, 0.88)
+      rgba(12, 12, 13, 0.02),
+      rgba(12, 12, 13, 0.15) 50%,
+      rgba(12, 12, 13, 0.8)
     );
   }
 
@@ -305,6 +307,8 @@ const capabilities = [
     gap: clamp(0.9rem, 2vw, 1.25rem);
     width: 100%;
     padding-block: clamp(2rem, 5vw, 3.5rem);
+    /* keeps text legible now that the image is lighter */
+    text-shadow: 0 1px 14px rgba(0, 0, 0, 0.55);
   }
 
   .hero .display {
