@@ -2,8 +2,8 @@
 
 ## Writing style (STRICT, applies everywhere)
 
-Never use em-dashes (—) or en-dashes (–) in anything delivered to Jason.
-This applies to all rendered site copy, page titles, alt/aria text, code
+Never use em-dashes or en-dashes (the long dash characters) in anything
+delivered to Jason. This applies to all rendered site copy, page titles, alt/aria text, code
 comments, commit messages, and chat replies. Jason considers the long dash
 a telltale sign of AI writing and wants it gone completely.
 
