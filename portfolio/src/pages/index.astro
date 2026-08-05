@@ -86,15 +86,21 @@ const capabilities = [
     <div class="hero-inner wrap">
       <p class="kicker rise"><b>&#9679;</b> Design Visualization &mdash; 3D Rendering / Film Cinematics / VR&#8202;/&#8202;AR&#8202;/&#8202;XR / Interactive</p>
       <h1 class="display rise">Jason Layel</h1>
-      <p class="lede rise-late">
-        I bring architecture and environments to life. Fourteen years across
-        architectural design and 3D visualization. My work is about telling a
-        project's story: what a space will feel like to stand in, and the design
-        intent behind it, long before it's built. Today I lead the Visualization
-        Technology department at MG2, a ~450-person architecture firm, where I
-        support our staff and archviz workflows and take on our most demanding
-        flagship projects myself.
-      </p>
+      <p class="lede rise-late">I bring architecture and environments to life.</p>
+      <div class="hero-sub rise-late">
+        <p>
+          My passion is using technology to tell compelling stories and build
+          deeply immersive experiences that evoke awe, a sense of beauty, and an
+          understanding of design.
+        </p>
+        <p>
+          Fourteen years of experience across architectural design and 3D
+          visualization. Currently leading the Visualization Technology
+          department at MG2, a ~450-person architecture firm, where I direct
+          enterprise-wide workflows and support our staff while personally
+          visualizing our most demanding flagship projects.
+        </p>
+      </div>
       <div class="hero-links rise-late">
         <a class="arrow-link" href="#stills">See the work</a>
         <a class="arrow-link" href="#contact">Get in touch</a>
@@ -306,6 +312,17 @@ const capabilities = [
 
   .hero .kicker {
     color: #d8d6d0;
+  }
+
+  .hero-sub {
+    display: grid;
+    gap: 0.85rem;
+    max-width: var(--measure);
+  }
+
+  .hero-sub p {
+    font-size: var(--step-0);
+    line-height: 1.55;
   }
 
   .hero-links {
