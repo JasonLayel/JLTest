@@ -7,11 +7,12 @@ import WorkCard from '../components/WorkCard.astro';
 import StillsGallery from '../components/StillsGallery.astro';
 import VimeoFilm from '../components/VimeoFilm.astro';
 
-// Hero backdrop. Drop a file into src/assets/hero/ to replace it:
-//   image: hero.jpg / hero.png / hero.webp   (2:1 aspect, ~2400px+ wide)
-//   video: hero.mp4 (or hero.webm)           (2:1 aspect, muted, H.264)
+// Hero backdrop. Drop any file into src/assets/hero/ to replace it:
+//   image: .jpg / .png / .webp   (2:1 aspect, ~2400px+ wide)
+//   video: .mp4 (or .webm)       (2:1 aspect, muted, H.264)
 // A video wins if present, else an image, else the fallback still below.
-const heroVideos = import.meta.glob('/src/assets/hero/hero.{mp4,webm}', {
+// Any image in the folder also serves as the video's poster frame.
+const heroVideos = import.meta.glob('/src/assets/hero/*.{mp4,webm}', {
   eager: true,
   query: '?url',
   import: 'default',
@@ -19,7 +20,7 @@ const heroVideos = import.meta.glob('/src/assets/hero/hero.{mp4,webm}', {
 const heroVideo = (Object.values(heroVideos)[0] as string) ?? null;
 
 const heroPics = import.meta.glob<{ default: ImageMetadata }>(
-  '/src/assets/hero/hero.{jpg,jpeg,png,webp}',
+  '/src/assets/hero/*.{jpg,jpeg,png,webp}',
   { eager: true }
 );
 const heroFallback = import.meta.glob<{ default: ImageMetadata }>(
