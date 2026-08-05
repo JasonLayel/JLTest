@@ -292,7 +292,7 @@ const capabilities = [
     position: relative;
     display: grid;
     align-content: end;
-    min-height: clamp(30rem, 48vw, 52rem);
+    min-height: clamp(28rem, 44vw, 48rem);
     overflow: hidden;
   }
 
@@ -302,7 +302,7 @@ const capabilities = [
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: 50% 32%;
+    object-position: 50% 62%;
     z-index: -2;
     filter: brightness(1.2) saturate(1.05);
     /* parallax + zoom is driven by --p (0 at top to 1 when hero scrolled past),
@@ -310,7 +310,7 @@ const capabilities = [
        Origin matches object-position to keep the figure framed as it zooms. */
     transform: scale(calc(1 + var(--p, 0) * 0.18))
       translateY(calc(var(--p, 0) * 4vh));
-    transform-origin: 50% 32%;
+    transform-origin: 50% 62%;
     will-change: transform;
   }
 
@@ -448,7 +448,7 @@ const capabilities = [
   }
 
   .about-media .frame.portrait :global(img) {
-    object-position: 50% 32%;
+    object-position: 50% 62%;
   }
 
   @media (max-width: 48rem) {
