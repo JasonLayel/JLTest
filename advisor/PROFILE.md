@@ -1,4 +1,4 @@
-# Artist Profile — Jason Layel
+# Artist Profile: Jason Layel
 
 The advisor reads this file at the start of every session. Last updated
 2026-07-11 from Jason's LinkedIn, portfolio links, and direct notes.
@@ -6,7 +6,7 @@ The advisor reads this file at the start of every session. Last updated
 ## Identity in one line
 
 Professional architectural visualization lead (day job) with a hobby practice
-in 3D art and traditional drawing/painting — not a hobbyist, a specialist
+in 3D art and traditional drawing/painting, not a hobbyist, a specialist
 with 10+ years of professional viz experience looking for side income and
 creative growth outside the day job.
 
@@ -15,16 +15,16 @@ creative growth outside the day job.
 - **Current:** Design Visualization Specialist at **MG2 Design** (architecture
   firm, ~450 employees), Washington DC, hybrid. Title undersells it: he is
   the **sole leader of the visualization department for the entire firm**.
-  At MG2 8+ years total (Associate II 2018–2021 → Associate III 2021–2022 →
-  viz specialist 2022–present). Salary: **$92K** — won via a comp/market
+  At MG2 8+ years total (Associate II 2018 to 2021 → Associate III 2021 to 2022 →
+  viz specialist 2022 to present). Salary: **$92K**, won via a comp/market
   case **less than a year ago (2025)**, so that card is played. The next
   raise lever is **competing offers from other firms**, which makes the
   public portfolio a direct compensation tool, not just a side-work funnel.
 - **Prior:** Project Manager, Illustrate My Design LLC, Alexandria VA,
-  2014–2018.
-- **Education:** M.Arch, University of Virginia (2009–2012), focus on
+  2014 to 2018.
+- **Education:** M.Arch, University of Virginia (2009 to 2012), focus on
   physical model building, 3D modeling, rendering/visualization. B.Arch,
-  University of Florida (2005–2009), high honors.
+  University of Florida (2005 to 2009), high honors.
 - Trained architect → strong drafting, spatial design, and presentation
   fundamentals underneath the viz skills.
 
@@ -46,7 +46,7 @@ hobby drawing/painting work.
 
 ## Portfolio situation (standing priority)
 
-- The portfolio is in **rough shape and updating it is a declared priority** —
+- The portfolio is in **rough shape and updating it is a declared priority**, 
   it serves both main-career jumps and the side-work funnel.
 - **Key constraint:** most of his strongest recent work was produced at MG2,
   and he doesn't know the rules for what he's allowed to show/post online.
@@ -70,14 +70,14 @@ hobby drawing/painting work.
 
 ## Income history from side work
 
-- **Upwork (2 years):** up to **$4K/year** side cash — mostly 3D rendering
+- **Upwork (2 years):** up to **$4K/year** side cash, mostly 3D rendering
   with random graphics work mixed in. Real traction, but modest; stopped
   after 2 years. Proven active-income fallback.
 - **TeePublic t-shirt graphics:** tried, "okay but never got traction," and
   the profile was mysteriously deactivated. Treat generic print-on-demand
-  merch as a failed experiment — do not re-recommend without a strong reason.
+  merch as a failed experiment, do not re-recommend without a strong reason.
 
-## Open questions (ask when decision-relevant, max 2–3 at a time)
+## Open questions (ask when decision-relevant, max 2 to 3 at a time)
 
 - Hours per week realistically available for side work: TODO
 - Monthly side-income target that would feel like success: TODO
