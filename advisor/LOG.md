@@ -8,6 +8,18 @@ what happened, what it changes.
 
 ---
 
+## 2026-08-04 — About photos live; site is send-ready
+
+Jason uploaded his headshot + a family photo via GitHub web upload
+(learned: the portfolio/ tree only exists on the cool-wright branch, so
+GitHub's default master view hid the folder — direct branch links solve
+it). Two-column About now renders: headshot primary portrait, family
+photo secondary. Confirmed working/live. The site is now genuinely
+send-ready to recruiters (cleared imagery, polished About, noindex,
+custom domain). Remaining, in priority order: (1) three case studies —
+the top credibility lever for a leadership hire, advisor to draft with
+Jason; (2) EOW stills + XR video (stills auto-load, video needs wiring).
+
 ## 2026-08-04 — Portfolio content tweaks (pre-send polish)
 
 Round of site tweaks on Jason's request: stills now click-to-zoom
