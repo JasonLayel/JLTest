@@ -7,13 +7,29 @@ import WorkCard from '../components/WorkCard.astro';
 import StillsGallery from '../components/StillsGallery.astro';
 import VimeoFilm from '../components/VimeoFilm.astro';
 
-// Hero backdrop. Swap the stem to feature a different still up top
-// (keep it in sync with EXCLUDED in StillsGallery.astro).
-const heroFiles = import.meta.glob<{ default: ImageMetadata }>(
+// Hero backdrop. Drop a file into src/assets/hero/ to replace it:
+//   image: hero.jpg / hero.png / hero.webp   (2:1 aspect, ~2400px+ wide)
+//   video: hero.mp4 (or hero.webm)           (2:1 aspect, muted, H.264)
+// A video wins if present, else an image, else the fallback still below.
+const heroVideos = import.meta.glob('/src/assets/hero/hero.{mp4,webm}', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+});
+const heroVideo = (Object.values(heroVideos)[0] as string) ?? null;
+
+const heroPics = import.meta.glob<{ default: ImageMetadata }>(
+  '/src/assets/hero/hero.{jpg,jpeg,png,webp}',
+  { eager: true }
+);
+const heroFallback = import.meta.glob<{ default: ImageMetadata }>(
   '/src/assets/stills/tree-art-final-small.{jpg,jpeg,png,webp}',
   { eager: true }
 );
-const heroImage = Object.values(heroFiles)[0]?.default ?? null;
+const heroImage =
+  Object.values(heroPics)[0]?.default ??
+  Object.values(heroFallback)[0]?.default ??
+  null;
 
 // About photos. Drop files into src/assets/about/ and the About section
 // switches to a two-column layout with the portrait (and optional family
@@ -71,16 +87,30 @@ const capabilities = [
   <!-- HERO -->
   <section id="top" class="hero" data-parallax>
     {
-      heroImage && (
-        <Image
+      heroVideo ? (
+        <video
           class="hero-bg"
-          src={heroImage}
-          alt=""
-          widths={[768, 1440, 2400]}
-          sizes="100vw"
-          loading="eager"
-          fetchpriority="high"
-        />
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="auto"
+          poster={heroImage?.src}
+        >
+          <source src={heroVideo} />
+        </video>
+      ) : (
+        heroImage && (
+          <Image
+            class="hero-bg"
+            src={heroImage}
+            alt=""
+            widths={[768, 1440, 2400]}
+            sizes="100vw"
+            loading="eager"
+            fetchpriority="high"
+          />
+        )
       )
     }
     <div class="hero-inner wrap">
@@ -261,7 +291,7 @@ const capabilities = [
     position: relative;
     display: grid;
     align-content: end;
-    min-height: clamp(32rem, 56vw, 62rem);
+    min-height: clamp(30rem, 48vw, 52rem);
     overflow: hidden;
   }
 
@@ -271,15 +301,15 @@ const capabilities = [
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: 50% 100%;
+    object-position: 50% 32%;
     z-index: -2;
     filter: brightness(1.2) saturate(1.05);
     /* parallax + zoom is driven by --p (0 at top to 1 when hero scrolled past),
        set by a scroll listener; falls back to a static image if JS/motion off.
-       Origin is the bottom so the foreground figure stays put as it zooms. */
+       Origin matches object-position to keep the figure framed as it zooms. */
     transform: scale(calc(1 + var(--p, 0) * 0.18))
       translateY(calc(var(--p, 0) * 4vh));
-    transform-origin: 50% 100%;
+    transform-origin: 50% 32%;
     will-change: transform;
   }
 
