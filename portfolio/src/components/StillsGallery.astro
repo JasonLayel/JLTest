@@ -1,7 +1,7 @@
 ---
 /**
  * Auto-populating gallery. Every image dropped into src/assets/stills/
- * appears here on the next build — no code changes. Pure imagery: no
+ * appears here on the next build. No code changes. Pure imagery: no
  * visible captions; filenames still become alt text for accessibility
  * ("arts-center-dusk.jpg" → "Arts center dusk").
  *
@@ -51,11 +51,11 @@ const grid = await Promise.all(gridList.map(withFull));
   visible.length ? (
     <>
       {featured.map(({ image, alt, full }) => (
-        <a class="feature-link" href={full} data-lightbox aria-label={`View full size — ${alt}`}>
+        <a class="feature-link" href={full} data-lightbox aria-label={`View full size: ${alt}`}>
           <Image
             class="feature"
             src={image}
-            alt={`Architectural rendering — ${alt}`}
+            alt={`Architectural rendering, ${alt}`}
             widths={[768, 1440, 2400]}
             sizes="100vw"
           />
@@ -63,10 +63,10 @@ const grid = await Promise.all(gridList.map(withFull));
       ))}
       <div class="stills">
         {grid.map(({ image, alt, full }) => (
-          <a class="still-link" href={full} data-lightbox aria-label={`View full size — ${alt}`}>
+          <a class="still-link" href={full} data-lightbox aria-label={`View full size: ${alt}`}>
             <Image
               src={image}
-              alt={`Architectural rendering — ${alt}`}
+              alt={`Architectural rendering, ${alt}`}
               widths={[480, 960, 1600]}
               sizes="(max-width: 48rem) 100vw, 33vw"
             />
@@ -81,7 +81,7 @@ const grid = await Promise.all(gridList.map(withFull));
   ) : (
     <div class="slot">
       <strong>Stills gallery.</strong> Drop rendering files into
-      src/assets/stills/ — every image there shows up here automatically on
+      src/assets/stills/. Every image there shows up here automatically on
       the next build.
     </div>
   )

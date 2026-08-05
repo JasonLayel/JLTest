@@ -1,5 +1,5 @@
 /* ---------------------------------------------------------------------------
-   Jason Layel — portfolio design system
+   Jason Layel portfolio design system
    Dark editorial. Images carry the color; the chrome stays out of the way.
 --------------------------------------------------------------------------- */
 
@@ -171,7 +171,7 @@ h1, h2, h3 {
   color: var(--accent);
 }
 
-/* --- content slots (visible TODOs — remove as real content lands) -------- */
+/* --- content slots (visible TODOs, remove as real content lands) -------- */
 
 .slot {
   border: 1px dashed var(--ink-faint);

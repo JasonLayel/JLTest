@@ -6,7 +6,7 @@ import ImageSlot from '../../components/ImageSlot.astro';
 export async function getStaticPaths() {
   const work = await getCollection('work');
   // PHASE 2: only build case-study pages that have real content. While an
-  // entry is still a slot (isSlot: true), it stays hidden — no orphan page.
+  // entry is still a slot (isSlot: true), it stays hidden, no orphan page.
   // Flip isSlot to false in the .md file and the page builds automatically.
   return work
     .filter((entry) => !entry.data.isSlot)
@@ -23,11 +23,11 @@ const { Content } = await render(entry);
 const home = import.meta.env.BASE_URL;
 ---
 
-<Base title={`${title} — Jason Layel`} description={summary}>
+<Base title={`${title} | Jason Layel`} description={summary}>
   <article class="wrap">
     <header class="cs-head">
       <a class="arrow-link back" href={`${home}#work`}>&#8592; All work</a>
-      <p class="kicker"><b>{category}</b>{isSlot && ' — content slot'}</p>
+      <p class="kicker"><b>{category}</b>{isSlot && ' · content slot'}</p>
       <h1>{title}</h1>
       <p class="lede muted">{summary}</p>
     </header>
@@ -45,15 +45,15 @@ const home = import.meta.env.BASE_URL;
       <aside class="cs-meta">
         <div>
           <span class="kicker">Role</span>
-          <p>{role || '—'}</p>
+          <p>{role || 'TBD'}</p>
         </div>
         <div>
           <span class="kicker">Year</span>
-          <p>{year || '—'}</p>
+          <p>{year || 'TBD'}</p>
         </div>
         <div>
           <span class="kicker">Tools</span>
-          <p>{tools.length ? tools.join(', ') : '—'}</p>
+          <p>{tools.length ? tools.join(', ') : 'TBD'}</p>
         </div>
       </aside>
       <div class="cs-content">

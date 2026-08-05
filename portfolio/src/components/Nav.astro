@@ -19,7 +19,7 @@ const logo = Object.values(logos)[0]?.default ?? null;
 ---
 
 <header class="nav wrap">
-  <a class="mark" href={onHome ? '#top' : home} aria-label="Jason Layel — home">
+  <a class="mark" href={onHome ? '#top' : home} aria-label="Jason Layel home">
     {
       logo ? (
         <Image src={logo} alt="Jason Layel logo" height={30} densities={[1, 2]} />
@@ -31,9 +31,9 @@ const logo = Object.values(logos)[0]?.default ?? null;
   <nav aria-label="Main">
     <a href={anchor('stills')}>Stills</a>
     <a href={anchor('cinematics')}>Cinematics</a>
-    {/* PHASE 2 — restore when the XR video lands: <a href={anchor('immersive')}>XR/VR/AR</a> */}
+    {/* PHASE 2: restore when the XR video lands: <a href={anchor('immersive')}>XR/VR/AR</a> */}
     <a href={anchor('capabilities')}>Capabilities</a>
-    {/* PHASE 2 — restore when case studies are ready: <a href={anchor('work')}>Work</a> */}
+    {/* PHASE 2: restore when case studies are ready: <a href={anchor('work')}>Work</a> */}
     <a href={anchor('about')}>About</a>
     <a href={anchor('contact')} class="cta">Contact</a>
   </nav>

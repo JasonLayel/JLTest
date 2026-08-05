@@ -7,7 +7,7 @@ import WorkCard from '../components/WorkCard.astro';
 import StillsGallery from '../components/StillsGallery.astro';
 import VimeoFilm from '../components/VimeoFilm.astro';
 
-// Hero backdrop — swap the stem to feature a different still up top
+// Hero backdrop. Swap the stem to feature a different still up top
 // (keep it in sync with EXCLUDED in StillsGallery.astro).
 const heroFiles = import.meta.glob<{ default: ImageMetadata }>(
   '/src/assets/stills/tree-art-final-small.{jpg,jpeg,png,webp}',
@@ -15,7 +15,7 @@ const heroFiles = import.meta.glob<{ default: ImageMetadata }>(
 );
 const heroImage = Object.values(heroFiles)[0]?.default ?? null;
 
-// About photos — drop files into src/assets/about/ and the About section
+// About photos. Drop files into src/assets/about/ and the About section
 // switches to a two-column layout with the portrait (and optional family
 // photo). Absent → About stays single-column text, no placeholders.
 const aboutFiles = import.meta.glob<{ default: ImageMetadata }>(
@@ -47,7 +47,7 @@ const tools = [
 const capabilities = [
   {
     name: '3D Rendering',
-    text: 'Stills that hold up under a client’s longest stare. Pursuit imagery, marketing packages, design studies — built from live design models, not one-off art files.',
+    text: 'Stills that hold up under a client’s longest stare. Pursuit imagery, marketing packages, design studies. All built from live design models, not one-off art files.',
   },
   {
     name: '3D Film Cinematics & Editing',
@@ -65,7 +65,7 @@ const capabilities = [
 ---
 
 <Base
-  title="Jason Layel — Design Visualization"
+  title="Jason Layel | Design Visualization"
   description="Design Visualization Specialist with 14 years across architectural design and 3D visualization. 3D rendering, film cinematics, VR/AR/XR, and interactive experiences."
 >
   <!-- HERO -->
@@ -84,14 +84,14 @@ const capabilities = [
       )
     }
     <div class="hero-inner wrap">
-      <p class="kicker rise"><b>&#9679;</b> Design Visualization &mdash; 3D Rendering / Film Cinematics / VR&#8202;/&#8202;AR&#8202;/&#8202;XR / Interactive</p>
+      <p class="kicker rise"><b>&#9679;</b> Design Visualization &middot; 3D Rendering / Film Cinematics / VR&#8202;/&#8202;AR&#8202;/&#8202;XR / Interactive</p>
       <h1 class="display rise">Jason Layel</h1>
       <p class="lede rise-late">I bring architecture and environments to life.</p>
       <div class="hero-sub rise-late">
         <p>
           My passion is telling compelling stories and building deeply immersive
           experiences that evoke awe, a sense of beauty, and an understanding of
-          design — through the use of visualization technology.
+          design, through the use of visualization technology.
         </p>
         <p>
           Fourteen years of experience across architectural design and 3D
@@ -130,7 +130,7 @@ const capabilities = [
     />
   </section>
 
-  {/* PHASE 2 — XR / VR / AR. Hidden until a real video lands (end of week).
+  {/* PHASE 2: XR / VR / AR. Hidden until a real video lands (end of week).
      Restore this section and its nav link (Nav.astro) then, and give the
      VimeoFilm a `vimeoId` and `poster`:
 
@@ -165,7 +165,7 @@ const capabilities = [
     </ul>
   </section>
 
-  {/* PHASE 2 — Work / case studies. Hidden until the case studies are
+  {/* PHASE 2: Work / case studies. Hidden until the case studies are
      written (WorkCard + content/work/*.md are all kept ready). Restore this
      section and its nav link (Nav.astro) then:
 
@@ -190,7 +190,7 @@ const capabilities = [
       <div class="about-text">
         <p>
           I founded and run the visualization department at MG2, a 450-person
-          architecture firm, as its sole practitioner — turning live design
+          architecture firm, as its sole practitioner, turning live design
           models into the renderings, films, and immersive experiences that win
           pursuits and move review boards.
         </p>
@@ -200,7 +200,7 @@ const capabilities = [
           which is why the work reads as buildings, not backdrops. I build
           visualization pipelines end to end, set the art-direction and QA
           standards behind 100+ deliverables a year, and scale them across the
-          firm — authoring training in seven tools for 300+ designers and
+          firm, authoring training in seven tools for 300+ designers and
           running VR design reviews across six offices.
         </p>
         <p>
@@ -242,9 +242,9 @@ const capabilities = [
     </div>
     <p class="lede">
       If you&rsquo;re hiring for a design visualization or visualization
-      leadership role &mdash; or building a team and want to talk about how one
-      dedicated specialist raised the bar across an entire firm &mdash;
-      I&rsquo;d welcome the conversation. The fastest way to reach me:
+      leadership role, or building a team and want to talk about how one
+      dedicated specialist raised the bar across an entire firm, I&rsquo;d
+      welcome the conversation. The fastest way to reach me:
     </p>
     <a class="big-mail" href="mailto:jason.layel@gmail.com">jason.layel@gmail.com</a>
     <div class="contact-links">
@@ -272,7 +272,8 @@ const capabilities = [
     height: 100%;
     object-fit: cover;
     z-index: -2;
-    /* parallax + zoom is driven by --p (0 at top → 1 when hero scrolled past),
+    filter: brightness(1.1) saturate(1.03);
+    /* parallax + zoom is driven by --p (0 at top to 1 when hero scrolled past),
        set by a scroll listener; falls back to a static image if JS/motion off */
     transform: scale(calc(1 + var(--p, 0) * 0.18))
       translateY(calc(var(--p, 0) * 4vh));
@@ -293,9 +294,9 @@ const capabilities = [
     z-index: -1;
     background: linear-gradient(
       to bottom,
-      rgba(12, 12, 13, 0.35),
-      rgba(12, 12, 13, 0.55) 55%,
-      rgba(12, 12, 13, 0.94)
+      rgba(12, 12, 13, 0.1),
+      rgba(12, 12, 13, 0.3) 55%,
+      rgba(12, 12, 13, 0.88)
     );
   }
 
