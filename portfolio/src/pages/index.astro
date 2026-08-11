@@ -122,14 +122,7 @@ const capabilities = [
         <p>
           My passion is telling compelling stories and building deeply immersive
           experiences that evoke awe, a sense of beauty, and an understanding of
-          design, through the use of visualization technology.
-        </p>
-        <p>
-          Fourteen years of experience across architectural design and 3D
-          visualization. Currently leading the Visualization Technology
-          department at MG2, a ~450-person architecture firm, where I direct
-          enterprise-wide workflows and support our staff while personally
-          visualizing our most demanding flagship projects.
+          design.
         </p>
       </div>
       <div class="hero-links rise-late">
@@ -220,6 +213,7 @@ const capabilities = [
     <div class:list={['about-body', { 'about-grid': portrait }]}>
       <div class="about-text">
         <p>
+          With fourteen years across architectural design and 3D visualization,
           I founded and run the visualization department at MG2, a 450-person
           architecture firm, as its sole practitioner, turning live design
           models into the renderings, films, and immersive experiences that win
@@ -354,6 +348,8 @@ const capabilities = [
     display: grid;
     gap: 0.85rem;
     max-width: var(--measure);
+    /* extra breathing room between the headline and this body copy */
+    margin-top: clamp(0.75rem, 2.5vw, 1.75rem);
   }
 
   .hero-sub p {
