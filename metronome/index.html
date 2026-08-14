@@ -194,22 +194,31 @@
 
   <!-- Stretch length -->
   <div class="card">
-    <h3>⏱️ Stretch length <span class="row-val" id="stretchVal">20s</span></h3>
-    <p class="hint">How long the metronome tends to hold a groove before shaking things up. Low = restless &amp; jumpy, high = long stable passages.</p>
-    <input type="range" id="stretchSlider" min="0" max="60" step="1" value="20" />
-    <div class="ticks"><span>0s</span><span>15s</span><span>30s</span><span>45s</span><span>60s</span></div>
+    <h3>⏱️ Stretch length <span class="row-val" id="stretchVal">8–30s</span></h3>
+    <p class="hint">Each groove is held for a <b>random time between these two handles</b> before things change. Left = shortest a stretch can be, right = longest. Set both to the same spot for a fixed length.</p>
+    <div class="dual" id="dualStretch">
+      <div class="base"></div>
+      <div class="fill" id="stretchFillRange"></div>
+      <input type="range" id="stretchMin" min="0" max="60" step="1" value="8" />
+      <input type="range" id="stretchMax" min="0" max="60" step="1" value="30" />
+    </div>
+    <div class="range-readout">
+      <span>Shortest <b id="stretchMinRead">8</b>s</span>
+      <span>Longest <b id="stretchMaxRead">30</b>s</span>
+    </div>
   </div>
 
-  <!-- Change amount -->
+  <!-- Drift range -->
   <div class="card">
-    <h3>🎢 Drift within a stretch <span class="row-val" id="changeWord">Small</span></h3>
-    <p class="hint">Does the tempo speed up / slow down while a stretch plays out? From dead-steady, to a gentle lean, to a wild ramp.</p>
-    <input type="range" id="changeSlider" min="0" max="100" step="1" value="18" />
-    <div class="ticks">
-      <span id="tkNone">No change</span>
-      <span id="tkSmall">Small</span>
-      <span id="tkBig">Big</span>
+    <h3>🎢 Drift within a stretch <span class="row-val" id="driftVal">None → Small</span></h3>
+    <p class="hint">Each stretch rolls a <b>random drift strength between these handles</b> — how much the tempo speeds up or slows down as it plays out. Left = calmest it can be, right = wildest. Set both to the left for zero drift.</p>
+    <div class="dual" id="dualDrift">
+      <div class="base"></div>
+      <div class="fill" id="driftFillRange"></div>
+      <input type="range" id="driftMin" min="0" max="100" step="1" value="0" />
+      <input type="range" id="driftMax" min="0" max="100" step="1" value="25" />
     </div>
+    <div class="ticks"><span>No change</span><span>Small</span><span>Big</span></div>
   </div>
 
   <!-- BPM range -->
@@ -268,20 +277,21 @@
 
   /* ---------- state / params ---------- */
   var params = {
-    stretchAvg: 20,   // seconds
-    change: 0.18,     // 0..1 drift amount
+    stretchMin: 8,    // seconds (floor)
+    stretchMax: 30,   // seconds (ceiling)
+    driftMin: 0.0,    // 0..1 drift strength floor
+    driftMax: 0.25,   // 0..1 drift strength ceiling
     bpmMin: 70,
     bpmMax: 110,
     sound: "pop",
     volume: 0.8
   };
-  var ABS_MIN = 30, ABS_MAX = 260, GAP = 4;
 
   var presets = {
-    steady: {stretchAvg:45, change:0.00, bpmMin:92,  bpmMax:100},
-    calm:   {stretchAvg:22, change:0.15, bpmMin:70,  bpmMax:112},
-    wander: {stretchAvg:9,  change:0.42, bpmMin:58,  bpmMax:150},
-    chaos:  {stretchAvg:2,  change:0.92, bpmMin:42,  bpmMax:224}
+    steady: {stretchMin:30, stretchMax:60, driftMin:0.00, driftMax:0.00, bpmMin:95, bpmMax:95},
+    calm:   {stretchMin:14, stretchMax:30, driftMin:0.05, driftMax:0.22, bpmMin:70, bpmMax:112},
+    wander: {stretchMin:5,  stretchMax:16, driftMin:0.15, driftMax:0.55, bpmMin:58, bpmMax:150},
+    chaos:  {stretchMin:1,  stretchMax:5,  driftMin:0.40, driftMax:1.00, bpmMin:42, bpmMax:224}
   };
 
   /* ---------- audio engine ---------- */
@@ -320,16 +330,15 @@
 
   /* pick a fresh stretch starting at time t */
   function startStretch(t, firstEver){
-    var avg = params.stretchAvg;
-    var dur;
-    if(avg <= 0.4){
-      dur = 0;                                   // change every beat = maximum chaos
-    } else {
-      dur = -avg * Math.log(1 - Math.random()); // exponential -> lots of variety
-      dur = Math.min(dur, avg*4 + 3);
-      dur = Math.max(dur, 0.4);
-    }
-    var d = params.change;                       // 0..1
+    // random length between the two stretch handles
+    var sMin = Math.min(params.stretchMin, params.stretchMax);
+    var sMax = Math.max(params.stretchMin, params.stretchMax);
+    var dur = rand(sMin, sMax);
+    if(dur < 0.05){ dur = 0; }                    // both near zero => reroll every beat
+    // random drift strength between the two drift handles
+    var dLo = Math.min(params.driftMin, params.driftMax);
+    var dHi = Math.max(params.driftMin, params.driftMax);
+    var d = rand(dLo, dHi);                        // 0..1 drift strength for THIS stretch
     var lo = params.bpmMin, hi = params.bpmMax, span = Math.max(1, hi-lo);
     var prev = engine.endBPM;
 
@@ -553,11 +562,18 @@
   requestAnimationFrame(frame);
 
   /* ---------- controls wiring ---------- */
-  var stretchSlider = document.getElementById("stretchSlider");
+  var stretchMinEl = document.getElementById("stretchMin");
+  var stretchMaxEl = document.getElementById("stretchMax");
+  var stretchFillRange = document.getElementById("stretchFillRange");
+  var stretchMinRead = document.getElementById("stretchMinRead");
+  var stretchMaxRead = document.getElementById("stretchMaxRead");
   var stretchValEl = document.getElementById("stretchVal");
-  var changeSlider = document.getElementById("changeSlider");
-  var changeWord = document.getElementById("changeWord");
-  var tkNone=document.getElementById("tkNone"), tkSmall=document.getElementById("tkSmall"), tkBig=document.getElementById("tkBig");
+
+  var driftMinEl = document.getElementById("driftMin");
+  var driftMaxEl = document.getElementById("driftMax");
+  var driftFillRange = document.getElementById("driftFillRange");
+  var driftValEl = document.getElementById("driftVal");
+
   var bpmMin = document.getElementById("bpmMin");
   var bpmMax = document.getElementById("bpmMax");
   var rangeFill = document.getElementById("rangeFill");
@@ -573,68 +589,76 @@
     return "Wild";
   }
 
-  function refreshChangeTicks(v){
-    tkNone.classList.toggle("active", v<0.08);
-    tkSmall.classList.toggle("active", v>=0.08 && v<0.60);
-    tkBig.classList.toggle("active", v>=0.60);
+  /* generic dual-handle slider: keeps min<=max, paints the fill, and raises
+     whichever thumb you grab so overlapping handles stay reachable */
+  function setupDual(minEl, maxEl, fillEl, onInput){
+    function paint(){
+      var absMin = +minEl.min, absMax = +minEl.max;
+      var lo = +minEl.value, hi = +maxEl.value;
+      var a = (lo-absMin)/(absMax-absMin), b = (hi-absMin)/(absMax-absMin);
+      fillEl.style.left = (a*100)+"%";
+      fillEl.style.width = (Math.max(0, b-a)*100)+"%";
+    }
+    function handle(source){
+      var lo = +minEl.value, hi = +maxEl.value;
+      if(lo > hi){ if(source==="min") minEl.value = hi; else maxEl.value = lo; }
+      paint();
+      onInput();
+    }
+    minEl.addEventListener("input", function(){ handle("min"); });
+    maxEl.addEventListener("input", function(){ handle("max"); });
+    minEl.addEventListener("pointerdown", function(){ minEl.style.zIndex=30; maxEl.style.zIndex=20; });
+    maxEl.addEventListener("pointerdown", function(){ maxEl.style.zIndex=30; minEl.style.zIndex=20; });
+    return paint;
   }
 
-  function updateDualFill(){
-    var lo = +bpmMin.value, hi = +bpmMax.value;
-    var a = (lo-ABS_MIN)/(ABS_MAX-ABS_MIN);
-    var b = (hi-ABS_MIN)/(ABS_MAX-ABS_MIN);
-    rangeFill.style.left = (a*100)+"%";
-    rangeFill.style.width = ((b-a)*100)+"%";
+  function refreshStretchReadout(){
+    var lo = +stretchMinEl.value, hi = +stretchMaxEl.value;
+    stretchMinRead.textContent = lo;
+    stretchMaxRead.textContent = hi;
+    stretchValEl.textContent = (lo===hi) ? (lo+"s") : (lo+"–"+hi+"s");
   }
+  var paintStretch = setupDual(stretchMinEl, stretchMaxEl, stretchFillRange, function(){
+    params.stretchMin = +stretchMinEl.value;
+    params.stretchMax = +stretchMaxEl.value;
+    refreshStretchReadout(); markCustom(); save();
+  });
+
+  function refreshDriftReadout(){
+    var lo = +driftMinEl.value/100, hi = +driftMaxEl.value/100;
+    driftValEl.textContent = changeLabel(lo) + " → " + changeLabel(hi);
+  }
+  var paintDrift = setupDual(driftMinEl, driftMaxEl, driftFillRange, function(){
+    params.driftMin = +driftMinEl.value/100;
+    params.driftMax = +driftMaxEl.value/100;
+    refreshDriftReadout(); markCustom(); save();
+  });
+
+  function refreshBpmReadout(){
+    minRead.textContent = +bpmMin.value;
+    maxRead.textContent = +bpmMax.value;
+  }
+  var paintBpm = setupDual(bpmMin, bpmMax, rangeFill, function(){
+    params.bpmMin = +bpmMin.value;
+    params.bpmMax = +bpmMax.value;
+    refreshBpmReadout(); markCustom(); save();
+  });
 
   function syncUIFromParams(){
-    stretchSlider.value = params.stretchAvg;
-    stretchValEl.textContent = params.stretchAvg + "s";
-    changeSlider.value = Math.round(params.change*100);
-    changeWord.textContent = changeLabel(params.change);
-    refreshChangeTicks(params.change);
+    stretchMinEl.value = params.stretchMin;
+    stretchMaxEl.value = params.stretchMax;
+    refreshStretchReadout(); paintStretch();
+    driftMinEl.value = Math.round(params.driftMin*100);
+    driftMaxEl.value = Math.round(params.driftMax*100);
+    refreshDriftReadout(); paintDrift();
     bpmMin.value = params.bpmMin;
     bpmMax.value = params.bpmMax;
-    minRead.textContent = params.bpmMin;
-    maxRead.textContent = params.bpmMax;
-    updateDualFill();
+    refreshBpmReadout(); paintBpm();
     volume.value = Math.round(params.volume*100);
     document.querySelectorAll(".sound-chip").forEach(function(c){
       c.classList.toggle("active", c.dataset.sound === params.sound);
     });
   }
-
-  stretchSlider.addEventListener("input", function(){
-    params.stretchAvg = +this.value;
-    stretchValEl.textContent = params.stretchAvg + "s";
-    markCustom(); save();
-  });
-
-  changeSlider.addEventListener("input", function(){
-    params.change = +this.value/100;
-    changeWord.textContent = changeLabel(params.change);
-    refreshChangeTicks(params.change);
-    markCustom(); save();
-  });
-
-  function clampDual(source){
-    var lo = +bpmMin.value, hi = +bpmMax.value;
-    if(lo > hi - GAP){
-      if(source === "min"){ lo = hi - GAP; bpmMin.value = lo; }
-      else { hi = lo + GAP; bpmMax.value = hi; }
-    }
-    params.bpmMin = +bpmMin.value;
-    params.bpmMax = +bpmMax.value;
-    minRead.textContent = params.bpmMin;
-    maxRead.textContent = params.bpmMax;
-    updateDualFill();
-    markCustom(); save();
-  }
-  bpmMin.addEventListener("input", function(){ clampDual("min"); });
-  bpmMax.addEventListener("input", function(){ clampDual("max"); });
-  // raise the grabbed thumb so overlapping handles stay reachable
-  bpmMin.addEventListener("pointerdown", function(){ bpmMin.style.zIndex=30; bpmMax.style.zIndex=20; });
-  bpmMax.addEventListener("pointerdown", function(){ bpmMax.style.zIndex=30; bpmMin.style.zIndex=20; });
 
   volume.addEventListener("input", function(){
     params.volume = +this.value/100;
@@ -661,8 +685,10 @@
     if(!b) return;
     var p = presets[b.dataset.preset];
     if(!p) return;
-    params.stretchAvg = p.stretchAvg;
-    params.change = p.change;
+    params.stretchMin = p.stretchMin;
+    params.stretchMax = p.stretchMax;
+    params.driftMin = p.driftMin;
+    params.driftMax = p.driftMax;
     params.bpmMin = p.bpmMin;
     params.bpmMax = p.bpmMax;
     syncUIFromParams();
@@ -709,7 +735,8 @@
   (function(){
     for(var name in presets){
       var p = presets[name];
-      if(p.stretchAvg===params.stretchAvg && Math.abs(p.change-params.change)<0.005 &&
+      if(p.stretchMin===params.stretchMin && p.stretchMax===params.stretchMax &&
+         Math.abs(p.driftMin-params.driftMin)<0.005 && Math.abs(p.driftMax-params.driftMax)<0.005 &&
          p.bpmMin===params.bpmMin && p.bpmMax===params.bpmMax){ setActivePreset(name); return; }
     }
   })();

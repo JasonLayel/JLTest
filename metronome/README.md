@@ -17,11 +17,13 @@ Just open `index.html` in any modern browser (Chrome, Firefox, Safari, Edge — 
 
 | Control | What it does |
 | --- | --- |
-| **⏱️ Stretch length** (0–60 s) | The *average* time the metronome holds a groove before it shakes things up. Low = restless and jumpy; high = long stable passages. Lengths are randomized around this average, so you get a natural mix of short and long stretches. Set it to `0` to reroll every single beat. |
-| **🎢 Drift within a stretch** (None → Big) | Whether the tempo speeds up or slows down *while a stretch plays out*. From dead‑steady, through a gentle lean, to a wild ramp. Direction (accelerate vs. decay) is chosen at random each stretch. |
+| **⏱️ Stretch length** (dual handles, 0–60 s) | Every groove is held for a **random time between the two handles** before it changes. The left handle is the shortest a stretch can be, the right handle is the longest — so you get a natural mix of short and long passages inside your bounds. Set both handles to the same spot for a fixed length, or both near `0` to reroll every beat. |
+| **🎢 Drift within a stretch** (dual handles, None → Big) | Each stretch rolls a **random drift strength between the two handles** — how much the tempo speeds up or slows down while it plays out. The left handle is the calmest it can be, the right handle the wildest. Direction (accelerate vs. decay) is chosen at random each stretch. Set both to the far left for zero drift. |
 | **🎯 Tempo range** (dual handles) | Fence in the tempo. Drag the two handles to set the **floor** (it will never drop below) and the **ceiling** (it will never rise above). A narrow range feels controlled; a wide range invites big jumps. |
 | **🎨 Sound** | Pick the voice: **Pop** (round & cute), **Woodblock**, **Tick** (crisp digital), or **Beep**. |
 | **🔈 Volume** | Output level. |
+
+All three ranges use the same two‑handle slider — push and pull each end to set its floor and ceiling.
 
 Your settings are remembered between visits (saved in the browser).
 
@@ -44,9 +46,10 @@ One tap loads a vibe; tweak any slider afterward to make it your own.
 
 The engine runs a little state machine. Each **stretch** gets:
 
-1. **A length** drawn from an exponential distribution around your *Stretch length* setting — so stretches vary naturally instead of all being the same duration.
-2. **A starting tempo** — with a probability that grows with the *Drift* setting, it makes a wild jump anywhere inside your range; otherwise it takes a gentle step from where it was (which feels continuous).
-3. **A drift target** — from the *Drift* setting it may ramp up, ramp down, or hold flat across the stretch. The tempo interpolates smoothly from the stretch's start tempo to its target.
+1. **A length** picked at random between your two *Stretch length* handles — so stretches vary naturally instead of all being the same duration.
+2. **A drift strength** picked at random between your two *Drift* handles — some stretches barely move, others ramp hard, depending on where you set the handles.
+3. **A starting tempo** — with a probability that grows with that stretch's drift strength, it makes a wild jump anywhere inside your tempo range; otherwise it takes a gentle step from where it was (which feels continuous).
+4. **A drift target** — using the stretch's drift strength it may ramp up, ramp down, or hold flat. The tempo interpolates smoothly from the stretch's start tempo to its target.
 
 Every beat is clamped to your tempo range, so it always stays inside the fence you set. Timing uses the Web Audio clock with a look‑ahead scheduler, so beats stay accurate even while the tempo is changing.
 
