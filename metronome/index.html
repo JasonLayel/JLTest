@@ -221,6 +221,14 @@
     <div class="ticks"><span>No change</span><span>Small</span><span>Big</span></div>
   </div>
 
+  <!-- Transition blend -->
+  <div class="card">
+    <h3>🌫️ Transition blend <span class="row-val" id="transVal">0.8s</span></h3>
+    <p class="hint">When the tempo moves to a new stretch, glide into it over this many seconds instead of switching instantly. <b>0 = snap</b> to the new tempo, <b>5 = long smooth ramp</b>.</p>
+    <input type="range" id="transSlider" min="0" max="5" step="0.1" value="0.8" />
+    <div class="ticks"><span>Snap 0s</span><span>2.5s</span><span>Glide 5s</span></div>
+  </div>
+
   <!-- BPM range -->
   <div class="card">
     <h3>🎯 Tempo range</h3>
@@ -281,6 +289,7 @@
     stretchMax: 30,   // seconds (ceiling)
     driftMin: 0.0,    // 0..1 drift strength floor
     driftMax: 0.25,   // 0..1 drift strength ceiling
+    transition: 0.8,  // seconds to blend between stretches
     bpmMin: 70,
     bpmMax: 110,
     sound: "pop",
@@ -288,10 +297,10 @@
   };
 
   var presets = {
-    steady: {stretchMin:30, stretchMax:60, driftMin:0.00, driftMax:0.00, bpmMin:95, bpmMax:95},
-    calm:   {stretchMin:14, stretchMax:30, driftMin:0.05, driftMax:0.22, bpmMin:70, bpmMax:112},
-    wander: {stretchMin:5,  stretchMax:16, driftMin:0.15, driftMax:0.55, bpmMin:58, bpmMax:150},
-    chaos:  {stretchMin:1,  stretchMax:5,  driftMin:0.40, driftMax:1.00, bpmMin:42, bpmMax:224}
+    steady: {stretchMin:30, stretchMax:60, driftMin:0.00, driftMax:0.00, transition:1.2, bpmMin:95, bpmMax:95},
+    calm:   {stretchMin:14, stretchMax:30, driftMin:0.05, driftMax:0.22, transition:1.5, bpmMin:70, bpmMax:112},
+    wander: {stretchMin:5,  stretchMax:16, driftMin:0.15, driftMax:0.55, transition:0.6, bpmMin:58, bpmMax:150},
+    chaos:  {stretchMin:1,  stretchMax:5,  driftMin:0.40, driftMax:1.00, transition:0.1, bpmMin:42, bpmMax:224}
   };
 
   /* ---------- audio engine ---------- */
@@ -307,6 +316,8 @@
     stretchDur:0,
     baseBPM:95,
     endBPM:95,
+    fromBPM:95,       // tempo we are blending out of
+    transDur:0,       // seconds of blend at the start of this stretch
     trendDir:0
   };
   var beatQueue = [];          // {time, bpm} for visuals
@@ -328,8 +339,12 @@
   function rand(a,b){ return a + Math.random()*(b-a); }
   function clamp(v,a,b){ return v<a?a:(v>b?b:v); }
 
+  function smoothstep(x){ return x*x*(3 - 2*x); }
+
   /* pick a fresh stretch starting at time t */
   function startStretch(t, firstEver){
+    // capture the tempo we're leaving so the new stretch can ease out of it
+    var fromBPM = firstEver ? null : bpmAt(t);
     // random length between the two stretch handles
     var sMin = Math.min(params.stretchMin, params.stretchMax);
     var sMax = Math.max(params.stretchMin, params.stretchMax);
@@ -362,12 +377,28 @@
     engine.baseBPM = base;
     engine.endBPM = end;
     engine.trendDir = (end > base+0.5) ? 1 : (end < base-0.5 ? -1 : 0);
+    engine.fromBPM = (fromBPM === null) ? base : fromBPM;
+    engine.transDur = (fromBPM === null) ? 0 : Math.max(0, params.transition);
   }
 
   function bpmAt(t){
-    var frac = engine.stretchDur > 0 ? (t - engine.stretchStart)/engine.stretchDur : 1;
-    frac = clamp(frac, 0, 1);
-    var bpm = engine.baseBPM + (engine.endBPM - engine.baseBPM)*frac;
+    var local = t - engine.stretchStart;
+    // the stretch's own tempo curve (drift from base -> end)
+    var target;
+    if(engine.stretchDur > 0){
+      var f = clamp(local/engine.stretchDur, 0, 1);
+      target = engine.baseBPM + (engine.endBPM - engine.baseBPM)*f;
+    } else {
+      target = engine.baseBPM;
+    }
+    // ease from the outgoing tempo into that curve over the transition window
+    var bpm;
+    if(engine.transDur > 0 && local < engine.transDur){
+      var s = smoothstep(clamp(local/engine.transDur, 0, 1));
+      bpm = engine.fromBPM + (target - engine.fromBPM)*s;
+    } else {
+      bpm = target;
+    }
     return clamp(bpm, params.bpmMin, params.bpmMax);
   }
 
@@ -542,9 +573,12 @@
       var prog = engine.stretchDur>0 ? clamp((now-engine.stretchStart)/engine.stretchDur,0,1) : 1;
       stretchFill.style.width = (prog*100).toFixed(0)+"%";
       var remain = Math.max(0, engine.stretchStart + engine.stretchDur - now);
-      stretchState.textContent = engine.stretchDur<=0.4
-        ? "Rolling the dice every beat"
-        : ("Holding this groove ~" + remain.toFixed(1) + "s more");
+      var blending = engine.transDur>0 && (now-engine.stretchStart) < engine.transDur && engine.stretchDur>0.4;
+      stretchState.textContent = blending
+        ? "Easing into a new tempo…"
+        : (engine.stretchDur<=0.4
+            ? "Rolling the dice every beat"
+            : ("Holding this groove ~" + remain.toFixed(1) + "s more"));
       if(engine.trendDir>0) trendBadge.textContent = "↗ speeding up";
       else if(engine.trendDir<0) trendBadge.textContent = "↘ slowing down";
       else trendBadge.textContent = "→ steady";
@@ -573,6 +607,9 @@
   var driftMaxEl = document.getElementById("driftMax");
   var driftFillRange = document.getElementById("driftFillRange");
   var driftValEl = document.getElementById("driftVal");
+
+  var transSlider = document.getElementById("transSlider");
+  var transValEl = document.getElementById("transVal");
 
   var bpmMin = document.getElementById("bpmMin");
   var bpmMax = document.getElementById("bpmMax");
@@ -644,6 +681,12 @@
     refreshBpmReadout(); markCustom(); save();
   });
 
+  transSlider.addEventListener("input", function(){
+    params.transition = +this.value;
+    transValEl.textContent = params.transition.toFixed(1) + "s";
+    markCustom(); save();
+  });
+
   function syncUIFromParams(){
     stretchMinEl.value = params.stretchMin;
     stretchMaxEl.value = params.stretchMax;
@@ -651,6 +694,8 @@
     driftMinEl.value = Math.round(params.driftMin*100);
     driftMaxEl.value = Math.round(params.driftMax*100);
     refreshDriftReadout(); paintDrift();
+    transSlider.value = params.transition;
+    transValEl.textContent = params.transition.toFixed(1) + "s";
     bpmMin.value = params.bpmMin;
     bpmMax.value = params.bpmMax;
     refreshBpmReadout(); paintBpm();
@@ -689,6 +734,7 @@
     params.stretchMax = p.stretchMax;
     params.driftMin = p.driftMin;
     params.driftMax = p.driftMax;
+    params.transition = p.transition;
     params.bpmMin = p.bpmMin;
     params.bpmMax = p.bpmMax;
     syncUIFromParams();
@@ -737,6 +783,7 @@
       var p = presets[name];
       if(p.stretchMin===params.stretchMin && p.stretchMax===params.stretchMax &&
          Math.abs(p.driftMin-params.driftMin)<0.005 && Math.abs(p.driftMax-params.driftMax)<0.005 &&
+         Math.abs(p.transition-params.transition)<0.005 &&
          p.bpmMin===params.bpmMin && p.bpmMax===params.bpmMax){ setActivePreset(name); return; }
     }
   })();

@@ -19,6 +19,7 @@ Just open `index.html` in any modern browser (Chrome, Firefox, Safari, Edge — 
 | --- | --- |
 | **⏱️ Stretch length** (dual handles, 0–60 s) | Every groove is held for a **random time between the two handles** before it changes. The left handle is the shortest a stretch can be, the right handle is the longest — so you get a natural mix of short and long passages inside your bounds. Set both handles to the same spot for a fixed length, or both near `0` to reroll every beat. |
 | **🎢 Drift within a stretch** (dual handles, None → Big) | Each stretch rolls a **random drift strength between the two handles** — how much the tempo speeds up or slows down while it plays out. The left handle is the calmest it can be, the right handle the wildest. Direction (accelerate vs. decay) is chosen at random each stretch. Set both to the far left for zero drift. |
+| **🌫️ Transition blend** (0–5 s) | When the tempo moves to a new stretch, **glide into it over this many seconds** instead of switching instantly, using a smooth ease. `0` snaps to the new tempo (punchy jumps); higher values give long, smooth ramps. Longer blends noticeably tame even a wide, jumpy range. |
 | **🎯 Tempo range** (dual handles) | Fence in the tempo. Drag the two handles to set the **floor** (it will never drop below) and the **ceiling** (it will never rise above). A narrow range feels controlled; a wide range invites big jumps. |
 | **🎨 Sound** | Pick the voice: **Pop** (round & cute), **Woodblock**, **Tick** (crisp digital), or **Beep**. |
 | **🔈 Volume** | Output level. |
@@ -50,6 +51,7 @@ The engine runs a little state machine. Each **stretch** gets:
 2. **A drift strength** picked at random between your two *Drift* handles — some stretches barely move, others ramp hard, depending on where you set the handles.
 3. **A starting tempo** — with a probability that grows with that stretch's drift strength, it makes a wild jump anywhere inside your tempo range; otherwise it takes a gentle step from where it was (which feels continuous).
 4. **A drift target** — using the stretch's drift strength it may ramp up, ramp down, or hold flat. The tempo interpolates smoothly from the stretch's start tempo to its target.
+5. **A blend** — for the first *Transition blend* seconds of the stretch, the played tempo eases (via a smoothstep curve) from whatever it was at the boundary into that stretch's tempo curve, so jumps arrive as glides instead of steps. Set the blend to `0` and stretches switch instantly.
 
 Every beat is clamped to your tempo range, so it always stays inside the fence you set. Timing uses the Web Audio clock with a look‑ahead scheduler, so beats stay accurate even while the tempo is changing.
 
