@@ -1008,6 +1008,12 @@ select, input[type="time"] {
   margin: 0.5rem auto;
 }
 
+.bond-line {
+  text-align: center;
+  margin: 0.15rem auto 0.35rem;
+  font-size: 0.8rem;
+}
+
 .affection-bar {
   height: 0.55rem;
   border-radius: 999px;

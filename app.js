@@ -11,6 +11,12 @@
   const OVER_BONUS = 100;
   const OVERTIME_MULT = 1.5; // tasks beyond a met goal earn royal-favor points
   const STREAK_MILESTONES = [3, 5, 7, 14, 21, 30, 50, 100];
+  // Devotion endgame: affection can climb a "reserve" above the top tier's floor,
+  // so max devotion becomes something you maintain (it erodes when neglected)
+  // rather than a finished bar. While Devoted, every task earns a Favor bonus.
+  const MAX_AFFECTION = 420; // Devoted floor (320) + 100 reserve
+  const FAVOR_BONUS = 0.15; // +15% task points while she's Devoted
+  const BOND_MILESTONES = [7, 30, 100, 200, 365, 730]; // "days together" anniversaries
 
   // Umbrella categories; each task additionally carries a mode: "active" | "reset".
   const DEFAULT_CATEGORIES = [
@@ -32,7 +38,7 @@
   };
 
   const DEFAULT_STATE = {
-    version: 4,
+    version: 5,
     categories: DEFAULT_CATEGORIES,
     tasks: [], // {id, title, categoryId, mode, estimateMin, recurring, done, createdAt, completedAt}
     history: [], // picks: {id, taskId, title, categoryId, at, source, status}
@@ -69,6 +75,10 @@
       tier: 0,
       recentLines: [],
       lastOpenDate: null,
+      daysTogether: 0, // distinct days you've shown up — a bond counter that never caps
+      metOn: null, // first day together (for "together since")
+      maxedEver: false, // has she ever reached Devoted (gates her one-time confession)
+      petName: null, // the nickname she assigns you once she's Devoted
     },
     currentPick: null, // history entry id of the active pick
   };
@@ -140,6 +150,16 @@
     if (s.version < 4) {
       if (!s.stats.lifetimePoints) s.stats.lifetimePoints = s.stats.totalPoints || 0;
       s.version = 4;
+    }
+    // v4 → v5: seed the bond counter from existing history so long-time users
+    // don't reset to "Day 1 together," and record whether max was already reached.
+    if (s.version < 5) {
+      const c = s.companion || (s.companion = {});
+      const days = Object.keys(s.stats?.dailyLog || {}).sort();
+      if (c.daysTogether == null) c.daysTogether = days.length;
+      if (c.metOn == null) c.metOn = days[0] || c.lastOpenDate || todayStr();
+      if (c.maxedEver == null) c.maxedEver = (c.affection || 0) >= 320;
+      s.version = 5;
     }
     return s;
   }
@@ -282,7 +302,10 @@
     const today = todayStr();
     const goalBefore = goalMetOn(today);
     // Royal favor: once the goal is met, every extra task pays 1.5×.
-    const pts = goalBefore ? Math.round(pointsFor(task) * OVERTIME_MULT) : pointsFor(task);
+    let pts = goalBefore ? Math.round(pointsFor(task) * OVERTIME_MULT) : pointsFor(task);
+    // Her Majesty's Favor: while Devoted, every task earns an extra bonus.
+    const favor = favorActive();
+    if (favor) pts = Math.round(pts * (1 + FAVOR_BONUS));
     if (!state.stats.dailyLog[today]) state.stats.dailyLog[today] = [];
     state.stats.dailyLog[today].push({
       taskId: task.id,
@@ -324,6 +347,7 @@
       // Finish something within 20s of her speaking and she was watching.
       speak(Date.now() - lastSpokeAt < 20000 ? "watched" : "complete");
       if (goalBefore) toast(`✨ Royal favor: +${pts} pts (1.5× beyond the quest)`);
+      else if (favor) toast(`💗 Her Majesty's Favor: +${pts} pts (+15% while Devoted)`);
     }
     save();
     checkAchievements();
@@ -599,6 +623,37 @@
     }
   }
 
+  // A grander, unlocked-at-Devoted herald: a rising fanfare with a sparkle on top.
+  function sfxRoyalFanfare() {
+    const ctx = getAudio();
+    if (!ctx) return;
+    const t0 = ctx.currentTime;
+    // G4 C5 E5 G5(held) with a C6 sparkle over the held note — a little coronation.
+    const notes = [
+      [392.0, 0, 0.12],
+      [523.25, 0.12, 0.12],
+      [659.25, 0.24, 0.12],
+      [783.99, 0.36, 0.55],
+      [1046.5, 0.5, 0.42],
+    ];
+    for (const [f, at, dur] of notes) {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(f, t0 + at);
+      gain.gain.setValueAtTime(0, t0 + at);
+      gain.gain.linearRampToValueAtTime(0.08, t0 + at + 0.015);
+      gain.gain.setValueAtTime(0.08, t0 + at + dur * 0.6);
+      gain.gain.exponentialRampToValueAtTime(0.001, t0 + at + dur);
+      const filter = ctx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 3200;
+      osc.connect(filter).connect(gain).connect(ctx.destination);
+      osc.start(t0 + at);
+      osc.stop(t0 + at + dur + 0.05);
+    }
+  }
+
   // Soft "pop" blip for button taps; a brighter sparkle for checking tasks off.
   function sfxClick(kind) {
     const ctx = getAudio();
@@ -691,13 +746,57 @@
 
   // ---------- Companion ----------
 
+  const MAX_TIER = COMPANION.TIERS.length - 1;
+  // While she's at the top tier, she grants her Favor: a small bonus on every task.
+  function favorActive() {
+    return state.companion.tier >= MAX_TIER;
+  }
+
+  // Once she's Devoted she stops using your name and picks a (bratty-fond) pet name.
+  const PET_NAMES = [
+    "my little knight",
+    "my loyal disaster",
+    "darling nuisance",
+    "my favorite peasant",
+    "champion",
+    "my royal pet",
+    "sweet trouble",
+    "my devoted goose",
+  ];
+
+  // A second, independent progression track: the player's own court rank, earned
+  // from lifetime points. Never resets — a slow ladder that outlasts her meter.
+  const RANKS = [
+    { min: 0, name: "Peasant" },
+    { min: 100, name: "Squire" },
+    { min: 300, name: "Knight" },
+    { min: 700, name: "Baron" },
+    { min: 1500, name: "Duke" },
+    { min: 3000, name: "Royal Consort" },
+  ];
+  function playerRank() {
+    const lp = state.stats.lifetimePoints || 0;
+    let r = RANKS[0];
+    for (const rank of RANKS) if (lp >= rank.min) r = rank;
+    return r;
+  }
+
   function addAffection(delta) {
     const c = state.companion;
-    c.affection = Math.max(0, c.affection + delta);
+    // Affection can build a reserve above the Devoted floor, but no higher — so
+    // maxing out becomes a buffer you maintain, not a bar that's simply "done."
+    c.affection = Math.max(0, Math.min(MAX_AFFECTION, c.affection + delta));
     const newTier = COMPANION.tierOf(c.affection);
     if (newTier > c.tier) {
       c.tier = newTier;
       speak("levelup", null, true);
+      // First time she ever reaches Devoted: she picks a pet name for you and,
+      // a beat later, drops the act with an unguarded confession.
+      if (newTier === MAX_TIER && !c.maxedEver) {
+        c.maxedEver = true;
+        if (!c.petName) c.petName = PET_NAMES[Math.floor(Math.random() * PET_NAMES.length)];
+        setTimeout(() => speak("devoted", null, true), 2800);
+      }
     } else if (newTier < c.tier) {
       c.tier = newTier; // she cools off quietly
     }
@@ -712,7 +811,9 @@
     const c = state.companion;
     // Scene/pose context lets her comment on where she is / what she's doing.
     const ctx = { sceneId: COMPANION.sceneForDate(todayStr()).id, poseId: currentPose.id };
-    const text = COMPANION.line(kind, c.tier, c.recentLines, vars, ctx);
+    // Always expose {pet}: her nickname for you once Devoted, else a neutral fallback.
+    const merged = Object.assign({ pet: c.petName || "you" }, vars || {});
+    const text = COMPANION.line(kind, c.tier, c.recentLines, merged, ctx);
     if (!text) return;
     lastSpokeAt = Date.now();
     save();
@@ -877,7 +978,7 @@
   // The check-off moment: sparkle burst from the checkbox, "+pts" flying
   // up, a row flash, the fanfare, and sometimes a princess hop.
   function celebrateCheck(taskId, pts) {
-    sfxFanfare();
+    (favorActive() ? sfxRoyalFanfare : sfxFanfare)();
     const item = document.querySelector(`.task-item[data-id="${taskId}"]`);
     if (item) {
       item.classList.add("just-done");
@@ -938,12 +1039,24 @@
     ls.count = ls.lastDate && daysBetween(ls.lastDate, today) === 1 ? ls.count + 1 : 1;
     ls.lastDate = today;
 
+    // Days Together: a bond counter that only ever grows — one per day you show up.
+    const c0 = state.companion;
+    if (c0.metOn == null) c0.metOn = today;
+    c0.daysTogether = (c0.daysTogether || 0) + 1;
+
     // Recurring tasks completed on a previous day come back.
     for (const t of state.tasks) {
       if (t.recurring && t.done && t.completedAt && localDate(new Date(t.completedAt)) < today) {
         t.done = false;
         t.completedAt = null;
       }
+    }
+
+    // Only one spoken greeting per day, by priority: anniversary > welcome-back
+    // > daily audience. The point gift still lands regardless of what she says.
+    let greeting = null; // [kind, vars, delay]
+    if (BOND_MILESTONES.includes(c0.daysTogether)) {
+      greeting = ["anniversary", { n: String(c0.daysTogether) }, 1400];
     }
 
     if (last) {
@@ -955,11 +1068,28 @@
         if (!(state.stats.dailyLog[d] || []).length) missed++;
       }
       if (missed > 0) {
-        const c = state.companion;
-        c.affection = Math.max(0, c.affection - missed * 4);
-        c.tier = COMPANION.tierOf(c.affection);
+        c0.affection = Math.max(0, c0.affection - missed * 4);
+        c0.tier = COMPANION.tierOf(c0.affection);
       }
-      if (gap >= 2) setTimeout(() => speak("back", null, true), 800);
+      if (gap >= 2 && !greeting) greeting = ["back", null, 900];
+    }
+
+    // Daily audience gift: once she's warmed to you (Curious+), showing up earns
+    // a small tribute that scales with devotion. A fresh reason to open each day.
+    if (c0.tier >= 1) {
+      const gift = 3 + c0.tier * 4;
+      earnPoints(gift);
+      const grand = c0.tier >= MAX_TIER;
+      if (!greeting) greeting = ["audience", null, 1100];
+      setTimeout(() => {
+        toast(`👑 Daily audience: +${gift} pts — royalty rewards loyalty.`);
+        if (grand) sfxRoyalFanfare();
+      }, 1000);
+    }
+
+    if (greeting) {
+      const [kind, vars, delay] = greeting;
+      setTimeout(() => speak(kind, vars, true), delay);
     }
 
     state.companion.lastOpenDate = today;
@@ -1745,8 +1875,24 @@
       fill.style.width = Math.round(((c.affection - tier.min) / span) * 100) + "%";
       label.textContent = `${c.affection - tier.min} / ${span} to ${next.name}`;
     } else {
-      fill.style.width = "100%";
-      label.textContent = "Maximum devotion 💗";
+      // Devoted: the bar becomes a "devotion reserve" that erodes if you drift
+      // away, and while it holds she grants Her Majesty's Favor (+15% points).
+      const reserve = MAX_AFFECTION - tier.min;
+      const held = c.affection - tier.min;
+      fill.style.width = Math.round((held / reserve) * 100) + "%";
+      label.textContent =
+        held > 0
+          ? `💗 Her Majesty's Favor active · +15% points · devotion reserve ${held}/${reserve}`
+          : `💗 Devoted — but her favor is fragile. Keep showing up.`;
+    }
+
+    // Bond line: days together + your court rank, plus the pet name once earned.
+    const bond = $("#bond-line");
+    if (bond) {
+      const days = c.daysTogether || 0;
+      let txt = `💞 Day ${days} together · 🏰 Your rank: ${playerRank().name}`;
+      if (c.petName) txt += ` · she calls you “${c.petName}”`;
+      bond.textContent = txt;
     }
   }
 
