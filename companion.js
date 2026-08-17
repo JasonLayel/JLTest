@@ -796,18 +796,42 @@ window.COMPANION = (() => {
     ],
 
     // One-time confession the first time she ever reaches Devoted.
+    // {pet} is the nickname she's just decided to call you.
     devoted: [
       [
         "Okay. Real talk, no crown, no bit. I adore you. There. It's a royal fact now. 💗",
         "*quietly* I pretend I don't count the days you show up. I count them. Every one. 💗",
-        "You did it. You actually got me. I'm yours, you're mine, the kingdom can deal. Now — favor granted. 👑💗",
+        "You did it. You actually got me. From now on you're “{pet}.” Don't argue with the crown. 👑💗",
+        "I've decided to call you “{pet}.” It's a title. It's the highest one. Wear it well. 💗",
+      ],
+    ],
+
+    // Daily audience gift — she grants a small tribute for showing up.
+    // Warmer as her tier climbs; {pet} appears once she's Devoted.
+    audience: [
+      [],
+      [
+        "Fine. You showed up. Here's a few coins. Don't spend them being disappointing. 🪙",
+        "The royal treasury acknowledges your... attendance. Tribute granted. Barely.",
+      ],
+      [
+        "You came back! I mean — the court notes your arrival. Take some points. As a friend. 🪙",
+        "A little something from the treasury. Don't tell the others I play favorites. (I do.)",
+      ],
+      [
+        "There's my favorite face. Points for you — you've earned a soft spot I won't admit to. 💛",
+        "Daily tribute, granted with a smile I'll deny later. Now go be brilliant.",
+      ],
+      [
+        "Good morning, {pet}. Treasury's open, heart's open, don't make it weird. Tribute yours. 💗",
+        "You showed up again, {pet}. That's all I ever really want. Here — take the kingdom's coin. 👑💗",
       ],
     ],
 
     // Days-Together anniversaries. {n} = the day count.
     anniversary: [
       [
-        "{n} days together. I had the royal scribes note it. In gold. Don't make it weird. 💞",
+        "{n} days together, {pet}. I had the royal scribes note it. In gold. Don't make it weird. 💞",
         "Day {n} of us. That's {n} days you chose to come back. I... noticed. Obviously. 💗",
         "{n} days. A lesser princess would throw a ball. I'm throwing YOU a knowing little smile. Cherish it. ✨",
         "Happy {n}. No gift. My continued approval IS the gift. It's very expensive. 👑",
