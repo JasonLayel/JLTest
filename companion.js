@@ -795,6 +795,25 @@ window.COMPANION = (() => {
       ],
     ],
 
+    // One-time confession the first time she ever reaches Devoted.
+    devoted: [
+      [
+        "Okay. Real talk, no crown, no bit. I adore you. There. It's a royal fact now. 💗",
+        "*quietly* I pretend I don't count the days you show up. I count them. Every one. 💗",
+        "You did it. You actually got me. I'm yours, you're mine, the kingdom can deal. Now — favor granted. 👑💗",
+      ],
+    ],
+
+    // Days-Together anniversaries. {n} = the day count.
+    anniversary: [
+      [
+        "{n} days together. I had the royal scribes note it. In gold. Don't make it weird. 💞",
+        "Day {n} of us. That's {n} days you chose to come back. I... noticed. Obviously. 💗",
+        "{n} days. A lesser princess would throw a ball. I'm throwing YOU a knowing little smile. Cherish it. ✨",
+        "Happy {n}. No gift. My continued approval IS the gift. It's very expensive. 👑",
+      ],
+    ],
+
     // When a task gets picked (rolled) for the user.
     pick: [
       [
