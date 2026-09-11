@@ -133,13 +133,12 @@
       img.loading = 'lazy';
       img.decoding = 'async';
       img.referrerPolicy = 'no-referrer';
-      // Derived thumbnails (ArtStation upsizes, Pixiv's mirror) can 404, so
-      // try the source's own fallback once before giving up on the image.
-      let fallback = isSafeUrl(item.thumbFallback) && item.thumbFallback !== thumbUrl ? item.thumbFallback : '';
+      // Derived thumbnails (ArtStation's upsized covers, Pixiv's mirror) can
+      // stop resolving, so walk the source's fallbacks before giving up.
+      const fallbacks = (item.thumbFallbacks || []).filter((url) => isSafeUrl(url) && url !== thumbUrl);
       img.addEventListener('error', () => {
-        if (fallback) {
-          const next = fallback;
-          fallback = '';
+        const next = fallbacks.shift();
+        if (next) {
           img.src = next;
           return;
         }

@@ -347,11 +347,17 @@ export function normalizeArtStation(payload) {
         artist: clean(p.user?.full_name || p.user?.username || p.username || ''),
         artistUrl: p.user?.username ? `https://www.artstation.com/${p.user.username}` : https(pick(p.user?.permalink)),
         url: https(pick(p.permalink, p.url, hash ? `https://www.artstation.com/artwork/${hash}` : '')),
-        image: https(wide || artstationSize(square, 'large')),
-        // Square covers always exist on the explore feed; the wider render is
-        // derived, so keep the square as the thumbnail's fallback.
-        thumb: https(artstationSize(square, 'medium') || wide),
-        thumbFallback: https(square),
+        image: https(wide || artstationSize(square, 'large') || square),
+        // Only the square covers are given; the wider renders are derived from
+        // the asset path and do not exist for every piece, so offer a ladder
+        // and let the collector keep the first one that actually resolves.
+        thumb: https(artstationSize(square, 'medium') || wide || square),
+        thumbFallbacks: [
+          https(artstationSize(square, 'large')),
+          https(artstationSize(square, 'small')),
+          https(pick(p.small_square_cover_url, cover.square_image_url)),
+          https(square),
+        ].filter(Boolean),
         value: hasLikes ? likes : usable.length - index,
         scoreLabel: hasLikes ? `${compact(likes)} likes` : `#${index + 1} trending`,
         postedAt: p.published_at ? new Date(p.published_at).toISOString() : null,
@@ -617,14 +623,21 @@ export async function resolveThumbnails(items, { check = urlResolves, concurrenc
   const queue = [...items];
   const worker = async () => {
     for (let item = queue.shift(); item; item = queue.shift()) {
-      if (!item.thumb || (await check(item.thumb))) continue;
-      if (item.thumbFallback && item.thumbFallback !== item.thumb && (await check(item.thumbFallback))) {
-        item.image = item.thumbFallback;
-        item.thumb = item.thumbFallback;
-      } else {
-        item.image = '';
-        item.thumb = '';
+      const ladder = [item.thumb, ...(item.thumbFallbacks || [])].filter(
+        (url, i, all) => url && all.indexOf(url) === i
+      );
+      let resolved = '';
+      for (const candidate of ladder) {
+        if (await check(candidate)) {
+          resolved = candidate;
+          break;
+        }
       }
+      if (resolved === item.thumb) continue;
+      item.thumb = resolved;
+      // The big version is derived from the same guess as the thumbnail, so
+      // when the guess was wrong fall back to what did resolve.
+      item.image = resolved;
     }
   };
   await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));

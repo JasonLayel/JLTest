@@ -161,7 +161,11 @@ test('artstation: reads the explore feed shape (square covers, no like counts)',
   assert.equal(first.url, 'https://www.artstation.com/artwork/4193e2');
   assert.ok(first.thumb.includes('/medium/leon.jpg'), 'the thumbnail is upsized from the square cover');
   assert.ok(first.image.includes('/large/leon.jpg'), 'the full image asks for the large render');
-  assert.ok(first.thumbFallback.includes('/smaller_square/leon.jpg'), 'the original square cover stays as a fallback');
+  assert.ok(
+    first.thumbFallbacks.some((u) => u.includes('/small_square/leon.jpg')) &&
+      first.thumbFallbacks.at(-1).includes('/smaller_square/leon.jpg'),
+    'the given square covers stay as fallbacks, smallest last'
+  );
   assert.equal(first.scoreLabel, '#1 trending', 'no like counts: the feed order is the score');
   assert.ok(first.value > second.value, 'earlier in the trending feed ranks higher');
 });
@@ -358,22 +362,33 @@ test('ranking: removes duplicate posts of the same piece', () => {
 
 /* -------------------------------------------------------------- thumbnails */
 
-test('thumbnails: a derived thumbnail that 404s falls back to the square cover', async () => {
+test('thumbnails: walks the candidate ladder down to one that resolves', async () => {
   const items = [
-    { thumb: 'https://cdn/medium/a.jpg', thumbFallback: 'https://cdn/smaller_square/a.jpg', image: 'https://cdn/large/a.jpg' },
-    { thumb: 'https://cdn/medium/b.jpg', thumbFallback: '', image: 'https://cdn/large/b.jpg' },
-    { thumb: 'https://cdn/good.jpg', thumbFallback: '', image: 'https://cdn/good-big.jpg' },
+    {
+      thumb: 'https://cdn/medium/a.jpg',
+      thumbFallbacks: ['https://cdn/large/a.jpg', 'https://cdn/small_square/a.jpg', 'https://cdn/smaller_square/a.jpg'],
+      image: 'https://cdn/large/a.jpg',
+    },
+    { thumb: 'https://cdn/medium/b.jpg', thumbFallbacks: [], image: 'https://cdn/large/b.jpg' },
+    { thumb: 'https://cdn/good.jpg', thumbFallbacks: [], image: 'https://cdn/good-big.jpg' },
   ];
-  await resolveThumbnails(items, { check: async (url) => url.includes('good') || url.includes('smaller_square') });
-  assert.equal(items[0].thumb, 'https://cdn/smaller_square/a.jpg', 'swapped for the fallback');
-  assert.equal(items[0].image, 'https://cdn/smaller_square/a.jpg');
-  assert.equal(items[1].thumb, '', 'no fallback: the card goes text-only rather than broken');
+  const tried = [];
+  await resolveThumbnails(items, {
+    check: async (url) => {
+      tried.push(url);
+      return url.includes('good') || url.includes('small_square');
+    },
+  });
+  assert.equal(items[0].thumb, 'https://cdn/small_square/a.jpg', 'the first resolving candidate wins');
+  assert.equal(items[0].image, 'https://cdn/small_square/a.jpg', 'the big version follows the thumbnail');
+  assert.ok(!tried.includes('https://cdn/smaller_square/a.jpg'), 'the ladder stops at the first hit');
+  assert.equal(items[1].thumb, '', 'nothing resolves: the card goes text-only rather than broken');
   assert.equal(items[1].image, '');
   assert.equal(items[2].thumb, 'https://cdn/good.jpg', 'a working thumbnail is left alone');
 });
 
 test('thumbnails: every item is checked even past the concurrency limit', async () => {
-  const items = Array.from({ length: 20 }, (_, i) => ({ thumb: `https://cdn/${i}.jpg`, thumbFallback: '', image: '' }));
+  const items = Array.from({ length: 20 }, (_, i) => ({ thumb: `https://cdn/${i}.jpg`, thumbFallbacks: [], image: '' }));
   const seen = [];
   await resolveThumbnails(items, { concurrency: 3, check: async (url) => { seen.push(url); return false; } });
   assert.equal(seen.length, 20);
