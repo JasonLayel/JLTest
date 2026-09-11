@@ -34,14 +34,31 @@ it stays a plain static page with no server, no build and no API keys.
 
 | Source | Endpoint | Popularity signal |
 | --- | --- | --- |
-| ArtStation | community trending explore feed | likes |
-| Reddit | `top?t=day` across r/Art, r/DigitalArt, r/ImaginaryLandscapes, r/ImaginaryCharacters, r/ConceptArt, r/SciFiArt, r/FantasyArt | upvotes |
+| ArtStation | community trending explore feed | position in the trending feed (the feed carries no like counts), or likes when the projects feed answers |
+| Reddit | `top?t=day` across r/Art, r/DigitalArt, r/ImaginaryLandscapes, r/ImaginaryCharacters, r/ConceptArt, r/SciFiArt, r/FantasyArt | upvotes, or feed position on the Atom fallback |
 | Pixiv | public daily illustration ranking | bookmarks |
-| DeviantArt | `boost:popular max_age:24h in:digitalart` RSS | position in the feed |
+| DeviantArt | Daily Deviations (API) or `boost:popular max_age:24h in:digitalart` RSS | favourites, or position in the feed |
 
 Adult/NSFW posts are filtered out of every source. A source that fails is
 reported in the digest and in the widget footer instead of failing the run —
-the other three still ship.
+the others still ship. A source that answers but whose rows no longer
+normalize is reported as `changed`, with a trimmed sample row saved in the
+digest so the shape can be fixed without guessing.
+
+### Access from CI
+
+These sites treat datacenter IPs (which is what GitHub's runners are) very
+differently from a home connection:
+
+| Source | Without credentials, from CI |
+| --- | --- |
+| Pixiv | works |
+| ArtStation | works |
+| Reddit | the JSON API answers `403 Blocked`; the collector falls back to the Atom feed, which works but has no vote counts. Set `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` (a *script* app at <https://www.reddit.com/prefs/apps>) to get the real API and real upvote counts |
+| DeviantArt | `403` on every RSS host. Set `DEVIANTART_CLIENT_ID` / `DEVIANTART_CLIENT_SECRET` (register at <https://www.deviantart.com/developers/apps>) and the collector uses the official Daily Deviations API instead |
+
+Both are repository secrets (*Settings → Secrets and variables → Actions*) and
+both are optional — the digest ships with whatever sources answer.
 
 ### Ranking
 
@@ -66,7 +83,8 @@ python3 -m http.server 8000     # then open /art-digest/
 | `ART_DIGEST_SUBS` | see above | Comma-separated subreddits |
 | `ART_DIGEST_PIXIV_PROXY` | `https://i.pixiv.re` | Pixiv blocks hotlinked thumbnails, so they're re-served through a mirror. Set to empty to drop Pixiv thumbnails instead |
 | `ART_DIGEST_OUT` | `art-digest/data` | Output directory |
-| `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` | unset | Optional. Reddit throttles datacenter IPs on the public JSON API; with these repository secrets set the collector uses app-only OAuth instead |
+| `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` | unset | Optional. Reddit blocks datacenter IPs on the public JSON API; with these set the collector uses app-only OAuth instead |
+| `DEVIANTART_CLIENT_ID` / `DEVIANTART_CLIENT_SECRET` | unset | Optional. Without them DeviantArt is unreachable from CI; with them the collector reads Daily Deviations from the official API |
 
 ## Schedule
 

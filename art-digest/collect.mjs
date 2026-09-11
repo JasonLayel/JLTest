@@ -189,6 +189,12 @@ export function normalizeRedditRss(xml, subreddit = '') {
       const link = (block.match(/<link[^>]+href="([^"]+)"/i) || [])[1] || '';
       const author = tag(block, 'name').replace(/^\/u\//, '');
       const id = (tag(block, 'id').match(/t3_(\w+)/) || [])[1] || String(index);
+      // A multireddit feed tags every entry with the subreddit it came from.
+      const sub =
+        subreddit ||
+        (block.match(/<category[^>]+term="([^"]+)"/i) || [])[1] ||
+        (link.match(/reddit\.com\/r\/([^/]+)/i) || [])[1] ||
+        '';
       return {
         id: `reddit:${id}`,
         source: 'reddit',
@@ -199,12 +205,12 @@ export function normalizeRedditRss(xml, subreddit = '') {
         image: https(decodeEntities(image)),
         thumb: https(decodeEntities(image)),
         value: Math.max(1, entries.length - index),
-        scoreLabel: `#${index + 1} top today${subreddit ? ` in r/${subreddit}` : ''}`,
+        scoreLabel: `#${index + 1} top today${sub ? ` in r/${sub}` : ''}`,
         postedAt: (() => {
           const d = new Date(tag(block, 'updated') || tag(block, 'published'));
           return Number.isNaN(d.valueOf()) ? null : d.toISOString();
         })(),
-        context: subreddit ? `r/${subreddit}` : '',
+        context: sub ? `r/${sub}` : '',
       };
     })
     .filter((item) => item.url && item.image);
@@ -236,108 +242,118 @@ async function redditToken() {
 
 async function collectReddit(cfg) {
   const token = await redditToken();
+  const multi = cfg.subs.join('+');
 
   // Reddit turns away unauthenticated datacenter traffic, and not always the
   // same way, so try the richest route first and fall back to the Atom feed.
-  const strategies = [
+  // Every route asks for all the subreddits at once: one request is far less
+  // likely to be rate-limited than seven.
+  const routes = [
     token && {
       name: 'oauth',
-      fetch: (sub) =>
-        get(`https://oauth.reddit.com/r/${sub}/top.json?t=day&limit=25&raw_json=1`, {
+      run: () =>
+        get(`https://oauth.reddit.com/r/${multi}/top.json?t=day&limit=100&raw_json=1`, {
           headers: { Authorization: `Bearer ${token}` },
-          attempts: 2,
         }).then((payload) => ({
-          items: normalizeReddit(payload, sub),
+          items: normalizeReddit(payload),
           fetched: payload?.data?.children?.length ?? 0,
         })),
     },
     {
       name: 'public json',
-      fetch: (sub) =>
-        get(`https://www.reddit.com/r/${sub}/top.json?t=day&limit=25&raw_json=1`, {
+      run: () =>
+        get(`https://www.reddit.com/r/${multi}/top.json?t=day&limit=100&raw_json=1`, {
           headers: { 'User-Agent': BROWSER_UA },
           attempts: 2,
         }).then((payload) => ({
-          items: normalizeReddit(payload, sub),
+          items: normalizeReddit(payload),
           fetched: payload?.data?.children?.length ?? 0,
         })),
     },
     {
       name: 'atom feed',
-      fetch: (sub) =>
-        get(`https://www.reddit.com/r/${sub}/top.rss?t=day&limit=25`, {
+      run: () =>
+        get(`https://www.reddit.com/r/${multi}/top.rss?t=day&limit=100`, {
           as: 'text',
           headers: { 'User-Agent': BROWSER_UA, Accept: 'application/atom+xml,text/xml' },
           attempts: 2,
         }).then((xml) => ({
-          items: normalizeRedditRss(xml, sub),
+          items: normalizeRedditRss(xml),
           fetched: (String(xml).match(/<entry>/g) || []).length,
         })),
     },
   ].filter(Boolean);
 
-  const items = [];
-  let fetched = 0;
-  let working = null;
-  const failures = [];
-
-  for (const sub of cfg.subs) {
-    // Once a route works, stick with it instead of re-probing every subreddit.
-    const candidates = working ? [working] : strategies;
-    let done = false;
-    for (const strategy of candidates) {
-      try {
-        const result = await strategy.fetch(sub);
-        fetched += result.fetched;
-        items.push(...result.items);
-        working = strategy;
-        done = true;
-        break;
-      } catch (err) {
-        if (candidates.length === 1) failures.push(`r/${sub} (${err.message})`);
+  const errors = [];
+  for (const route of routes) {
+    try {
+      const result = await route.run();
+      if (!result.items.length) {
+        errors.push(`${route.name}: ${result.fetched} rows, none usable`);
+        continue;
       }
+      return { ...result, note: route.name === 'oauth' ? '' : `via ${route.name}` };
+    } catch (err) {
+      errors.push(`${route.name}: ${err.message}`);
     }
-    if (!done && !working) failures.push(`r/${sub}: every route refused`);
-    await sleep(700); // stay well inside Reddit's rate limit
   }
-
-  if (!items.length) throw new Error(failures.join('; ') || 'no posts returned');
-  const note = [
-    working && working.name !== 'oauth' ? `via ${working.name}` : '',
-    failures.length ? `skipped ${failures.length} subreddit(s)` : '',
-  ].filter(Boolean).join(', ');
-  return { items, fetched, note };
+  throw new Error(errors.join(' | '));
 }
 
-/** ArtStation: the community "trending" explore feed. */
+/**
+ * ArtStation asset URLs carry the render size as the second-to-last path
+ * segment (.../20260910144737/smaller_square/piece.jpg), so a bigger version
+ * of a cover is one substitution away.
+ */
+const AS_SIZES = ['micro_square', 'smaller_square', 'small_square', 'small', 'medium', 'large'];
+export function artstationSize(url, size) {
+  if (!url) return '';
+  return url.replace(
+    new RegExp(`/(${AS_SIZES.join('|')})/([^/]+)$`),
+    (match, _found, file) => `/${size}/${file}`
+  );
+}
+
+/**
+ * ArtStation: the community "trending" explore feed.
+ *
+ * That feed returns square cover URLs and no like counts, while the older
+ * projects feed returns a `cover` object with likes — so covers are picked
+ * from whichever keys exist, and when no counts come back at all the feed's
+ * own ordering becomes the score.
+ */
 export function normalizeArtStation(payload) {
   const rows = payload?.data ?? payload?.projects ?? (Array.isArray(payload) ? payload : []);
-  return rows
-    .filter((p) => p && !p.adult_content && !p.hide_as_adult)
-    .map((p) => {
-      // The explore feed and the older projects feed disagree on where the
-      // cover lives, and some rows carry the URLs flat on the project.
+  const usable = rows.filter((p) => p && !p.adult_content && !p.hide_as_adult);
+  const hasLikes = usable.some((p) => Number(p.likes_count ?? p.likes ?? 0) > 0);
+
+  return usable
+    .map((p, index) => {
       const cover = p.cover || {};
-      const image = pick(
-        cover.medium_image_url, cover.image_url, cover.large_image_url,
-        p.cover_url, p.image_url, cover.thumb_url, cover.small_image_url
+      const square = pick(
+        p.smaller_square_cover_url, p.small_square_cover_url, p.square_cover_url,
+        cover.smaller_square_image_url, cover.square_image_url, cover.thumb_url
       );
-      const thumb = pick(
-        cover.smaller_square_image_url, cover.square_image_url, cover.thumb_url,
-        p.smaller_square_image_url, p.icons?.image, cover.small_image_url, image
+      const wide = pick(
+        p.medium_cover_url, p.cover_url, p.large_cover_url,
+        cover.medium_image_url, cover.image_url, cover.large_image_url
       );
       const hash = p.hash_id || p.hashId || p.id;
+      const likes = Number(p.likes_count ?? p.likes ?? 0) || 0;
       return {
         id: `artstation:${hash}`,
         source: 'artstation',
         title: clean(p.title) || 'Untitled',
         artist: clean(p.user?.full_name || p.user?.username || p.username || ''),
-        artistUrl: https(pick(p.user?.permalink, p.user?.profile_url)),
+        artistUrl: p.user?.username ? `https://www.artstation.com/${p.user.username}` : https(pick(p.user?.permalink)),
         url: https(pick(p.permalink, p.url, hash ? `https://www.artstation.com/artwork/${hash}` : '')),
-        image: https(image),
-        thumb: https(thumb),
-        value: Number(p.likes_count ?? p.likes ?? 0) || 0,
-        scoreLabel: `${compact(Number(p.likes_count ?? p.likes ?? 0) || 0)} likes`,
+        image: https(wide || artstationSize(square, 'large')),
+        // Square covers always exist on the explore feed; the wider render is
+        // derived, so keep the square as the thumbnail's fallback.
+        thumb: https(artstationSize(square, 'medium') || wide),
+        thumbFallback: https(square),
+        value: hasLikes ? likes : usable.length - index,
+        scoreLabel: hasLikes ? `${compact(likes)} likes` : `#${index + 1} trending`,
         postedAt: p.published_at ? new Date(p.published_at).toISOString() : null,
         context: 'Trending',
       };
@@ -444,7 +460,60 @@ export function normalizeDeviantArt(xml) {
     .filter((item) => item.url && (item.image || item.thumb));
 }
 
+/**
+ * DeviantArt's official API, used when app credentials are configured. Its RSS
+ * feed is behind bot protection that turns away CI runners, so credentials are
+ * the only reliable route from a datacenter.
+ */
+export function normalizeDeviantArtApi(payload) {
+  return (payload?.results ?? [])
+    .filter((d) => d && !d.is_mature && !d.is_deleted)
+    .map((d) => ({
+      id: `deviantart:${d.deviationid}`,
+      source: 'deviantart',
+      title: clean(d.title) || 'Untitled',
+      artist: clean(d.author?.username || ''),
+      artistUrl: d.author?.username ? `https://www.deviantart.com/${d.author.username}` : '',
+      url: https(d.url || ''),
+      image: https(pick(d.content?.src, d.preview?.src, d.thumbs?.at(-1)?.src)),
+      thumb: https(pick(d.preview?.src, d.thumbs?.at(-1)?.src, d.content?.src)),
+      value: Number(d.stats?.favourites) || 0,
+      scoreLabel: `${compact(Number(d.stats?.favourites) || 0)} favourites`,
+      postedAt: iso(Number(d.published_time)),
+      context: 'Daily Deviation',
+    }))
+    .filter((item) => item.url && (item.image || item.thumb));
+}
+
+async function deviantArtToken() {
+  if (!process.env.DEVIANTART_CLIENT_ID || !process.env.DEVIANTART_CLIENT_SECRET) return null;
+  try {
+    const url =
+      'https://www.deviantart.com/oauth2/token?grant_type=client_credentials' +
+      `&client_id=${encodeURIComponent(process.env.DEVIANTART_CLIENT_ID)}` +
+      `&client_secret=${encodeURIComponent(process.env.DEVIANTART_CLIENT_SECRET)}`;
+    return (await get(url, { attempts: 2 }))?.access_token || null;
+  } catch {
+    return null;
+  }
+}
+
 async function collectDeviantArt() {
+  const token = await deviantArtToken();
+  if (token) {
+    const payload = await get(
+      `https://www.deviantart.com/api/v1/oauth2/browse/dailydeviations?mature_content=false&access_token=${token}`,
+      { headers: { 'User-Agent': BROWSER_UA } }
+    );
+    const items = normalizeDeviantArtApi(payload);
+    return {
+      items,
+      fetched: (payload?.results ?? []).length,
+      note: 'via the API',
+      sample: sampleShape(payload?.results?.[0]),
+    };
+  }
+
   const query = encodeURIComponent('boost:popular max_age:24h in:digitalart');
   const xml = await getFirst(
     [
@@ -460,6 +529,7 @@ async function collectDeviantArt() {
   return {
     items,
     fetched: (String(xml).match(/<item>/g) || []).length,
+    note: 'via RSS',
     sample: items.length ? undefined : String(xml).slice(0, 400),
   };
 }

@@ -133,8 +133,16 @@
       img.loading = 'lazy';
       img.decoding = 'async';
       img.referrerPolicy = 'no-referrer';
-      // Some hosts block hotlinking; show the title instead of a broken frame.
+      // Derived thumbnails (ArtStation upsizes, Pixiv's mirror) can 404, so
+      // try the source's own fallback once before giving up on the image.
+      let fallback = isSafeUrl(item.thumbFallback) && item.thumbFallback !== thumbUrl ? item.thumbFallback : '';
       img.addEventListener('error', () => {
+        if (fallback) {
+          const next = fallback;
+          fallback = '';
+          img.src = next;
+          return;
+        }
         img.remove();
         link.prepend(el('div', 'thumb-fallback', item.title));
       });

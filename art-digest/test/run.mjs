@@ -10,8 +10,10 @@ import {
   normalizeRedditRss,
   sampleShape,
   normalizeArtStation,
+  artstationSize,
   normalizePixiv,
   normalizeDeviantArt,
+  normalizeDeviantArtApi,
   rankItems,
   renderEmail,
 } from '../collect.mjs';
@@ -121,46 +123,78 @@ test('reddit atom: used when the JSON API refuses, ranked by feed position', () 
 
 /* -------------------------------------------------------------- artstation */
 
-const artstationPayload = {
-  data: [
-    {
-      id: 1,
-      hash_id: 'zZk9L',
-      title: 'Skyward Cathedral',
-      permalink: 'https://www.artstation.com/artwork/zZk9L',
-      likes_count: 3120,
-      published_at: new Date(NOW - 9 * 3600_000).toISOString(),
-      user: { full_name: 'Mira Solis', permalink: 'https://www.artstation.com/mirasolis' },
-      cover: {
-        medium_image_url: 'http://cdna.artstation.com/p/medium.jpg',
-        smaller_square_image_url: 'https://cdna.artstation.com/p/square.jpg',
-      },
-    },
-    { id: 2, hash_id: 'adult1', title: 'nope', permalink: 'https://www.artstation.com/artwork/adult1', adult_content: true, likes_count: 90000, user: { full_name: 'x' }, cover: { thumb_url: 'https://c/t.jpg' } },
-  ],
-};
 
-test('artstation: falls back through the cover shapes the API actually returns', () => {
-  const flat = normalizeArtStation({
+test('artstation: reads the explore feed shape (square covers, no like counts)', () => {
+  // Shape taken from a real trending response.
+  const items = normalizeArtStation({
     data: [
-      { hash_id: 'flat1', title: 'Flat cover', permalink: 'https://www.artstation.com/artwork/flat1', likes_count: 12, user: { username: 'nn' }, cover: { small_image_url: 'https://cdna.artstation.com/small.jpg' } },
-      { hash_id: 'flat2', title: 'No cover object', url: 'https://www.artstation.com/artwork/flat2', cover_url: 'https://cdna.artstation.com/flat2.jpg', user: { full_name: 'Ann' } },
-      { hash_id: 'nope', title: 'No image at all', permalink: 'https://www.artstation.com/artwork/nope', user: {} },
+      {
+        id: 22861190,
+        hash_id: '4193e2',
+        url: 'https://www.artstation.com/artwork/4193e2',
+        title: 'Leon S. Kennedy (fan art)',
+        hide_as_adult: false,
+        smaller_square_cover_url: 'https://cdna.artstation.com/p/assets/images/images/102/320/164/20260910144737/smaller_square/leon.jpg',
+        small_square_cover_url: 'https://cdna.artstation.com/p/assets/images/images/102/320/164/20260910144737/small_square/leon.jpg',
+        user: { username: 'he77ga', full_name: 'Olya Anufrieva' },
+      },
+      {
+        id: 2,
+        hash_id: 'second',
+        url: 'https://www.artstation.com/artwork/second',
+        title: 'Runner up',
+        smaller_square_cover_url: 'https://cdna.artstation.com/p/assets/images/images/1/2/3/20260910144737/smaller_square/b.jpg',
+        user: { username: 'two', full_name: 'Two' },
+      },
     ],
   });
-  assert.deepEqual(flat.map((i) => i.id), ['artstation:flat1', 'artstation:flat2']);
-  assert.equal(flat[0].thumb, 'https://cdna.artstation.com/small.jpg');
-  assert.equal(flat[1].image, 'https://cdna.artstation.com/flat2.jpg');
+
+  assert.equal(items.length, 2);
+  const [first, second] = items;
+  assert.equal(first.artist, 'Olya Anufrieva');
+  assert.equal(first.artistUrl, 'https://www.artstation.com/he77ga');
+  assert.equal(first.url, 'https://www.artstation.com/artwork/4193e2');
+  assert.ok(first.thumb.includes('/medium/leon.jpg'), 'the thumbnail is upsized from the square cover');
+  assert.ok(first.image.includes('/large/leon.jpg'), 'the full image asks for the large render');
+  assert.ok(first.thumbFallback.includes('/smaller_square/leon.jpg'), 'the original square cover stays as a fallback');
+  assert.equal(first.scoreLabel, '#1 trending', 'no like counts: the feed order is the score');
+  assert.ok(first.value > second.value, 'earlier in the trending feed ranks higher');
 });
 
-test('artstation: normalizes trending projects and drops adult content', () => {
-  const items = normalizeArtStation(artstationPayload);
-  assert.equal(items.length, 1);
-  const [item] = items;
-  assert.equal(item.id, 'artstation:zZk9L');
-  assert.equal(item.artist, 'Mira Solis');
-  assert.equal(item.image, 'https://cdna.artstation.com/p/medium.jpg', 'http is upgraded to https');
+test('artstation: keeps using like counts when the projects feed provides them', () => {
+  const [item] = normalizeArtStation({
+    data: [{
+      hash_id: 'likes1',
+      title: 'With likes',
+      permalink: 'https://www.artstation.com/artwork/likes1',
+      likes_count: 3120,
+      user: { full_name: 'Mira Solis' },
+      cover: { medium_image_url: 'http://cdna.artstation.com/p/medium.jpg', smaller_square_image_url: 'https://cdna.artstation.com/p/square.jpg' },
+    }],
+  });
   assert.equal(item.scoreLabel, '3.1k likes');
+  assert.equal(item.value, 3120);
+  assert.equal(item.image, 'https://cdna.artstation.com/p/medium.jpg', 'http is upgraded to https');
+});
+
+test('artstationSize: only rewrites a real size segment', () => {
+  assert.equal(
+    artstationSize('https://cdna.artstation.com/p/a/b/20260910/smaller_square/x.jpg', 'large'),
+    'https://cdna.artstation.com/p/a/b/20260910/large/x.jpg'
+  );
+  assert.equal(artstationSize('https://example.com/plain.jpg', 'large'), 'https://example.com/plain.jpg');
+  assert.equal(artstationSize('', 'large'), '');
+});
+
+test('artstation: drops adult content', () => {
+  const items = normalizeArtStation({
+    data: [
+      { hash_id: 'ok1', title: 'fine', url: 'https://www.artstation.com/artwork/ok1', smaller_square_cover_url: 'https://c/s/smaller_square/a.jpg', user: {} },
+      { hash_id: 'adult1', title: 'nope', url: 'https://www.artstation.com/artwork/adult1', adult_content: true, smaller_square_cover_url: 'https://c/s/smaller_square/b.jpg', user: {} },
+      { hash_id: 'adult2', title: 'nope', url: 'https://www.artstation.com/artwork/adult2', hide_as_adult: true, smaller_square_cover_url: 'https://c/s/smaller_square/c.jpg', user: {} },
+    ],
+  });
+  assert.deepEqual(items.map((i) => i.id), ['artstation:ok1']);
 });
 
 /* ------------------------------------------------------------------- pixiv */
@@ -234,6 +268,35 @@ test('deviantart: parses the RSS feed and skips mature deviations', () => {
   assert.equal(item.thumb, 'https://images-wixmp.com/t400/ember.jpg', 'largest thumbnail wins');
   assert.equal(item.scoreLabel, '#1 most popular');
   assert.ok(item.postedAt.startsWith('2026-09-11'), 'pubDate parsed to ISO');
+});
+
+test('deviantart api: normalizes daily deviations and skips mature ones', () => {
+  const items = normalizeDeviantArtApi({
+    results: [
+      {
+        deviationid: 'abc-123',
+        title: 'Ember Fox',
+        url: 'https://www.deviantart.com/aurelia/art/Ember-Fox-998877',
+        is_mature: false,
+        published_time: String(Math.floor(NOW / 1000) - 3600),
+        author: { username: 'Aurelia' },
+        preview: { src: 'https://images-wixmp.com/preview/ember.jpg' },
+        content: { src: 'https://images-wixmp.com/full/ember.jpg' },
+        stats: { favourites: 4210, comments: 88 },
+      },
+      { deviationid: 'm-1', title: 'Mature', url: 'https://www.deviantart.com/x/art/m-1', is_mature: true, author: { username: 'x' }, preview: { src: 'https://i/m.jpg' }, stats: { favourites: 99999 } },
+      { deviationid: 'no-img', title: 'No image', url: 'https://www.deviantart.com/x/art/no-img', author: { username: 'x' }, stats: { favourites: 5 } },
+    ],
+  });
+  assert.deepEqual(items.map((i) => i.id), ['deviantart:abc-123']);
+  const [item] = items;
+  assert.equal(item.artist, 'Aurelia');
+  assert.equal(item.artistUrl, 'https://www.deviantart.com/Aurelia');
+  assert.equal(item.image, 'https://images-wixmp.com/full/ember.jpg');
+  assert.equal(item.thumb, 'https://images-wixmp.com/preview/ember.jpg');
+  assert.equal(item.scoreLabel, '4.2k favourites');
+  assert.equal(item.context, 'Daily Deviation');
+  assert.ok(item.postedAt.startsWith('2026-09-11'));
 });
 
 /* ----------------------------------------------------------------- ranking */
