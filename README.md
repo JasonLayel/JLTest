@@ -45,3 +45,4 @@ your phone or PC. Notifications and PWA install require HTTPS (or localhost).
 | `app.js` | All logic: state, picking, rules, scheduling, rendering |
 | `styles.css` | Responsive, mobile-first styling with dark mode |
 | `manifest.json`, `icon.svg`, `sw.js` | PWA install + offline support |
+| `art-digest/` | A separate widget: the day's most popular new digital art from ArtStation, Reddit, Pixiv and DeviantArt ([details](art-digest/README.md)) |
