@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-11T13:33:46.615Z",
+  "generatedAt": "2026-09-11T13:37:21.325Z",
   "windowHours": 48,
-  "totalCollected": 46,
+  "totalCollected": 67,
   "sourceLabels": {
     "artstation": "ArtStation",
     "reddit": "Reddit",
@@ -13,21 +13,52 @@
       "id": "artstation",
       "label": "ArtStation",
       "home": "https://www.artstation.com",
-      "status": "ok",
+      "status": "changed",
       "fetched": 50,
       "kept": 0,
       "note": "",
-      "error": null
+      "error": "returned 50 rows, none usable — the response shape changed",
+      "sample": {
+        "id": 22861190,
+        "hash_id": "4193e2",
+        "url": "https://www.artstation.com/artwork/4193e2",
+        "smaller_square_cover_url": "https://cdna.artstation.com/p/assets/images/images/102/320/164/20260910144737/sm…",
+        "hide_as_adult": false,
+        "title": "Leon S. Kennedy (fan art)",
+        "is_highlighted": false,
+        "small_square_cover_url": "https://cdna.artstation.com/p/assets/images/images/102/320/164/20260910144737/sm…",
+        "icons": {
+          "video": false,
+          "image": true,
+          "model3d": false,
+          "marmoset": false,
+          "pano": false,
+          "multiple_images": true,
+          "video_clip": true
+        },
+        "user": {
+          "id": 66847,
+          "username": "he77ga",
+          "medium_avatar_url": "https://cdnb.artstation.com/p/users/avatars/000/066/847/medium/0243531e510162946…",
+          "is_staff": false,
+          "pro_member": false,
+          "is_plus_member": false,
+          "is_studio_account": false,
+          "is_school_account": false,
+          "has_recruiter_badge": false,
+          "full_name": "Olya Anufrieva"
+        }
+      }
     },
     {
       "id": "reddit",
       "label": "Reddit",
       "home": "https://www.reddit.com",
-      "status": "failed",
-      "fetched": 0,
-      "kept": 0,
-      "note": "",
-      "error": "r/Art (www.reddit.com: HTTP 403 Blocked); r/DigitalArt (www.reddit.com: HTTP 403 Blocked); r/ImaginaryLandscapes (www.reddit.com: HTTP 403 Blocked); r/ImaginaryCharacters (www.reddit.com: HTTP 403 Blocked); r/ConceptArt (www.reddit.com: HTTP 403 Blocked); r/SciFiArt (www.reddit.com: HTTP 403 Blocked"
+      "status": "ok",
+      "fetched": 25,
+      "kept": 21,
+      "note": "via atom feed, skipped 6 subreddit(s)",
+      "error": null
     },
     {
       "id": "pixiv",
@@ -47,10 +78,25 @@
       "fetched": 0,
       "kept": 0,
       "note": "",
-      "error": "backend.deviantart.com: HTTP 403 Forbidden"
+      "error": "backend.deviantart.com: HTTP 403 Forbidden | www.deviantart.com: HTTP 403 Forbidden | backend.deviantart.com: HTTP 403 Forbidden"
     }
   ],
   "items": [
+    {
+      "id": "reddit:1wcm45w",
+      "source": "reddit",
+      "title": "Kyudo, Mojiro, Ink, 2026",
+      "artist": "u/hoopderscotch",
+      "artistUrl": "https://www.reddit.com/user/hoopderscotch",
+      "url": "https://www.reddit.com/r/Art/comments/1wcm45w/kyudo_mojiro_ink_2026/",
+      "image": "https://preview.redd.it/6njnljbqjpoh1.png?width=640&crop=smart&auto=webp&s=207a3e13a104d0fc7762465023775131461275b6",
+      "thumb": "https://preview.redd.it/6njnljbqjpoh1.png?width=640&crop=smart&auto=webp&s=207a3e13a104d0fc7762465023775131461275b6",
+      "value": 25,
+      "scoreLabel": "#1 top today in r/Art",
+      "postedAt": "2026-09-10T15:16:57.000Z",
+      "context": "r/Art",
+      "heat": 94
+    },
     {
       "id": "pixiv:149478161",
       "source": "pixiv",
@@ -65,6 +111,21 @@
       "postedAt": "2026-09-09T15:00:15.000Z",
       "context": "Daily ranking #14",
       "heat": 87
+    },
+    {
+      "id": "reddit:1wczdgy",
+      "source": "reddit",
+      "title": "Two Earthlings, John Brosio, Oil on Canvas, 2009",
+      "artist": "u/italianartist",
+      "artistUrl": "https://www.reddit.com/user/italianartist",
+      "url": "https://www.reddit.com/r/Art/comments/1wczdgy/two_earthlings_john_brosio_oil_on_canvas_2009/",
+      "image": "https://preview.redd.it/3zkd8f1s1soh1.jpeg?width=640&crop=smart&auto=webp&s=a6456d1ffd56b8b9d57fb43860ccff48325ba66d",
+      "thumb": "https://preview.redd.it/3zkd8f1s1soh1.jpeg?width=640&crop=smart&auto=webp&s=a6456d1ffd56b8b9d57fb43860ccff48325ba66d",
+      "value": 24,
+      "scoreLabel": "#2 top today in r/Art",
+      "postedAt": "2026-09-10T23:27:05.000Z",
+      "context": "r/Art",
+      "heat": 93
     },
     {
       "id": "pixiv:149478229",
@@ -82,6 +143,21 @@
       "heat": 85
     },
     {
+      "id": "reddit:1wcvemj",
+      "source": "reddit",
+      "title": "Pencil Artwork, Bashir Sultani, pencils, 2025",
+      "artist": "u/Melurdaz",
+      "artistUrl": "https://www.reddit.com/user/Melurdaz",
+      "url": "https://www.reddit.com/r/Art/comments/1wcvemj/pencil_artwork_bashir_sultani_pencils_2025/",
+      "image": "https://preview.redd.it/wxonog9l9roh1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=28ffd377ba5f4121c02e47b24d2008291de3f5b8",
+      "thumb": "https://preview.redd.it/wxonog9l9roh1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=28ffd377ba5f4121c02e47b24d2008291de3f5b8",
+      "value": 22,
+      "scoreLabel": "#4 top today in r/Art",
+      "postedAt": "2026-09-10T20:49:05.000Z",
+      "context": "r/Art",
+      "heat": 86
+    },
+    {
       "id": "pixiv:149479831",
       "source": "pixiv",
       "title": "쿠온 레이",
@@ -95,6 +171,21 @@
       "postedAt": "2026-09-09T15:30:01.000Z",
       "context": "Daily ranking #48",
       "heat": 75
+    },
+    {
+      "id": "reddit:1wd8zqr",
+      "source": "reddit",
+      "title": "Mosh Pit, Dan Witz, Oil on Canvas, 2000",
+      "artist": "u/mangosmoothie35467",
+      "artistUrl": "https://www.reddit.com/user/mangosmoothie35467",
+      "url": "https://www.reddit.com/r/Art/comments/1wd8zqr/mosh_pit_dan_witz_oil_on_canvas_2000/",
+      "image": "https://preview.redd.it/trgkdnfscuoh1.jpeg?width=640&crop=smart&auto=webp&s=6f56bda0345097c196275a2fb3dd23ec1acacbfc",
+      "thumb": "https://preview.redd.it/trgkdnfscuoh1.jpeg?width=640&crop=smart&auto=webp&s=6f56bda0345097c196275a2fb3dd23ec1acacbfc",
+      "value": 21,
+      "scoreLabel": "#5 top today in r/Art",
+      "postedAt": "2026-09-11T07:12:21.000Z",
+      "context": "r/Art",
+      "heat": 85
     },
     {
       "id": "pixiv:149495026",
@@ -112,6 +203,21 @@
       "heat": 64
     },
     {
+      "id": "reddit:1wcu3q5",
+      "source": "reddit",
+      "title": "Morpho Butterfly on Shades of Periwinkle, Lindsey Kustusch, oil on panel, 2026",
+      "artist": "u/PrincipleGallery",
+      "artistUrl": "https://www.reddit.com/user/PrincipleGallery",
+      "url": "https://www.reddit.com/r/Art/comments/1wcu3q5/morpho_butterfly_on_shades_of_periwinkle_lindsey/",
+      "image": "https://preview.redd.it/9ae7c2zt0roh1.jpeg?width=640&crop=smart&auto=webp&s=bf6dfcdb1b54bbc4220350a852170192180c7ef6",
+      "thumb": "https://preview.redd.it/9ae7c2zt0roh1.jpeg?width=640&crop=smart&auto=webp&s=bf6dfcdb1b54bbc4220350a852170192180c7ef6",
+      "value": 19,
+      "scoreLabel": "#7 top today in r/Art",
+      "postedAt": "2026-09-10T20:01:12.000Z",
+      "context": "r/Art",
+      "heat": 76
+    },
+    {
       "id": "pixiv:149494576",
       "source": "pixiv",
       "title": ":D",
@@ -125,6 +231,21 @@
       "postedAt": "2026-09-10T04:48:19.000Z",
       "context": "Daily ranking #23",
       "heat": 33
+    },
+    {
+      "id": "reddit:1wdf2vx",
+      "source": "reddit",
+      "title": "The Death of SpongeBob, Jason Fischer, oil/canvas, 2014",
+      "artist": "u/MunkZion",
+      "artistUrl": "https://www.reddit.com/user/MunkZion",
+      "url": "https://www.reddit.com/r/Art/comments/1wdf2vx/the_death_of_spongebob_jason_fischer_oilcanvas/",
+      "image": "https://preview.redd.it/b3o26gynyvoh1.jpeg?width=320&crop=smart&auto=webp&s=91b7c8952b47ad03346e4f0e9cdf87ac5d24345e",
+      "thumb": "https://preview.redd.it/b3o26gynyvoh1.jpeg?width=320&crop=smart&auto=webp&s=91b7c8952b47ad03346e4f0e9cdf87ac5d24345e",
+      "value": 17,
+      "scoreLabel": "#9 top today in r/Art",
+      "postedAt": "2026-09-11T12:36:45.000Z",
+      "context": "r/Art",
+      "heat": 74
     },
     {
       "id": "pixiv:149506374",
@@ -142,6 +263,21 @@
       "heat": 25
     },
     {
+      "id": "reddit:1wdao41",
+      "source": "reddit",
+      "title": "The Lady of the Forest, Tito Merello, Digital, 2023",
+      "artist": "u/astral-seer",
+      "artistUrl": "https://www.reddit.com/user/astral-seer",
+      "url": "https://www.reddit.com/r/Art/comments/1wdao41/the_lady_of_the_forest_tito_merello_digital_2023/",
+      "image": "https://preview.redd.it/p8b6itqluuoh1.jpeg?width=640&crop=smart&auto=webp&s=3a13d4a8ce7ae0da82725441e2bc5188bb4386a8",
+      "thumb": "https://preview.redd.it/p8b6itqluuoh1.jpeg?width=640&crop=smart&auto=webp&s=3a13d4a8ce7ae0da82725441e2bc5188bb4386a8",
+      "value": 16,
+      "scoreLabel": "#10 top today in r/Art",
+      "postedAt": "2026-09-11T08:52:15.000Z",
+      "context": "r/Art",
+      "heat": 70
+    },
+    {
       "id": "pixiv:149478422",
       "source": "pixiv",
       "title": "09-ⅩⅩⅩ / BA-CXIII",
@@ -155,6 +291,21 @@
       "postedAt": "2026-09-09T15:01:19.000Z",
       "context": "Daily ranking #32",
       "heat": 23
+    },
+    {
+      "id": "reddit:1wcrz9t",
+      "source": "reddit",
+      "title": "Minimai, letrezdraw, Digital, 2026",
+      "artist": "u/letrezdraw",
+      "artistUrl": "https://www.reddit.com/user/letrezdraw",
+      "url": "https://www.reddit.com/r/Art/comments/1wcrz9t/minimai_letrezdraw_digital_2026/",
+      "image": "https://preview.redd.it/gp349pwknqoh1.png?width=640&crop=smart&auto=webp&s=83992510c6766a959cf4494e512db3e459ac10cb",
+      "thumb": "https://preview.redd.it/gp349pwknqoh1.png?width=640&crop=smart&auto=webp&s=83992510c6766a959cf4494e512db3e459ac10cb",
+      "value": 15,
+      "scoreLabel": "#11 top today in r/Art",
+      "postedAt": "2026-09-10T18:45:54.000Z",
+      "context": "r/Art",
+      "heat": 63
     },
     {
       "id": "pixiv:149478206",
@@ -172,6 +323,21 @@
       "heat": 23
     },
     {
+      "id": "reddit:1wd1n7o",
+      "source": "reddit",
+      "title": "The Land Before Dinner Time, Lindsey Marie Art, Acrylic, 2026",
+      "artist": "u/LindseyMarieArt",
+      "artistUrl": "https://www.reddit.com/user/LindseyMarieArt",
+      "url": "https://www.reddit.com/r/Art/comments/1wd1n7o/the_land_before_dinner_time_lindsey_marie_art/",
+      "image": "https://preview.redd.it/j0w2jy79jsoh1.jpeg?width=640&crop=smart&auto=webp&s=8a343745cc27e6c50cbf6bc95ec78f512970b39b",
+      "thumb": "https://preview.redd.it/j0w2jy79jsoh1.jpeg?width=640&crop=smart&auto=webp&s=8a343745cc27e6c50cbf6bc95ec78f512970b39b",
+      "value": 14,
+      "scoreLabel": "#12 top today in r/Art",
+      "postedAt": "2026-09-11T01:05:05.000Z",
+      "context": "r/Art",
+      "heat": 61
+    },
+    {
       "id": "pixiv:149500779",
       "source": "pixiv",
       "title": "後任選出",
@@ -185,6 +351,21 @@
       "postedAt": "2026-09-10T09:20:41.000Z",
       "context": "Daily ranking #43",
       "heat": 21
+    },
+    {
+      "id": "reddit:1wddlow",
+      "source": "reddit",
+      "title": "Santa Ynez California Hillside, Eyvind Earle, oil on masonite, 1969",
+      "artist": "u/Tokyono",
+      "artistUrl": "https://www.reddit.com/user/Tokyono",
+      "url": "https://www.reddit.com/r/Art/comments/1wddlow/santa_ynez_california_hillside_eyvind_earle_oil/",
+      "image": "https://preview.redd.it/w9c4y7xomvoh1.jpeg?width=640&crop=smart&auto=webp&s=32d31f0a160f4a36e1dc84069c8e582bcc232146",
+      "thumb": "https://preview.redd.it/w9c4y7xomvoh1.jpeg?width=640&crop=smart&auto=webp&s=32d31f0a160f4a36e1dc84069c8e582bcc232146",
+      "value": 12,
+      "scoreLabel": "#14 top today in r/Art",
+      "postedAt": "2026-09-11T11:29:53.000Z",
+      "context": "r/Art",
+      "heat": 58
     },
     {
       "id": "pixiv:149486199",
@@ -202,6 +383,21 @@
       "heat": 20
     },
     {
+      "id": "reddit:1wcm3ty",
+      "source": "reddit",
+      "title": "My Montreal house, Marie-Michelle Pepin, Gouache, 2026 [OC]",
+      "artist": "u/Tits_mmp",
+      "artistUrl": "https://www.reddit.com/user/Tits_mmp",
+      "url": "https://www.reddit.com/r/Art/comments/1wcm3ty/my_montreal_house_mariemichelle_pepin_gouache/",
+      "image": "https://preview.redd.it/m30u20v9mpoh1.jpeg?width=640&crop=smart&auto=webp&s=c22f1d915b6b91bbd7fb9d1bee11b0a81ad6b8af",
+      "thumb": "https://preview.redd.it/m30u20v9mpoh1.jpeg?width=640&crop=smart&auto=webp&s=c22f1d915b6b91bbd7fb9d1bee11b0a81ad6b8af",
+      "value": 13,
+      "scoreLabel": "#13 top today in r/Art",
+      "postedAt": "2026-09-10T15:16:36.000Z",
+      "context": "r/Art",
+      "heat": 55
+    },
+    {
       "id": "pixiv:149478433",
       "source": "pixiv",
       "title": "萌え袖",
@@ -217,6 +413,21 @@
       "heat": 17
     },
     {
+      "id": "reddit:1wcuel0",
+      "source": "reddit",
+      "title": "Grandpa got sick, Joe ,iPad ,2023",
+      "artist": "u/Professional-Bid8569",
+      "artistUrl": "https://www.reddit.com/user/Professional-Bid8569",
+      "url": "https://www.reddit.com/r/Art/comments/1wcuel0/grandpa_got_sick_joe_ipad_2023/",
+      "image": "https://preview.redd.it/ll95i4sz2roh1.jpg?width=140&height=98&auto=webp&s=46c1d7c6171bc2dc2255a8a6b182d583f579a836",
+      "thumb": "https://preview.redd.it/ll95i4sz2roh1.jpg?width=140&height=98&auto=webp&s=46c1d7c6171bc2dc2255a8a6b182d583f579a836",
+      "value": 11,
+      "scoreLabel": "#15 top today in r/Art",
+      "postedAt": "2026-09-10T20:12:09.000Z",
+      "context": "r/Art",
+      "heat": 50
+    },
+    {
       "id": "pixiv:149495710",
       "source": "pixiv",
       "title": "亜美誕祭2026",
@@ -230,36 +441,6 @@
       "postedAt": "2026-09-10T05:51:56.000Z",
       "context": "Daily ranking #47",
       "heat": 17
-    },
-    {
-      "id": "pixiv:149507957",
-      "source": "pixiv",
-      "title": "まどマギ",
-      "artist": "ネウちゃう",
-      "artistUrl": "https://www.pixiv.net/users/17753958",
-      "url": "https://www.pixiv.net/artworks/149507957",
-      "image": "https://i.pixiv.re/c/480x960/img-master/img/2026/09/10/21/18/20/149507957_p0_master1200.jpg",
-      "thumb": "https://i.pixiv.re/c/480x960/img-master/img/2026/09/10/21/18/20/149507957_p0_master1200.jpg",
-      "value": 153,
-      "scoreLabel": "153 bookmarks · #44 today",
-      "postedAt": "2026-09-10T12:18:20.000Z",
-      "context": "Daily ranking #44",
-      "heat": 17
-    },
-    {
-      "id": "pixiv:149506094",
-      "source": "pixiv",
-      "title": "リョ桜アンソロジー寄稿",
-      "artist": "カリマリカCARIMARICA",
-      "artistUrl": "https://www.pixiv.net/users/5764826",
-      "url": "https://www.pixiv.net/artworks/149506094",
-      "image": "https://i.pixiv.re/c/480x960/img-master/img/2026/09/10/20/39/32/149506094_p0_master1200.jpg",
-      "thumb": "https://i.pixiv.re/c/480x960/img-master/img/2026/09/10/20/39/32/149506094_p0_master1200.jpg",
-      "value": 129,
-      "scoreLabel": "129 bookmarks · #50 today",
-      "postedAt": "2026-09-10T11:39:32.000Z",
-      "context": "Daily ranking #50",
-      "heat": 16
     }
   ]
 }
