@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T13:43:23.730Z",
+  "generatedAt": "2026-09-11T13:48:36.911Z",
   "windowHours": 48,
   "totalCollected": 186,
   "sourceLabels": {
@@ -73,9 +73,14 @@
       "artist": "Olya Anufrieva",
       "artistUrl": "https://www.artstation.com/he77ga",
       "url": "https://www.artstation.com/artwork/4193e2",
-      "image": "https://cdna.artstation.com/p/assets/images/images/102/320/164/20260910144737/smaller_square/olya-anufrieva-00000.jpg?1789069657",
-      "thumb": "https://cdna.artstation.com/p/assets/images/images/102/320/164/20260910144737/smaller_square/olya-anufrieva-00000.jpg?1789069657",
-      "thumbFallback": "https://cdna.artstation.com/p/assets/images/images/102/320/164/20260910144737/smaller_square/olya-anufrieva-00000.jpg?1789069657",
+      "image": "https://cdna.artstation.com/p/assets/images/images/102/320/164/20260910144737/small_square/olya-anufrieva-00000.jpg?1789069657",
+      "thumb": "https://cdna.artstation.com/p/assets/images/images/102/320/164/20260910144737/small_square/olya-anufrieva-00000.jpg?1789069657",
+      "thumbFallbacks": [
+        "https://cdna.artstation.com/p/assets/images/images/102/320/164/20260910144737/large/olya-anufrieva-00000.jpg?1789069657",
+        "https://cdna.artstation.com/p/assets/images/images/102/320/164/20260910144737/small/olya-anufrieva-00000.jpg?1789069657",
+        "https://cdna.artstation.com/p/assets/images/images/102/320/164/20260910144737/small_square/olya-anufrieva-00000.jpg?1789069657",
+        "https://cdna.artstation.com/p/assets/images/images/102/320/164/20260910144737/smaller_square/olya-anufrieva-00000.jpg?1789069657"
+      ],
       "value": 50,
       "scoreLabel": "#1 trending",
       "postedAt": null,
@@ -121,7 +126,12 @@
       "url": "https://www.artstation.com/artwork/nd0B94",
       "image": "https://cdnb.artstation.com/p/assets/covers/images/102/334/569/large/nicolas-delrieu-nicolas-delrieu-dragon-lord-project-minia.jpg?1789124045",
       "thumb": "https://cdnb.artstation.com/p/assets/covers/images/102/334/569/medium/nicolas-delrieu-nicolas-delrieu-dragon-lord-project-minia.jpg?1789124045",
-      "thumbFallback": "https://cdnb.artstation.com/p/assets/covers/images/102/334/569/smaller_square/nicolas-delrieu-nicolas-delrieu-dragon-lord-project-minia.jpg?1789124045",
+      "thumbFallbacks": [
+        "https://cdnb.artstation.com/p/assets/covers/images/102/334/569/large/nicolas-delrieu-nicolas-delrieu-dragon-lord-project-minia.jpg?1789124045",
+        "https://cdnb.artstation.com/p/assets/covers/images/102/334/569/small/nicolas-delrieu-nicolas-delrieu-dragon-lord-project-minia.jpg?1789124045",
+        "https://cdnb.artstation.com/p/assets/covers/images/102/334/569/small_square/nicolas-delrieu-nicolas-delrieu-dragon-lord-project-minia.jpg?1789124045",
+        "https://cdnb.artstation.com/p/assets/covers/images/102/334/569/smaller_square/nicolas-delrieu-nicolas-delrieu-dragon-lord-project-minia.jpg?1789124045"
+      ],
       "value": 49,
       "scoreLabel": "#2 trending",
       "postedAt": null,
@@ -167,7 +177,12 @@
       "url": "https://www.artstation.com/artwork/0a4DQ4",
       "image": "https://cdnb.artstation.com/p/assets/images/images/102/334/813/large/arsen-asyrankulov-01topfisheye.jpg?1789124749",
       "thumb": "https://cdnb.artstation.com/p/assets/images/images/102/334/813/medium/arsen-asyrankulov-01topfisheye.jpg?1789124749",
-      "thumbFallback": "https://cdnb.artstation.com/p/assets/images/images/102/334/813/smaller_square/arsen-asyrankulov-01topfisheye.jpg?1789124749",
+      "thumbFallbacks": [
+        "https://cdnb.artstation.com/p/assets/images/images/102/334/813/large/arsen-asyrankulov-01topfisheye.jpg?1789124749",
+        "https://cdnb.artstation.com/p/assets/images/images/102/334/813/small/arsen-asyrankulov-01topfisheye.jpg?1789124749",
+        "https://cdnb.artstation.com/p/assets/images/images/102/334/813/small_square/arsen-asyrankulov-01topfisheye.jpg?1789124749",
+        "https://cdnb.artstation.com/p/assets/images/images/102/334/813/smaller_square/arsen-asyrankulov-01topfisheye.jpg?1789124749"
+      ],
       "value": 48,
       "scoreLabel": "#3 trending",
       "postedAt": null,
@@ -213,7 +228,12 @@
       "url": "https://www.artstation.com/artwork/JwvJan",
       "image": "https://cdna.artstation.com/p/assets/covers/images/102/326/130/large/artem-demura-artem-demura-tavern.jpg?1789093014",
       "thumb": "https://cdna.artstation.com/p/assets/covers/images/102/326/130/medium/artem-demura-artem-demura-tavern.jpg?1789093014",
-      "thumbFallback": "https://cdna.artstation.com/p/assets/covers/images/102/326/130/smaller_square/artem-demura-artem-demura-tavern.jpg?1789093014",
+      "thumbFallbacks": [
+        "https://cdna.artstation.com/p/assets/covers/images/102/326/130/large/artem-demura-artem-demura-tavern.jpg?1789093014",
+        "https://cdna.artstation.com/p/assets/covers/images/102/326/130/small/artem-demura-artem-demura-tavern.jpg?1789093014",
+        "https://cdna.artstation.com/p/assets/covers/images/102/326/130/small_square/artem-demura-artem-demura-tavern.jpg?1789093014",
+        "https://cdna.artstation.com/p/assets/covers/images/102/326/130/smaller_square/artem-demura-artem-demura-tavern.jpg?1789093014"
+      ],
       "value": 47,
       "scoreLabel": "#4 trending",
       "postedAt": null,
@@ -257,9 +277,14 @@
       "artist": "Maung Thuta",
       "artistUrl": "https://www.artstation.com/cypressd",
       "url": "https://www.artstation.com/artwork/q0eBRL",
-      "image": "https://cdna.artstation.com/p/assets/images/images/102/331/160/20260911034911/smaller_square/maung-thuta-c3.jpg?1789116551",
-      "thumb": "https://cdna.artstation.com/p/assets/images/images/102/331/160/20260911034911/smaller_square/maung-thuta-c3.jpg?1789116551",
-      "thumbFallback": "https://cdna.artstation.com/p/assets/images/images/102/331/160/20260911034911/smaller_square/maung-thuta-c3.jpg?1789116551",
+      "image": "https://cdna.artstation.com/p/assets/images/images/102/331/160/20260911034911/small_square/maung-thuta-c3.jpg?1789116551",
+      "thumb": "https://cdna.artstation.com/p/assets/images/images/102/331/160/20260911034911/small_square/maung-thuta-c3.jpg?1789116551",
+      "thumbFallbacks": [
+        "https://cdna.artstation.com/p/assets/images/images/102/331/160/20260911034911/large/maung-thuta-c3.jpg?1789116551",
+        "https://cdna.artstation.com/p/assets/images/images/102/331/160/20260911034911/small/maung-thuta-c3.jpg?1789116551",
+        "https://cdna.artstation.com/p/assets/images/images/102/331/160/20260911034911/small_square/maung-thuta-c3.jpg?1789116551",
+        "https://cdna.artstation.com/p/assets/images/images/102/331/160/20260911034911/smaller_square/maung-thuta-c3.jpg?1789116551"
+      ],
       "value": 46,
       "scoreLabel": "#5 trending",
       "postedAt": null,
@@ -305,7 +330,12 @@
       "url": "https://www.artstation.com/artwork/2LqDVv",
       "image": "https://cdna.artstation.com/p/assets/covers/images/102/324/276/large/gabriel-yeganyan-gabriel-yeganyan-wall-drawing-cover.jpg?1789084183",
       "thumb": "https://cdna.artstation.com/p/assets/covers/images/102/324/276/medium/gabriel-yeganyan-gabriel-yeganyan-wall-drawing-cover.jpg?1789084183",
-      "thumbFallback": "https://cdna.artstation.com/p/assets/covers/images/102/324/276/smaller_square/gabriel-yeganyan-gabriel-yeganyan-wall-drawing-cover.jpg?1789084183",
+      "thumbFallbacks": [
+        "https://cdna.artstation.com/p/assets/covers/images/102/324/276/large/gabriel-yeganyan-gabriel-yeganyan-wall-drawing-cover.jpg?1789084183",
+        "https://cdna.artstation.com/p/assets/covers/images/102/324/276/small/gabriel-yeganyan-gabriel-yeganyan-wall-drawing-cover.jpg?1789084183",
+        "https://cdna.artstation.com/p/assets/covers/images/102/324/276/small_square/gabriel-yeganyan-gabriel-yeganyan-wall-drawing-cover.jpg?1789084183",
+        "https://cdna.artstation.com/p/assets/covers/images/102/324/276/smaller_square/gabriel-yeganyan-gabriel-yeganyan-wall-drawing-cover.jpg?1789084183"
+      ],
       "value": 45,
       "scoreLabel": "#6 trending",
       "postedAt": null,
@@ -351,7 +381,12 @@
       "url": "https://www.artstation.com/artwork/2L9KQY",
       "image": "https://cdna.artstation.com/p/assets/covers/images/102/331/094/large/qifeng-lin-qifeng-lin-1.jpg?1789114233",
       "thumb": "https://cdna.artstation.com/p/assets/covers/images/102/331/094/medium/qifeng-lin-qifeng-lin-1.jpg?1789114233",
-      "thumbFallback": "https://cdna.artstation.com/p/assets/covers/images/102/331/094/smaller_square/qifeng-lin-qifeng-lin-1.jpg?1789114233",
+      "thumbFallbacks": [
+        "https://cdna.artstation.com/p/assets/covers/images/102/331/094/large/qifeng-lin-qifeng-lin-1.jpg?1789114233",
+        "https://cdna.artstation.com/p/assets/covers/images/102/331/094/small/qifeng-lin-qifeng-lin-1.jpg?1789114233",
+        "https://cdna.artstation.com/p/assets/covers/images/102/331/094/small_square/qifeng-lin-qifeng-lin-1.jpg?1789114233",
+        "https://cdna.artstation.com/p/assets/covers/images/102/331/094/smaller_square/qifeng-lin-qifeng-lin-1.jpg?1789114233"
+      ],
       "value": 44,
       "scoreLabel": "#7 trending",
       "postedAt": null,
@@ -395,9 +430,14 @@
       "artist": "ki minwoo",
       "artistUrl": "https://www.artstation.com/minwooki",
       "url": "https://www.artstation.com/artwork/Z0aq3x",
-      "image": "https://cdnb.artstation.com/p/assets/images/images/102/328/353/20260911001946/smaller_square/ki-minwoo-.jpg?1789103986",
-      "thumb": "https://cdnb.artstation.com/p/assets/images/images/102/328/353/20260911001946/smaller_square/ki-minwoo-.jpg?1789103986",
-      "thumbFallback": "https://cdnb.artstation.com/p/assets/images/images/102/328/353/20260911001946/smaller_square/ki-minwoo-.jpg?1789103986",
+      "image": "https://cdnb.artstation.com/p/assets/images/images/102/328/353/20260911001946/small_square/ki-minwoo-.jpg?1789103986",
+      "thumb": "https://cdnb.artstation.com/p/assets/images/images/102/328/353/20260911001946/small_square/ki-minwoo-.jpg?1789103986",
+      "thumbFallbacks": [
+        "https://cdnb.artstation.com/p/assets/images/images/102/328/353/20260911001946/large/ki-minwoo-.jpg?1789103986",
+        "https://cdnb.artstation.com/p/assets/images/images/102/328/353/20260911001946/small/ki-minwoo-.jpg?1789103986",
+        "https://cdnb.artstation.com/p/assets/images/images/102/328/353/20260911001946/small_square/ki-minwoo-.jpg?1789103986",
+        "https://cdnb.artstation.com/p/assets/images/images/102/328/353/20260911001946/smaller_square/ki-minwoo-.jpg?1789103986"
+      ],
       "value": 43,
       "scoreLabel": "#8 trending",
       "postedAt": null,
