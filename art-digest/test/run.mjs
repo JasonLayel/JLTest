@@ -15,20 +15,25 @@ import {
   normalizeDeviantArt,
   normalizeDeviantArtApi,
   rankItems,
+  resolveThumbnails,
   renderEmail,
 } from '../collect.mjs';
 
 let passed = 0;
 const failures = [];
+const pending = [];
 const test = (name, fn) => {
-  try {
-    fn();
-    passed++;
-    console.log(`  ✓ ${name}`);
-  } catch (err) {
-    failures.push({ name, err });
-    console.log(`  ✕ ${name}\n    ${err.message}`);
-  }
+  const run = async () => {
+    try {
+      await fn();
+      passed++;
+      console.log(`  ✓ ${name}`);
+    } catch (err) {
+      failures.push({ name, err });
+      console.log(`  ✕ ${name}\n    ${err.message}`);
+    }
+  };
+  pending.push(run);
 };
 
 const NOW = Date.UTC(2026, 8, 11, 12, 0, 0);
@@ -351,6 +356,30 @@ test('ranking: removes duplicate posts of the same piece', () => {
   assert.equal(ranked.length, 2);
 });
 
+/* -------------------------------------------------------------- thumbnails */
+
+test('thumbnails: a derived thumbnail that 404s falls back to the square cover', async () => {
+  const items = [
+    { thumb: 'https://cdn/medium/a.jpg', thumbFallback: 'https://cdn/smaller_square/a.jpg', image: 'https://cdn/large/a.jpg' },
+    { thumb: 'https://cdn/medium/b.jpg', thumbFallback: '', image: 'https://cdn/large/b.jpg' },
+    { thumb: 'https://cdn/good.jpg', thumbFallback: '', image: 'https://cdn/good-big.jpg' },
+  ];
+  await resolveThumbnails(items, { check: async (url) => url.includes('good') || url.includes('smaller_square') });
+  assert.equal(items[0].thumb, 'https://cdn/smaller_square/a.jpg', 'swapped for the fallback');
+  assert.equal(items[0].image, 'https://cdn/smaller_square/a.jpg');
+  assert.equal(items[1].thumb, '', 'no fallback: the card goes text-only rather than broken');
+  assert.equal(items[1].image, '');
+  assert.equal(items[2].thumb, 'https://cdn/good.jpg', 'a working thumbnail is left alone');
+});
+
+test('thumbnails: every item is checked even past the concurrency limit', async () => {
+  const items = Array.from({ length: 20 }, (_, i) => ({ thumb: `https://cdn/${i}.jpg`, thumbFallback: '', image: '' }));
+  const seen = [];
+  await resolveThumbnails(items, { concurrency: 3, check: async (url) => { seen.push(url); return false; } });
+  assert.equal(seen.length, 20);
+  assert.ok(items.every((i) => i.thumb === ''));
+});
+
 /* ------------------------------------------------------------------- email */
 
 test('email: renders every item, escapes markup, and links the widget', () => {
@@ -393,6 +422,9 @@ test('sampleShape: trims a raw row to something loggable', () => {
   assert.equal(shape.cover.nested, '{…}', 'nesting stops at one level');
   assert.equal(shape.flag, false);
 });
+
+// Run in declaration order so the output reads top to bottom.
+for (const run of pending) await run();
 
 console.log(`\n${passed} passed, ${failures.length} failed`);
 if (failures.length) process.exit(1);

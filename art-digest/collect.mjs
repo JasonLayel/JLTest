@@ -588,6 +588,49 @@ export function rankItems(bySource, { limit = 24, windowHours = 48, now = Date.n
   return out;
 }
 
+/* -------------------------------------------------------------- thumbnails */
+
+/** HEAD (or a one-byte GET, for hosts that refuse HEAD) to see if a URL resolves. */
+async function urlResolves(url) {
+  const headers = { 'User-Agent': BROWSER_UA, Referer: 'https://www.google.com/' };
+  try {
+    let res = await fetch(url, { method: 'HEAD', headers, signal: AbortSignal.timeout(12_000) });
+    if (res.status === 405 || res.status === 501) {
+      res = await fetch(url, {
+        headers: { ...headers, Range: 'bytes=0-0' },
+        signal: AbortSignal.timeout(12_000),
+      });
+    }
+    return res.ok || res.status === 206;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Some thumbnails are derived rather than given: ArtStation's are upsized from
+ * a square cover, Pixiv's go through a mirror. The email can't retry a broken
+ * image the way the widget can, so every thumbnail is checked here and either
+ * swapped for the source's fallback or dropped, leaving a text card.
+ */
+export async function resolveThumbnails(items, { check = urlResolves, concurrency = 8 } = {}) {
+  const queue = [...items];
+  const worker = async () => {
+    for (let item = queue.shift(); item; item = queue.shift()) {
+      if (!item.thumb || (await check(item.thumb))) continue;
+      if (item.thumbFallback && item.thumbFallback !== item.thumb && (await check(item.thumbFallback))) {
+        item.image = item.thumbFallback;
+        item.thumb = item.thumbFallback;
+      } else {
+        item.image = '';
+        item.thumb = '';
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
+  return items;
+}
+
 function dedupe(items) {
   const seen = new Set();
   return items.filter((item) => {
@@ -713,7 +756,11 @@ export async function buildDigest(cfg = CONFIG) {
     }
   });
 
-  const items = rankItems(bySource, { limit: cfg.limit, windowHours: cfg.windowHours });
+  const items = await resolveThumbnails(
+    rankItems(bySource, { limit: cfg.limit, windowHours: cfg.windowHours })
+  );
+  const broken = items.filter((item) => !item.thumb).length;
+  if (broken) console.log(`${broken} of ${items.length} thumbnails did not resolve and were dropped`);
 
   return {
     generatedAt: new Date().toISOString(),
