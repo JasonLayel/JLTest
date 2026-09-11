@@ -107,6 +107,31 @@ const iso = (seconds) =>
 const compact = (n) =>
   n >= 1_000_000 ? `${(n / 1e6).toFixed(1)}M` : n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
 
+/**
+ * A trimmed view of a raw row, recorded only when a source returns rows but
+ * none survive normalizing — which means the site changed its response shape
+ * and the digest needs a fix. Without it that failure is invisible.
+ */
+export function sampleShape(row, depth = 1) {
+  if (row == null || typeof row !== 'object') return row;
+  const out = {};
+  for (const [key, value] of Object.entries(row).slice(0, 40)) {
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      out[key] = depth > 0 ? sampleShape(value, depth - 1) : '{…}';
+    } else if (Array.isArray(value)) {
+      out[key] = `[${value.length}]`;
+    } else if (typeof value === 'string') {
+      out[key] = value.length > 80 ? `${value.slice(0, 80)}…` : value;
+    } else {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
+/** First non-empty value among several candidate paths. */
+const pick = (...values) => values.find((v) => typeof v === 'string' && v.trim()) || '';
+
 /* ---------------------------------------------------------------- sources */
 
 /** Reddit: top posts of the day across the art subreddits. */
@@ -143,16 +168,55 @@ export function normalizeReddit(payload, subreddit = '') {
     .filter((item) => item.image || item.thumb);
 }
 
-async function collectReddit(cfg) {
-  let headers = {};
-  let base = 'https://www.reddit.com';
+/**
+ * Reddit's Atom feed, used when the JSON API refuses the request — which it
+ * does from datacenter IPs like GitHub's runners. The feed is ordered by top
+ * of the day but carries no vote counts, so position is the only signal.
+ */
+export function normalizeRedditRss(xml, subreddit = '') {
+  const entries = String(xml).split(/<entry>/).slice(1).map((b) => b.split(/<\/entry>/)[0]);
+  const tag = (block, name) => {
+    const m = block.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`, 'i'));
+    return m ? clean(m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1')) : '';
+  };
 
-  // Datacenter IPs get throttled hard on the public JSON, so use app-only
-  // OAuth when credentials are available.
-  if (process.env.REDDIT_CLIENT_ID && process.env.REDDIT_CLIENT_SECRET) {
-    const auth = Buffer.from(
-      `${process.env.REDDIT_CLIENT_ID}:${process.env.REDDIT_CLIENT_SECRET}`
-    ).toString('base64');
+  return entries
+    .map((block, index) => {
+      const html = decodeEntities(
+        (block.match(/<content[^>]*>([\s\S]*?)<\/content>/i) || [])[1] || ''
+      );
+      const image = (html.match(/<img[^>]+src="([^"]+)"/i) || [])[1] || '';
+      const link = (block.match(/<link[^>]+href="([^"]+)"/i) || [])[1] || '';
+      const author = tag(block, 'name').replace(/^\/u\//, '');
+      const id = (tag(block, 'id').match(/t3_(\w+)/) || [])[1] || String(index);
+      return {
+        id: `reddit:${id}`,
+        source: 'reddit',
+        title: tag(block, 'title') || 'Untitled',
+        artist: author ? `u/${author}` : '',
+        artistUrl: author ? `https://www.reddit.com/user/${author}` : '',
+        url: https(decodeEntities(link)),
+        image: https(decodeEntities(image)),
+        thumb: https(decodeEntities(image)),
+        value: Math.max(1, entries.length - index),
+        scoreLabel: `#${index + 1} top today${subreddit ? ` in r/${subreddit}` : ''}`,
+        postedAt: (() => {
+          const d = new Date(tag(block, 'updated') || tag(block, 'published'));
+          return Number.isNaN(d.valueOf()) ? null : d.toISOString();
+        })(),
+        context: subreddit ? `r/${subreddit}` : '',
+      };
+    })
+    .filter((item) => item.url && item.image);
+}
+
+/** App-only OAuth token, when repository secrets provide credentials. */
+async function redditToken() {
+  if (!process.env.REDDIT_CLIENT_ID || !process.env.REDDIT_CLIENT_SECRET) return null;
+  const auth = Buffer.from(
+    `${process.env.REDDIT_CLIENT_ID}:${process.env.REDDIT_CLIENT_SECRET}`
+  ).toString('base64');
+  try {
     const res = await fetch('https://www.reddit.com/api/v1/access_token', {
       method: 'POST',
       headers: {
@@ -163,30 +227,86 @@ async function collectReddit(cfg) {
       body: 'grant_type=client_credentials',
       signal: AbortSignal.timeout(25_000),
     });
-    if (res.ok) {
-      const token = (await res.json()).access_token;
-      if (token) {
-        headers = { Authorization: `Bearer ${token}` };
-        base = 'https://oauth.reddit.com';
-      }
-    }
+    if (!res.ok) return null;
+    return (await res.json()).access_token || null;
+  } catch {
+    return null;
   }
+}
+
+async function collectReddit(cfg) {
+  const token = await redditToken();
+
+  // Reddit turns away unauthenticated datacenter traffic, and not always the
+  // same way, so try the richest route first and fall back to the Atom feed.
+  const strategies = [
+    token && {
+      name: 'oauth',
+      fetch: (sub) =>
+        get(`https://oauth.reddit.com/r/${sub}/top.json?t=day&limit=25&raw_json=1`, {
+          headers: { Authorization: `Bearer ${token}` },
+          attempts: 2,
+        }).then((payload) => ({
+          items: normalizeReddit(payload, sub),
+          fetched: payload?.data?.children?.length ?? 0,
+        })),
+    },
+    {
+      name: 'public json',
+      fetch: (sub) =>
+        get(`https://www.reddit.com/r/${sub}/top.json?t=day&limit=25&raw_json=1`, {
+          headers: { 'User-Agent': BROWSER_UA },
+          attempts: 2,
+        }).then((payload) => ({
+          items: normalizeReddit(payload, sub),
+          fetched: payload?.data?.children?.length ?? 0,
+        })),
+    },
+    {
+      name: 'atom feed',
+      fetch: (sub) =>
+        get(`https://www.reddit.com/r/${sub}/top.rss?t=day&limit=25`, {
+          as: 'text',
+          headers: { 'User-Agent': BROWSER_UA, Accept: 'application/atom+xml,text/xml' },
+          attempts: 2,
+        }).then((xml) => ({
+          items: normalizeRedditRss(xml, sub),
+          fetched: (String(xml).match(/<entry>/g) || []).length,
+        })),
+    },
+  ].filter(Boolean);
 
   const items = [];
   let fetched = 0;
+  let working = null;
   const failures = [];
+
   for (const sub of cfg.subs) {
-    try {
-      const payload = await get(`${base}/r/${sub}/top.json?t=day&limit=25&raw_json=1`, { headers });
-      fetched += payload?.data?.children?.length ?? 0;
-      items.push(...normalizeReddit(payload, sub));
-    } catch (err) {
-      failures.push(`r/${sub} (${err.message})`);
+    // Once a route works, stick with it instead of re-probing every subreddit.
+    const candidates = working ? [working] : strategies;
+    let done = false;
+    for (const strategy of candidates) {
+      try {
+        const result = await strategy.fetch(sub);
+        fetched += result.fetched;
+        items.push(...result.items);
+        working = strategy;
+        done = true;
+        break;
+      } catch (err) {
+        if (candidates.length === 1) failures.push(`r/${sub} (${err.message})`);
+      }
     }
+    if (!done && !working) failures.push(`r/${sub}: every route refused`);
     await sleep(700); // stay well inside Reddit's rate limit
   }
-  if (!items.length && failures.length) throw new Error(failures.join('; '));
-  return { items, fetched, note: failures.length ? `skipped ${failures.join(', ')}` : '' };
+
+  if (!items.length) throw new Error(failures.join('; ') || 'no posts returned');
+  const note = [
+    working && working.name !== 'oauth' ? `via ${working.name}` : '',
+    failures.length ? `skipped ${failures.length} subreddit(s)` : '',
+  ].filter(Boolean).join(', ');
+  return { items, fetched, note };
 }
 
 /** ArtStation: the community "trending" explore feed. */
@@ -194,20 +314,34 @@ export function normalizeArtStation(payload) {
   const rows = payload?.data ?? payload?.projects ?? (Array.isArray(payload) ? payload : []);
   return rows
     .filter((p) => p && !p.adult_content && !p.hide_as_adult)
-    .map((p) => ({
-      id: `artstation:${p.hash_id || p.id}`,
-      source: 'artstation',
-      title: clean(p.title) || 'Untitled',
-      artist: clean(p.user?.full_name || p.user?.username || ''),
-      artistUrl: p.user?.permalink ? https(p.user.permalink) : '',
-      url: https(p.permalink || (p.hash_id ? `https://www.artstation.com/artwork/${p.hash_id}` : '')),
-      image: https(p.cover?.medium_image_url || p.cover?.image_url || p.cover?.thumb_url || ''),
-      thumb: https(p.cover?.smaller_square_image_url || p.cover?.thumb_url || p.cover?.medium_image_url || ''),
-      value: Number(p.likes_count) || 0,
-      scoreLabel: `${compact(Number(p.likes_count) || 0)} likes`,
-      postedAt: p.published_at ? new Date(p.published_at).toISOString() : null,
-      context: 'Trending',
-    }))
+    .map((p) => {
+      // The explore feed and the older projects feed disagree on where the
+      // cover lives, and some rows carry the URLs flat on the project.
+      const cover = p.cover || {};
+      const image = pick(
+        cover.medium_image_url, cover.image_url, cover.large_image_url,
+        p.cover_url, p.image_url, cover.thumb_url, cover.small_image_url
+      );
+      const thumb = pick(
+        cover.smaller_square_image_url, cover.square_image_url, cover.thumb_url,
+        p.smaller_square_image_url, p.icons?.image, cover.small_image_url, image
+      );
+      const hash = p.hash_id || p.hashId || p.id;
+      return {
+        id: `artstation:${hash}`,
+        source: 'artstation',
+        title: clean(p.title) || 'Untitled',
+        artist: clean(p.user?.full_name || p.user?.username || p.username || ''),
+        artistUrl: https(pick(p.user?.permalink, p.user?.profile_url)),
+        url: https(pick(p.permalink, p.url, hash ? `https://www.artstation.com/artwork/${hash}` : '')),
+        image: https(image),
+        thumb: https(thumb),
+        value: Number(p.likes_count ?? p.likes ?? 0) || 0,
+        scoreLabel: `${compact(Number(p.likes_count ?? p.likes ?? 0) || 0)} likes`,
+        postedAt: p.published_at ? new Date(p.published_at).toISOString() : null,
+        context: 'Trending',
+      };
+    })
     .filter((item) => item.url && (item.image || item.thumb));
 }
 
@@ -219,8 +353,9 @@ async function collectArtStation() {
     ],
     { headers: { 'User-Agent': BROWSER_UA, Accept: 'application/json', Referer: 'https://www.artstation.com/' } }
   );
+  const rows = payload?.data ?? payload?.projects ?? [];
   const items = normalizeArtStation(payload);
-  return { items, fetched: (payload?.data ?? payload?.projects ?? []).length };
+  return { items, fetched: rows.length, sample: sampleShape(rows[0]) };
 }
 
 /** Pixiv: the public daily illustration ranking (all-ages only). */
@@ -263,7 +398,7 @@ async function collectPixiv(cfg) {
     { headers: { 'User-Agent': BROWSER_UA, Referer: 'https://www.pixiv.net/', Accept: 'application/json' } }
   );
   const items = normalizePixiv(payload, cfg);
-  return { items, fetched: (payload?.contents ?? []).length };
+  return { items, fetched: (payload?.contents ?? []).length, sample: sampleShape(payload?.contents?.[0]) };
 }
 
 /** DeviantArt: the popular-this-week RSS feed for digital art. */
@@ -311,12 +446,22 @@ export function normalizeDeviantArt(xml) {
 
 async function collectDeviantArt() {
   const query = encodeURIComponent('boost:popular max_age:24h in:digitalart');
-  const xml = await get(`https://backend.deviantart.com/rss.xml?type=deviation&q=${query}&limit=60`, {
-    as: 'text',
-    headers: { 'User-Agent': BROWSER_UA, Accept: 'application/rss+xml,text/xml' },
-  });
+  const xml = await getFirst(
+    [
+      `https://backend.deviantart.com/rss.xml?type=deviation&q=${query}&limit=60`,
+      `https://www.deviantart.com/rss.xml?type=deviation&q=${query}&limit=60`,
+      // Without the age filter the feed is served from a different cache and
+      // sometimes answers when the filtered one does not.
+      `https://backend.deviantart.com/rss.xml?type=deviation&q=${encodeURIComponent('boost:popular in:digitalart')}&limit=60`,
+    ],
+    { as: 'text', headers: { 'User-Agent': BROWSER_UA, Accept: 'application/rss+xml,text/xml' } }
+  );
   const items = normalizeDeviantArt(xml);
-  return { items, fetched: (String(xml).match(/<item>/g) || []).length };
+  return {
+    items,
+    fetched: (String(xml).match(/<item>/g) || []).length,
+    sample: items.length ? undefined : String(xml).slice(0, 400),
+  };
 }
 
 export const SOURCES = [
@@ -468,16 +613,20 @@ export async function buildDigest(cfg = CONFIG) {
   SOURCES.forEach((source, i) => {
     const result = results[i];
     if (result.status === 'fulfilled') {
-      bySource[source.id] = result.value.items;
+      const { items, fetched, note, sample } = result.value;
+      bySource[source.id] = items;
       report.push({
         id: source.id,
         label: source.label,
         home: source.home,
-        status: 'ok',
-        fetched: result.value.fetched,
-        kept: result.value.items.length,
-        note: result.value.note || '',
-        error: null,
+        // Rows that all fail to normalize mean the site changed its response
+        // shape: report that as a failure rather than an empty success.
+        status: items.length || !fetched ? 'ok' : 'changed',
+        fetched,
+        kept: items.length,
+        note: note || '',
+        error: items.length || !fetched ? null : `returned ${fetched} rows, none usable — the response shape changed`,
+        ...(items.length || !fetched ? {} : { sample: sample ?? null }),
       });
     } else {
       bySource[source.id] = [];
@@ -519,6 +668,7 @@ async function main() {
   for (const s of digest.sources) {
     const detail = s.status === 'ok' ? `${s.kept} kept of ${s.fetched}${s.note ? ` — ${s.note}` : ''}` : s.error;
     console.log(`${s.status === 'ok' ? '✓' : '✕'} ${s.label.padEnd(12)} ${detail}`);
+    if (s.sample) console.log(`  sample row: ${JSON.stringify(s.sample).slice(0, 1200)}`);
   }
   console.log(`\n${digest.items.length} items written to ${CONFIG.outDir}`);
 

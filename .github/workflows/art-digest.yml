@@ -52,6 +52,7 @@ jobs:
             out.push(`## 🎨 ${d.items.length} picks · ${new Date(d.generatedAt).toUTCString()}`, "");
             for (const s of d.sources) {
               out.push(`- ${s.status === "ok" ? "✅" : "❌"} **${s.label}** — ${s.status === "ok" ? `${s.kept} kept of ${s.fetched}${s.note ? ` (${s.note})` : ""}` : s.error}`);
+              if (s.sample) out.push("", "  <details><summary>sample row</summary>", "", "  ```json", `  ${JSON.stringify(s.sample, null, 2).split("\n").join("\n  ")}`, "  ```", "  </details>", "");
             }
             out.push("", "| # | Source | Piece | Artist | Heat |", "|---|---|---|---|---|");
             d.items.slice(0, 10).forEach((i, n) => {

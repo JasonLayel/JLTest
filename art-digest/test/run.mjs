@@ -7,6 +7,8 @@
 import assert from 'node:assert/strict';
 import {
   normalizeReddit,
+  normalizeRedditRss,
+  sampleShape,
   normalizeArtStation,
   normalizePixiv,
   normalizeDeviantArt,
@@ -84,6 +86,39 @@ test('reddit: decodes entities in titles and image URLs', () => {
   assert.equal(item.context, 'r/Art');
 });
 
+const redditAtom = `<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<entry>
+  <author><name>/u/tuulikki</name></author>
+  <id>t3_zz9001</id>
+  <link href="https://www.reddit.com/r/Art/comments/zz9001/the_lighthouse/" />
+  <updated>2026-09-11T07:30:00+00:00</updated>
+  <title>The Lighthouse at Var</title>
+  <content type="html">&lt;a href="https://i.redd.it/zz9001.jpg"&gt;&lt;img src="https://preview.redd.it/zz9001.jpg?width=640&amp;amp;s=x" alt="post"&gt;&lt;/a&gt;</content>
+</entry>
+<entry>
+  <author><name>/u/nobody</name></author>
+  <id>t3_zz9002</id>
+  <link href="https://www.reddit.com/r/Art/comments/zz9002/text_post/" />
+  <updated>2026-09-11T06:00:00+00:00</updated>
+  <title>Discussion thread</title>
+  <content type="html">&lt;p&gt;no image here&lt;/p&gt;</content>
+</entry>
+</feed>`;
+
+test('reddit atom: used when the JSON API refuses, ranked by feed position', () => {
+  const items = normalizeRedditRss(redditAtom, 'Art');
+  assert.equal(items.length, 1, 'entries without an image are dropped');
+  const [item] = items;
+  assert.equal(item.id, 'reddit:zz9001');
+  assert.equal(item.title, 'The Lighthouse at Var');
+  assert.equal(item.artist, 'u/tuulikki');
+  assert.equal(item.url, 'https://www.reddit.com/r/Art/comments/zz9001/the_lighthouse/');
+  assert.equal(item.image, 'https://preview.redd.it/zz9001.jpg?width=640&s=x');
+  assert.equal(item.scoreLabel, '#1 top today in r/Art');
+  assert.equal(item.postedAt, '2026-09-11T07:30:00.000Z');
+});
+
 /* -------------------------------------------------------------- artstation */
 
 const artstationPayload = {
@@ -104,6 +139,19 @@ const artstationPayload = {
     { id: 2, hash_id: 'adult1', title: 'nope', permalink: 'https://www.artstation.com/artwork/adult1', adult_content: true, likes_count: 90000, user: { full_name: 'x' }, cover: { thumb_url: 'https://c/t.jpg' } },
   ],
 };
+
+test('artstation: falls back through the cover shapes the API actually returns', () => {
+  const flat = normalizeArtStation({
+    data: [
+      { hash_id: 'flat1', title: 'Flat cover', permalink: 'https://www.artstation.com/artwork/flat1', likes_count: 12, user: { username: 'nn' }, cover: { small_image_url: 'https://cdna.artstation.com/small.jpg' } },
+      { hash_id: 'flat2', title: 'No cover object', url: 'https://www.artstation.com/artwork/flat2', cover_url: 'https://cdna.artstation.com/flat2.jpg', user: { full_name: 'Ann' } },
+      { hash_id: 'nope', title: 'No image at all', permalink: 'https://www.artstation.com/artwork/nope', user: {} },
+    ],
+  });
+  assert.deepEqual(flat.map((i) => i.id), ['artstation:flat1', 'artstation:flat2']);
+  assert.equal(flat[0].thumb, 'https://cdna.artstation.com/small.jpg');
+  assert.equal(flat[1].image, 'https://cdna.artstation.com/flat2.jpg');
+});
 
 test('artstation: normalizes trending projects and drops adult content', () => {
   const items = normalizeArtStation(artstationPayload);
@@ -263,6 +311,24 @@ test('email: renders every item, escapes markup, and links the widget', () => {
   assert.ok(html.includes('✕ Pixiv'), 'failed sources are reported');
   assert.ok(html.includes('https://example.com/art-digest/'));
   assert.equal((html.match(/<tr>\s*<td style="padding:0 0 18px 0;">/g) || []).length, 2);
+});
+
+/* ----------------------------------------------------------- diagnostics */
+
+test('sampleShape: trims a raw row to something loggable', () => {
+  const shape = sampleShape({
+    id: 7,
+    title: 'x'.repeat(200),
+    tags: [1, 2, 3],
+    cover: { thumb_url: 'https://a/b.jpg', nested: { deep: true } },
+    flag: false,
+  });
+  assert.equal(shape.id, 7);
+  assert.ok(shape.title.endsWith('…') && shape.title.length < 100, 'long strings are cut');
+  assert.equal(shape.tags, '[3]');
+  assert.equal(shape.cover.thumb_url, 'https://a/b.jpg');
+  assert.equal(shape.cover.nested, '{…}', 'nesting stops at one level');
+  assert.equal(shape.flag, false);
 });
 
 console.log(`\n${passed} passed, ${failures.length} failed`);
