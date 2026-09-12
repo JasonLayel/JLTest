@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-12T18:30:29.507Z",
+  "generatedAt": "2026-09-12T18:35:48.910Z",
   "windowHours": 48,
-  "totalCollected": 239,
+  "totalCollected": 247,
   "nsfwPolicy": "include",
   "nsfwCount": 7,
   "sourceLabels": {
@@ -29,9 +29,9 @@
       "label": "Reddit",
       "home": "https://www.reddit.com",
       "status": "ok",
-      "fetched": 100,
-      "kept": 89,
-      "note": "via atom feed · dropped r/SciFiArt, r/FantasyArt, r/ImaginaryTechnology, r/ImaginaryArchitecture, r/characterdrawing, r/DnD, r/ImaginaryMonsters, r/ImaginaryWesteros, r/AnimeSketch, r/awwnime, r/ImaginaryLandscapes, r/ImaginaryCityscapes, r/ImaginaryMythology, r/ImaginaryWildlands",
+      "fetched": 129,
+      "kept": 97,
+      "note": "via atom feed · 24 requests · dropped r/Pathfinder_RPG, r/Warhammer40k, r/FanArt, r/ImaginaryCharacters, r/ImaginaryWesteros, r/AnimeSketch, r/awwnime, r/ImaginaryLandscapes, r/ImaginaryCityscapes, r/ImaginaryMythology, r/ImaginaryWildlands · request budget spent",
       "nsfw": 0,
       "error": null
     },
@@ -80,20 +80,20 @@
   ],
   "items": [
     {
-      "id": "reddit:1we077s",
+      "id": "reddit:1wed7bb",
       "source": "reddit",
-      "title": "Ghost Girl, Kevin Francis Gray, Carrara marble and glass crystal beads, 2007",
-      "artist": "u/unpaid-pukegreencow",
-      "artistUrl": "https://www.reddit.com/user/unpaid-pukegreencow",
-      "url": "https://www.reddit.com/r/Art/comments/1we077s/ghost_girl_kevin_francis_gray_carrara_marble_and/",
-      "image": "https://preview.redd.it/79z1psy230ph1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=00a765cfb90611a9187a5d11ef9b121a4e1c1293",
-      "thumb": "https://preview.redd.it/79z1psy230ph1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=00a765cfb90611a9187a5d11ef9b121a4e1c1293",
-      "value": 50,
-      "scoreLabel": "#1 top today in r/Art",
+      "title": "Freedom, Ixi, Street Art, 2026",
+      "artist": "u/P_a_s_g_i_t_21",
+      "artistUrl": "https://www.reddit.com/user/P_a_s_g_i_t_21",
+      "url": "https://www.reddit.com/r/Art/comments/1wed7bb/freedom_ixi_street_art_2026/",
+      "image": "https://preview.redd.it/c7xzps3wg3ph1.jpeg?width=640&crop=smart&auto=webp&s=b001a032a6e7db3ab1c8665965e7e92b83870e05",
+      "thumb": "https://preview.redd.it/c7xzps3wg3ph1.jpeg?width=640&crop=smart&auto=webp&s=b001a032a6e7db3ab1c8665965e7e92b83870e05",
+      "value": 98,
+      "scoreLabel": "#3 top today in r/Art",
       "nsfw": false,
-      "postedAt": "2026-09-12T02:28:50.000Z",
+      "postedAt": "2026-09-12T13:51:29.000Z",
       "context": "r/Art",
-      "heat": 96
+      "heat": 97
     },
     {
       "id": "artstation:419vwk",
@@ -154,20 +154,20 @@
       "heat": 90
     },
     {
-      "id": "reddit:1we9i1g",
+      "id": "reddit:1weg9qs",
       "source": "reddit",
-      "title": "WiP on my Dark Kraken Captain",
-      "artist": "u/Emperors_Paintbrush",
-      "artistUrl": "https://www.reddit.com/user/Emperors_Paintbrush",
-      "url": "https://www.reddit.com/r/Warhammer40k/comments/1we9i1g/wip_on_my_dark_kraken_captain/",
-      "image": "https://preview.redd.it/009tk42gl2ph1.jpeg?width=640&crop=smart&auto=webp&s=6486ec9bf4cb4402829acf15ec7645e8795fc2e0",
-      "thumb": "https://preview.redd.it/009tk42gl2ph1.jpeg?width=640&crop=smart&auto=webp&s=6486ec9bf4cb4402829acf15ec7645e8795fc2e0",
-      "value": 49,
-      "scoreLabel": "#2 top today in r/Warhammer40k",
+      "title": "Paintings from my last show",
+      "artist": "u/Affectionate-Shock63",
+      "artistUrl": "https://www.reddit.com/user/Affectionate-Shock63",
+      "url": "https://www.reddit.com/r/painting/comments/1weg9qs/paintings_from_my_last_show/",
+      "image": "https://preview.redd.it/hej1a3di34ph1.jpeg?width=640&crop=smart&auto=webp&s=600273de682ebb4e75c7a64b811d4022984b2926",
+      "thumb": "https://preview.redd.it/hej1a3di34ph1.jpeg?width=640&crop=smart&auto=webp&s=600273de682ebb4e75c7a64b811d4022984b2926",
+      "value": 92,
+      "scoreLabel": "#9 top today in r/painting",
       "nsfw": false,
-      "postedAt": "2026-09-12T10:55:08.000Z",
-      "context": "r/Warhammer40k",
-      "heat": 96
+      "postedAt": "2026-09-12T15:58:09.000Z",
+      "context": "r/painting",
+      "heat": 93
     },
     {
       "id": "artstation:QxXkml",
@@ -228,20 +228,20 @@
       "heat": 42
     },
     {
-      "id": "reddit:1weg9qs",
+      "id": "reddit:1we1ilc",
       "source": "reddit",
-      "title": "Paintings from my last show",
-      "artist": "u/Affectionate-Shock63",
-      "artistUrl": "https://www.reddit.com/user/Affectionate-Shock63",
-      "url": "https://www.reddit.com/r/painting/comments/1weg9qs/paintings_from_my_last_show/",
-      "image": "https://preview.redd.it/hej1a3di34ph1.jpeg?width=640&crop=smart&auto=webp&s=600273de682ebb4e75c7a64b811d4022984b2926",
-      "thumb": "https://preview.redd.it/hej1a3di34ph1.jpeg?width=640&crop=smart&auto=webp&s=600273de682ebb4e75c7a64b811d4022984b2926",
-      "value": 44,
-      "scoreLabel": "#7 top today in r/painting",
+      "title": "Dungeon Meowster",
+      "artist": "u/LegsIRL",
+      "artistUrl": "https://www.reddit.com/user/LegsIRL",
+      "url": "https://www.reddit.com/r/DungeonsAndDragons/comments/1we1ilc/dungeon_meowster/",
+      "image": "https://preview.redd.it/hgmpkp4oe0ph1.jpeg?width=640&crop=smart&auto=webp&s=0430008b7e3a8977a41f952bc849b28bc6f93529",
+      "thumb": "https://preview.redd.it/hgmpkp4oe0ph1.jpeg?width=640&crop=smart&auto=webp&s=0430008b7e3a8977a41f952bc849b28bc6f93529",
+      "value": 86,
+      "scoreLabel": "#15 top today in r/DungeonsAndDragons",
       "nsfw": false,
-      "postedAt": "2026-09-12T15:58:09.000Z",
-      "context": "r/painting",
-      "heat": 90
+      "postedAt": "2026-09-12T03:33:35.000Z",
+      "context": "r/DungeonsAndDragons",
+      "heat": 85
     },
     {
       "id": "artstation:319PP2",
@@ -302,20 +302,20 @@
       "heat": 37
     },
     {
-      "id": "reddit:1we1ilc",
+      "id": "reddit:1wefjbp",
       "source": "reddit",
-      "title": "Dungeon Meowster",
-      "artist": "u/LegsIRL",
-      "artistUrl": "https://www.reddit.com/user/LegsIRL",
-      "url": "https://www.reddit.com/r/DungeonsAndDragons/comments/1we1ilc/dungeon_meowster/",
-      "image": "https://preview.redd.it/hgmpkp4oe0ph1.jpeg?width=640&crop=smart&auto=webp&s=0430008b7e3a8977a41f952bc849b28bc6f93529",
-      "thumb": "https://preview.redd.it/hgmpkp4oe0ph1.jpeg?width=640&crop=smart&auto=webp&s=0430008b7e3a8977a41f952bc849b28bc6f93529",
-      "value": 44,
-      "scoreLabel": "#7 top today in r/DungeonsAndDragons",
+      "title": "Various Forms 다양한 형태 by 김경환(Kyounghwan Kim) tahraart",
+      "artist": "u/snoopmask10",
+      "artistUrl": "https://www.reddit.com/user/snoopmask10",
+      "url": "https://www.reddit.com/r/ImaginaryTechnology/comments/1wefjbp/various_forms_다양한_형태_by_김경환kyounghwan_kim/",
+      "image": "https://preview.redd.it/z8y3h9bzx3ph1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=44e31c0ea4dcfa04ab22e5ca7f629be205c4d0e8",
+      "thumb": "https://preview.redd.it/z8y3h9bzx3ph1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=44e31c0ea4dcfa04ab22e5ca7f629be205c4d0e8",
+      "value": 79,
+      "scoreLabel": "#22 top today in r/ImaginaryTechnology",
       "nsfw": false,
-      "postedAt": "2026-09-12T03:33:35.000Z",
-      "context": "r/DungeonsAndDragons",
-      "heat": 86
+      "postedAt": "2026-09-12T15:27:50.000Z",
+      "context": "r/ImaginaryTechnology",
+      "heat": 82
     },
     {
       "id": "artstation:wOJW1X",
@@ -376,20 +376,20 @@
       "heat": 33
     },
     {
-      "id": "reddit:1wdvxlu",
+      "id": "reddit:1wdxc79",
       "source": "reddit",
-      "title": "A touch of magic—you decide which one",
-      "artist": "u/Adorable_Level2420",
-      "artistUrl": "https://www.reddit.com/user/Adorable_Level2420",
-      "url": "https://www.reddit.com/r/ImaginaryCharacters/comments/1wdvxlu/a_touch_of_magicyou_decide_which_one/",
-      "image": "https://preview.redd.it/wpeww8qi3zoh1.jpeg?width=640&crop=smart&auto=webp&s=b211cfda247f366171eedd0bd0deeb988bb0223a",
-      "thumb": "https://preview.redd.it/wpeww8qi3zoh1.jpeg?width=640&crop=smart&auto=webp&s=b211cfda247f366171eedd0bd0deeb988bb0223a",
-      "value": 36,
-      "scoreLabel": "#15 top today in r/ImaginaryCharacters",
+      "title": "[OC] Mouse knight by bouboulonlon (me)",
+      "artist": "u/Bouboulonlon_art",
+      "artistUrl": "https://www.reddit.com/user/Bouboulonlon_art",
+      "url": "https://www.reddit.com/r/conceptart/comments/1wdxc79/oc_mouse_knight_by_bouboulonlon_me/",
+      "image": "https://preview.redd.it/gjh1e71bfzoh1.png?width=640&crop=smart&auto=webp&s=bc09c28c1ba3e43a8b91e8d5f3fffa7d020f76de",
+      "thumb": "https://preview.redd.it/gjh1e71bfzoh1.png?width=640&crop=smart&auto=webp&s=bc09c28c1ba3e43a8b91e8d5f3fffa7d020f76de",
+      "value": 81,
+      "scoreLabel": "#20 top today in r/conceptart",
       "nsfw": false,
-      "postedAt": "2026-09-11T23:14:23.000Z",
-      "context": "r/ImaginaryCharacters",
-      "heat": 72
+      "postedAt": "2026-09-12T00:15:36.000Z",
+      "context": "r/conceptart",
+      "heat": 80
     },
     {
       "id": "artstation:6vN5Nx",
@@ -431,7 +431,7 @@
       "postedAt": "2026-09-11T11:47:49.063Z",
       "nsfw": false,
       "context": "goddess of victory: nikke",
-      "heat": 77
+      "heat": 76
     },
     {
       "id": "pixiv:149529904",
@@ -450,20 +450,20 @@
       "heat": 32
     },
     {
-      "id": "reddit:1wdxc79",
+      "id": "reddit:1wdzhls",
       "source": "reddit",
-      "title": "[OC] Mouse knight by bouboulonlon (me)",
-      "artist": "u/Bouboulonlon_art",
-      "artistUrl": "https://www.reddit.com/user/Bouboulonlon_art",
-      "url": "https://www.reddit.com/r/conceptart/comments/1wdxc79/oc_mouse_knight_by_bouboulonlon_me/",
-      "image": "https://preview.redd.it/gjh1e71bfzoh1.png?width=640&crop=smart&auto=webp&s=bc09c28c1ba3e43a8b91e8d5f3fffa7d020f76de",
-      "thumb": "https://preview.redd.it/gjh1e71bfzoh1.png?width=640&crop=smart&auto=webp&s=bc09c28c1ba3e43a8b91e8d5f3fffa7d020f76de",
-      "value": 35,
-      "scoreLabel": "#16 top today in r/conceptart",
+      "title": "Aquarium Cats!! drawn by me",
+      "artist": "u/gray_sweatpants_",
+      "artistUrl": "https://www.reddit.com/user/gray_sweatpants_",
+      "url": "https://www.reddit.com/r/DigitalArt/comments/1wdzhls/aquarium_cats_drawn_by_me/",
+      "image": "https://preview.redd.it/llyet003xzoh1.jpeg?width=640&crop=smart&auto=webp&s=eafbc37483ab7c319f0be5b2b3dcf6005cca85e6",
+      "thumb": "https://preview.redd.it/llyet003xzoh1.jpeg?width=640&crop=smart&auto=webp&s=eafbc37483ab7c319f0be5b2b3dcf6005cca85e6",
+      "value": 74,
+      "scoreLabel": "#27 top today in r/DigitalArt",
       "nsfw": false,
-      "postedAt": "2026-09-12T00:15:36.000Z",
-      "context": "r/conceptart",
-      "heat": 71
+      "postedAt": "2026-09-12T01:55:01.000Z",
+      "context": "r/DigitalArt",
+      "heat": 75
     },
     {
       "id": "artstation:RqyO3A",
@@ -488,24 +488,24 @@
       "heat": 85
     },
     {
-      "id": "danbooru:12170494",
+      "id": "danbooru:12175370",
       "source": "danbooru",
-      "title": "exusiai (arknights)",
-      "artist": "suujiniku",
-      "artistUrl": "https://discord.com/channels/1547170478572052490/1547174318482391111/1547478622107861062",
-      "url": "https://danbooru.donmai.us/posts/12170494",
+      "title": "kurikoma komaru (aogiri koukou)",
+      "artist": "kkix25",
+      "artistUrl": "https://kkix25.fanbox.cc/posts/12586495",
+      "url": "https://danbooru.donmai.us/posts/12175370",
       "image": "",
       "thumb": "",
       "thumbFallbacks": [
-        "https://cdn.donmai.us/180x180/76/b8/76b8b4733ee4a6e6672a1038ba61abcf.jpg",
-        "https://cdn.donmai.us/original/76/b8/76b8b4733ee4a6e6672a1038ba61abcf.jpg"
+        "https://cdn.donmai.us/180x180/ff/52/ff52bcc40575248fa7a1bd5d8a11d311.jpg",
+        "https://cdn.donmai.us/original/ff/52/ff52bcc40575248fa7a1bd5d8a11d311.png"
       ],
-      "value": 274,
-      "scoreLabel": "score 274 · 249 favourites",
-      "postedAt": "2026-09-11T11:14:04.600Z",
+      "value": 255,
+      "scoreLabel": "score 255 · 243 favourites",
+      "postedAt": "2026-09-12T03:50:48.072Z",
       "nsfw": true,
-      "context": "arknights",
-      "heat": 69
+      "context": "aogiri koukou",
+      "heat": 70
     },
     {
       "id": "pixiv:149542894",
