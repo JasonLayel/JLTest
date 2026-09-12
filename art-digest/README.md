@@ -49,8 +49,11 @@ it stays a plain static page with no server, no build and no API keys.
 
 ### Subreddits
 
-Fetched in groups of six, so a name that is misspelled, private or banned is
-dropped and reported in the digest instead of costing the rest of the group.
+Fetched as one multireddit request per group of 13. A group that fails is
+halved and each half retried, so a name that is misspelled, private or banned
+is isolated in a handful of requests and reported in the digest — asking one
+subreddit at a time instead gets the run throttled, which looks identical to a
+dozen dead subreddits. The whole run is capped at 24 requests.
 
 | Group | Subreddits |
 | --- | --- |
@@ -99,7 +102,7 @@ differently from a home connection:
 | --- | --- |
 | Pixiv | works (all-ages ranking only) |
 | ArtStation | works |
-| Bluesky | works |
+| Bluesky | the public AppView answers `403` to GitHub's runners; set `BLUESKY_IDENTIFIER` and `BLUESKY_APP_PASSWORD` (an [app password](https://bsky.app/settings/app-passwords), not your account password) for a signed-in route |
 | Danbooru | works |
 | Reddit | the JSON API answers `403 Blocked`; the collector falls back to the Atom feed, which works but has no vote counts. Set `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` (a *script* app at <https://www.reddit.com/prefs/apps>) to get the real API and real upvote counts |
 | DeviantArt | `403` on every RSS host. Set `DEVIANTART_CLIENT_ID` / `DEVIANTART_CLIENT_SECRET` (register at <https://www.deviantart.com/developers/apps>) and the collector uses the official Daily Deviations API instead |
@@ -133,6 +136,7 @@ python3 -m http.server 8000     # then open /art-digest/
 | `ART_DIGEST_SOURCES` | all | Comma-separated source ids to run (`artstation,reddit,pixiv,deviantart,bluesky,danbooru`) |
 | `ART_DIGEST_NSFW` | `include` | `include`, `exclude` or `only` |
 | `PIXIV_SESSION` | unset | A Pixiv `PHPSESSID` cookie, which unlocks the R-18 daily ranking |
+| `BLUESKY_IDENTIFIER` / `BLUESKY_APP_PASSWORD` | unset | A handle and app password, used when the public AppView refuses the request |
 | `ART_DIGEST_PIXIV_PROXY` | `https://i.pixiv.re` | Pixiv blocks hotlinked thumbnails, so they're re-served through a mirror. Set to empty to drop Pixiv thumbnails instead |
 | `ART_DIGEST_OUT` | `art-digest/data` | Output directory |
 | `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` | unset | Optional. Reddit blocks datacenter IPs on the public JSON API; with these set the collector uses app-only OAuth instead |

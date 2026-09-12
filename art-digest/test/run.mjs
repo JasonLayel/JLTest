@@ -17,6 +17,7 @@ import {
   normalizeBluesky,
   normalizeDanbooru,
   applyNsfwPolicy,
+  harvestSubreddits,
   rankItems,
   resolveThumbnails,
   renderEmail,
@@ -405,6 +406,51 @@ test('danbooru: titles from character and series, credits the original source', 
   assert.equal(first.nsfw, true, 'explicit is adult');
   assert.equal(second.nsfw, false, 'general is not');
   assert.equal(second.artistUrl, 'https://danbooru.donmai.us/posts?tags=solo_artist', 'falls back to the artist tag');
+});
+
+/* ------------------------------------------------------- subreddit groups */
+
+const SUBS = Array.from({ length: 26 }, (_, i) => `sub${i}`);
+const fakeRun = (broken = [], log = []) => async (group) => {
+  log.push(group.join('+'));
+  const bad = group.find((sub) => broken.includes(sub));
+  if (bad) {
+    const err = new Error('HTTP 404 Not Found');
+    err.status = 404;
+    throw err;
+  }
+  return { items: group.map((sub) => ({ id: sub, context: `r/${sub}` })), fetched: group.length };
+};
+
+test('subreddits: one dead name is isolated by halving, not by asking one by one', async () => {
+  const log = [];
+  const result = await harvestSubreddits(SUBS, fakeRun(['sub19'], log), { pause: 0, backoff: 0 });
+  assert.deepEqual(result.dropped, ['r/sub19']);
+  assert.equal(result.items.length, 25, 'every other subreddit still lands');
+  assert.ok(result.requests <= 12, `isolated in ${result.requests} requests`);
+  assert.ok(!result.budgetSpent);
+});
+
+test('subreddits: a clean list costs one request per group', async () => {
+  const log = [];
+  const result = await harvestSubreddits(SUBS, fakeRun([], log), { pause: 0, backoff: 0 });
+  assert.equal(result.requests, 2, '26 subreddits in groups of 13');
+  assert.equal(result.items.length, 26);
+  assert.deepEqual(result.dropped, []);
+});
+
+test('subreddits: throttling is retried once, then reported, never unbounded', async () => {
+  let calls = 0;
+  const throttled = async () => {
+    calls++;
+    const err = new Error('HTTP 429 Too Many Requests');
+    err.status = 429;
+    throw err;
+  };
+  const result = await harvestSubreddits(SUBS, throttled, { pause: 0, backoff: 0, budget: 10 });
+  assert.equal(calls, 10, 'the request budget caps the damage');
+  assert.ok(result.budgetSpent);
+  assert.equal(result.dropped.length, 26, 'everything it could not reach is reported');
 });
 
 /* ------------------------------------------------------------ nsfw policy */

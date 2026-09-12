@@ -54,6 +54,10 @@ jobs:
           DEVIANTART_CLIENT_SECRET: ${{ secrets.DEVIANTART_CLIENT_SECRET }}
           # Pixiv only serves its R-18 ranking to a logged-in session.
           PIXIV_SESSION: ${{ secrets.PIXIV_SESSION }}
+          # Bluesky's public AppView refuses some datacenter traffic; an app
+          # password (not the account password) gets a signed-in route.
+          BLUESKY_IDENTIFIER: ${{ secrets.BLUESKY_IDENTIFIER }}
+          BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
         run: node art-digest/collect.mjs
 
       - name: Summarize the run

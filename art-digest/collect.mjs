@@ -95,14 +95,20 @@ async function get(url, { headers = {}, as = 'json', attempts = 3 } = {}) {
         signal: AbortSignal.timeout(25_000),
         redirect: 'follow',
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+      if (!res.ok) {
+        const error = new Error(`HTTP ${res.status} ${res.statusText}`);
+        error.status = res.status;
+        throw error;
+      }
       return as === 'json' ? await res.json() : await res.text();
     } catch (err) {
       lastError = err;
       if (attempt < attempts) await sleep(1500 * attempt);
     }
   }
-  throw new Error(`${new URL(url).host}: ${lastError?.message || 'request failed'}`);
+  const failure = new Error(`${new URL(url).host}: ${lastError?.message || 'request failed'}`);
+  failure.status = lastError?.status;
+  throw failure;
 }
 
 /** First endpoint in the list that answers wins. */
@@ -287,24 +293,84 @@ async function redditToken() {
   }
 }
 
-/** Subreddits are asked for in small groups, so one bad name costs only its group. */
-const REDDIT_GROUP_SIZE = 6;
+/**
+ * Subreddits are asked for in one multireddit request per group. A group that
+ * fails is halved and each half retried, so a name that is misspelled, private
+ * or banned is isolated in a handful of requests — rather than one request per
+ * subreddit, which Reddit throttles hard enough to look like 14 dead subs.
+ */
+export const REDDIT_DEFAULTS = { groupSize: 13, budget: 24, pause: 1500, backoff: 5000 };
 
-const groupsOf = (list, size) =>
-  Array.from({ length: Math.ceil(list.length / size) }, (_, i) => list.slice(i * size, i * size + size));
+export async function harvestSubreddits(subs, run, options = {}) {
+  const { groupSize, budget, pause, backoff } = { ...REDDIT_DEFAULTS, ...options };
+  const items = [];
+  const dropped = [];
+  const errors = [];
+  let fetched = 0;
+  let requests = 0;
+  let spent = false;
+
+  const attempt = async (group) => {
+    if (requests >= budget) {
+      spent = true;
+      return false;
+    }
+    requests++;
+    try {
+      const result = await run(group);
+      items.push(...result.items);
+      fetched += result.fetched;
+      return true;
+    } catch (err) {
+      errors.push(`${group.length === 1 ? `r/${group[0]}` : `${group.length} subs`}: ${err.message}`);
+      // 404 is the one answer that means the subreddit is really gone.
+      if (group.length === 1 && err.status === 404) {
+        dropped.push(`r/${group[0]}`);
+        return null; // handled: do not retry
+      }
+      return false;
+    }
+  };
+
+  const harvest = async (group) => {
+    if (spent) {
+      dropped.push(...group.map((sub) => `r/${sub}`));
+      return;
+    }
+    const first = await attempt(group);
+    if (first === true || first === null) return;
+
+    await sleep(backoff);
+    if (group.length === 1) {
+      // One retry after a long pause separates a throttled request from a
+      // subreddit that is actually unreachable.
+      if ((await attempt(group)) !== true) dropped.push(`r/${group[0]}`);
+      return;
+    }
+    const mid = Math.ceil(group.length / 2);
+    await harvest(group.slice(0, mid));
+    await sleep(pause);
+    await harvest(group.slice(mid));
+  };
+
+  for (let i = 0; i < subs.length; i += groupSize) {
+    await harvest(subs.slice(i, i + groupSize));
+    await sleep(pause);
+  }
+
+  return { items, fetched, dropped, errors, requests, budgetSpent: spent };
+}
 
 async function collectReddit(cfg) {
   const token = await redditToken();
 
   // Reddit turns away unauthenticated datacenter traffic, and not always the
   // same way, so try the richest route first and fall back to the Atom feed.
-  // Each route takes a group of subreddits as one multireddit request: far
-  // less likely to be rate-limited than one request per subreddit.
   const routes = [
     token && {
       name: 'oauth',
       run: (subs) =>
-        get(`https://oauth.reddit.com/r/${subs.join('+')}/top.json?t=day&limit=50&raw_json=1`, {
+        get(`https://oauth.reddit.com/r/${subs.join('+')}/top.json?t=day&limit=100&raw_json=1`, {
           headers: { Authorization: `Bearer ${token}` },
         }).then((payload) => ({
           items: normalizeReddit(payload),
@@ -314,7 +380,7 @@ async function collectReddit(cfg) {
     {
       name: 'public json',
       run: (subs) =>
-        get(`https://www.reddit.com/r/${subs.join('+')}/top.json?t=day&limit=50&raw_json=1`, {
+        get(`https://www.reddit.com/r/${subs.join('+')}/top.json?t=day&limit=100&raw_json=1`, {
           headers: { 'User-Agent': BROWSER_UA },
           attempts: 2,
         }).then((payload) => ({
@@ -325,7 +391,7 @@ async function collectReddit(cfg) {
     {
       name: 'atom feed',
       run: (subs) =>
-        get(`https://www.reddit.com/r/${subs.join('+')}/top.rss?t=day&limit=50`, {
+        get(`https://www.reddit.com/r/${subs.join('+')}/top.rss?t=day&limit=100`, {
           as: 'text',
           headers: { 'User-Agent': BROWSER_UA, Accept: 'application/atom+xml,text/xml' },
           attempts: 2,
@@ -336,54 +402,34 @@ async function collectReddit(cfg) {
     },
   ].filter(Boolean);
 
-  const items = [];
-  const dropped = [];
-  const errors = [];
-  let fetched = 0;
+  // Settle on a route with the first group, then reuse it for the rest.
   let working = null;
-
-  for (const group of groupsOf(cfg.subs, REDDIT_GROUP_SIZE)) {
-    // Once a route answers, reuse it instead of re-probing for every group.
-    let ok = false;
-    for (const route of working ? [working] : routes) {
+  const run = async (subs) => {
+    if (working) return working.run(subs);
+    let lastError;
+    for (const route of routes) {
       try {
-        const result = await route.run(group);
-        items.push(...result.items);
-        fetched += result.fetched;
+        const result = await route.run(subs);
         working = route;
-        ok = true;
-        break;
+        return result;
       } catch (err) {
-        errors.push(`${route.name}: ${err.message}`);
+        lastError = err;
       }
     }
+    throw lastError;
+  };
 
-    if (!ok) {
-      // A group that fails outright usually holds one subreddit that is
-      // misspelled, private or banned — find it rather than lose the rest.
-      const route = working || routes.at(-1);
-      for (const sub of group) {
-        try {
-          const result = await route.run([sub]);
-          items.push(...result.items);
-          fetched += result.fetched;
-          working = route;
-        } catch {
-          dropped.push(`r/${sub}`);
-        }
-        await sleep(600);
-      }
-    }
-    await sleep(600); // stay well inside Reddit's rate limit
-  }
+  const harvest = await harvestSubreddits(cfg.subs, run);
+  if (!harvest.items.length) throw new Error(harvest.errors.slice(0, 3).join(' | ') || 'no posts returned');
 
-  if (!items.length) throw new Error(errors.slice(0, 3).join(' | ') || 'no posts returned');
   return {
-    items,
-    fetched,
+    items: harvest.items,
+    fetched: harvest.fetched,
     note: [
       working && working.name !== 'oauth' ? `via ${working.name}` : '',
-      dropped.length ? `dropped ${dropped.join(', ')}` : '',
+      `${harvest.requests} requests`,
+      harvest.dropped.length ? `dropped ${harvest.dropped.join(', ')}` : '',
+      harvest.budgetSpent ? 'request budget spent' : '',
     ].filter(Boolean).join(' · '),
   };
 }
@@ -684,28 +730,72 @@ export function normalizeBluesky(payload, tag = '') {
     .filter((item) => item.url && item.thumb);
 }
 
+async function blueskyToken() {
+  const identifier = process.env.BLUESKY_IDENTIFIER;
+  const password = process.env.BLUESKY_APP_PASSWORD;
+  if (!identifier || !password) return null;
+  try {
+    const res = await fetch('https://bsky.social/xrpc/com.atproto.server.createSession', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'User-Agent': BOT_UA },
+      body: JSON.stringify({ identifier, password }),
+      signal: AbortSignal.timeout(25_000),
+    });
+    if (!res.ok) return null;
+    return (await res.json()).accessJwt || null;
+  } catch {
+    return null;
+  }
+}
+
 async function collectBluesky(cfg) {
+  const token = await blueskyToken();
+  const search = (host, headers) => (tag) =>
+    get(
+      `${host}/xrpc/app.bsky.feed.searchPosts?q=${encodeURIComponent(`#${tag}`)}&sort=top&limit=25`,
+      { headers: { Accept: 'application/json', ...headers }, attempts: 2 }
+    );
+
+  // The public AppView answers 403 to some datacenter traffic, so fall back to
+  // a browser agent and then to an authenticated session when one is configured.
+  const routes = [
+    { name: 'public', run: search('https://public.api.bsky.app', {}) },
+    { name: 'public (browser agent)', run: search('https://public.api.bsky.app', { 'User-Agent': BROWSER_UA }) },
+    token && {
+      name: 'signed in',
+      run: search('https://bsky.social', { Authorization: `Bearer ${token}` }),
+    },
+  ].filter(Boolean);
+
   const items = [];
-  let fetched = 0;
   const failed = [];
+  let fetched = 0;
+  let working = null;
 
   for (const tag of cfg.tags) {
-    try {
-      const payload = await get(
-        'https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts' +
-          `?q=${encodeURIComponent(`#${tag}`)}&sort=top&limit=25`,
-        { headers: { Accept: 'application/json' } }
-      );
-      fetched += (payload?.posts ?? []).length;
-      items.push(...normalizeBluesky(payload, tag));
-    } catch (err) {
-      failed.push(`#${tag} (${err.message})`);
+    for (const route of working ? [working] : routes) {
+      try {
+        const payload = await route.run(tag);
+        fetched += (payload?.posts ?? []).length;
+        items.push(...normalizeBluesky(payload, tag));
+        working = route;
+        break;
+      } catch (err) {
+        if (route === routes.at(-1)) failed.push(`#${tag} (${err.message})`);
+      }
     }
     await sleep(400);
   }
 
-  if (!items.length && failed.length) throw new Error(failed.join('; '));
-  return { items, fetched, note: failed.length ? `skipped ${failed.length} tag(s)` : '' };
+  if (!items.length) throw new Error(failed.join('; ') || 'no posts returned');
+  return {
+    items,
+    fetched,
+    note: [
+      working && working.name !== 'public' ? `via ${working.name}` : '',
+      failed.length ? `skipped ${failed.length} tag(s)` : '',
+    ].filter(Boolean).join(' · '),
+  };
 }
 
 /**
