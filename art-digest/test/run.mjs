@@ -425,10 +425,30 @@ const fakeRun = (broken = [], log = []) => async (group) => {
 test('subreddits: one dead name is isolated by halving, not by asking one by one', async () => {
   const log = [];
   const result = await harvestSubreddits(SUBS, fakeRun(['sub19'], log), { pause: 0, backoff: 0 });
-  assert.deepEqual(result.dropped, ['r/sub19']);
+  assert.deepEqual(result.dropped, ['r/sub19 (not found)']);
   assert.equal(result.items.length, 25, 'every other subreddit still lands');
   assert.ok(result.requests <= 12, `isolated in ${result.requests} requests`);
   assert.ok(!result.budgetSpent);
+});
+
+test('subreddits: a dead name is separated from a throttled one', async () => {
+  const run = async (group) => {
+    if (group.includes('sub3')) {
+      const err = new Error('HTTP 404 Not Found');
+      err.status = 404;
+      throw err;
+    }
+    if (group.includes('sub7')) {
+      const err = new Error('HTTP 429 Too Many Requests');
+      err.status = 429;
+      throw err;
+    }
+    return { items: group.map((sub) => ({ id: sub })), fetched: group.length };
+  };
+  const result = await harvestSubreddits(SUBS.slice(0, 13), run, { pause: 0, backoff: 0, groupSize: 13 });
+  assert.ok(result.dropped.includes('r/sub3 (not found)'), 'the 404 is named as gone');
+  assert.ok(result.dropped.includes('r/sub7 (unreachable (429))'), 'the throttled one is named as such');
+  assert.equal(result.items.length, 11, 'the other eleven still land');
 });
 
 test('subreddits: a clean list costs one request per group', async () => {
@@ -451,6 +471,10 @@ test('subreddits: throttling is retried once, then reported, never unbounded', a
   assert.equal(calls, 10, 'the request budget caps the damage');
   assert.ok(result.budgetSpent);
   assert.equal(result.dropped.length, 26, 'everything it could not reach is reported');
+  assert.ok(
+    result.dropped.every((d) => /budget spent|unreachable \(429\)/.test(d)),
+    'and none of it is blamed on a bad name'
+  );
 });
 
 /* ------------------------------------------------------------ nsfw policy */

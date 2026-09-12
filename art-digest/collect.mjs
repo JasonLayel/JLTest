@@ -299,7 +299,7 @@ async function redditToken() {
  * or banned is isolated in a handful of requests — rather than one request per
  * subreddit, which Reddit throttles hard enough to look like 14 dead subs.
  */
-export const REDDIT_DEFAULTS = { groupSize: 13, budget: 24, pause: 1500, backoff: 5000 };
+export const REDDIT_DEFAULTS = { groupSize: 13, budget: 40, pause: 1500, backoff: 5000 };
 
 export async function harvestSubreddits(subs, run, options = {}) {
   const { groupSize, budget, pause, backoff } = { ...REDDIT_DEFAULTS, ...options };
@@ -310,43 +310,56 @@ export async function harvestSubreddits(subs, run, options = {}) {
   let requests = 0;
   let spent = false;
 
+  // Every drop says why, so a run distinguishes a name worth deleting from the
+  // list from one that merely lost a race with Reddit's rate limiter.
+  const drop = (subs, reason) => dropped.push(...subs.map((sub) => `r/${sub} (${reason})`));
+
   const attempt = async (group) => {
     if (requests >= budget) {
       spent = true;
-      return false;
+      return { ok: false, spent: true };
     }
     requests++;
     try {
       const result = await run(group);
       items.push(...result.items);
       fetched += result.fetched;
-      return true;
+      return { ok: true };
     } catch (err) {
       errors.push(`${group.length === 1 ? `r/${group[0]}` : `${group.length} subs`}: ${err.message}`);
-      // 404 is the one answer that means the subreddit is really gone.
-      if (group.length === 1 && err.status === 404) {
-        dropped.push(`r/${group[0]}`);
-        return null; // handled: do not retry
-      }
-      return false;
+      return { ok: false, status: err.status };
     }
   };
 
   const harvest = async (group) => {
     if (spent) {
-      dropped.push(...group.map((sub) => `r/${sub}`));
+      drop(group, 'budget spent');
       return;
     }
     const first = await attempt(group);
-    if (first === true || first === null) return;
-
-    await sleep(backoff);
-    if (group.length === 1) {
-      // One retry after a long pause separates a throttled request from a
-      // subreddit that is actually unreachable.
-      if ((await attempt(group)) !== true) dropped.push(`r/${group[0]}`);
+    if (first.ok) return;
+    if (first.spent) {
+      drop(group, 'budget spent');
       return;
     }
+
+    if (group.length === 1) {
+      // 404 is the one answer that means the subreddit is really gone; anything
+      // else gets one retry after a pause, which separates a rate-limited
+      // request from a subreddit that is genuinely unreachable.
+      if (first.status === 404) {
+        drop(group, 'not found');
+        return;
+      }
+      await sleep(backoff);
+      const retry = await attempt(group);
+      if (!retry.ok) drop(group, retry.spent ? 'budget spent' : `unreachable${retry.status ? ` (${retry.status})` : ''}`);
+      return;
+    }
+
+    // A group only fails because something inside it does: halve it and look.
+    // No backoff after a 404 — nothing is being throttled, so splitting is free.
+    if (first.status !== 404) await sleep(backoff);
     const mid = Math.ceil(group.length / 2);
     await harvest(group.slice(0, mid));
     await sleep(pause);
