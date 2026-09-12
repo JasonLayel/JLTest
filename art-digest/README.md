@@ -63,13 +63,18 @@ differently:
   group is halved to find it.
 
 Every drop is reported in the digest with its reason, and the run is capped at
-20 requests and four minutes.
+24 requests and four minutes.
+
+r/battlemaps is not in the list: it answers `429` to every anonymous feed
+request, and isolating it costs enough requests to starve the groups behind it.
+Reddit OAuth credentials may reach it — add it back with
+`ART_DIGEST_EXTRA_SUBS=battlemaps` if you set them.
 
 | Group | Subreddits |
 | --- | --- |
 | Fine art | r/Art, r/DigitalArt, r/painting, r/ImaginaryBestOf |
 | Concept art | r/ConceptArt, r/SpecArt, r/SciFiArt, r/FantasyArt, r/ImaginaryTechnology, r/ImaginaryArchitecture |
-| Tabletop & character art | r/characterdrawing, r/DnD, r/DungeonsAndDragons, r/battlemaps, r/Pathfinder_RPG, r/Warhammer40k |
+| Tabletop & character art | r/characterdrawing, r/DnD, r/DungeonsAndDragons, r/Pathfinder_RPG, r/Warhammer40k |
 | Fandom | r/FanArt, r/ImaginaryCharacters, r/ImaginaryMonsters, r/ImaginaryWesteros, r/AnimeSketch, r/awwnime |
 | Worlds | r/ImaginaryLandscapes, r/ImaginaryCityscapes, r/ImaginaryMythology, r/ImaginaryWildlands |
 

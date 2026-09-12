@@ -38,7 +38,11 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 export const DEFAULT_SUBS = {
   'fine art': ['Art', 'DigitalArt', 'painting', 'ImaginaryBestOf'],
   'concept art': ['ConceptArt', 'SpecArt', 'SciFiArt', 'FantasyArt', 'ImaginaryTechnology', 'ImaginaryArchitecture'],
-  'tabletop & character art': ['characterdrawing', 'DnD', 'DungeonsAndDragons', 'battlemaps', 'Pathfinder_RPG', 'Warhammer40k'],
+  // r/battlemaps is deliberately absent: it answers 429 to anonymous feed
+  // requests every time, and hunting for it costs enough requests to starve
+  // the groups behind it. Reddit OAuth credentials may reach it — add it back
+  // with ART_DIGEST_EXTRA_SUBS if you set them.
+  'tabletop & character art': ['characterdrawing', 'DnD', 'DungeonsAndDragons', 'Pathfinder_RPG', 'Warhammer40k'],
   fandom: ['FanArt', 'ImaginaryCharacters', 'ImaginaryMonsters', 'ImaginaryWesteros', 'AnimeSketch', 'awwnime'],
   worlds: ['ImaginaryLandscapes', 'ImaginaryCityscapes', 'ImaginaryMythology', 'ImaginaryWildlands'],
 };
