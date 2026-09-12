@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-12T18:35:48.910Z",
+  "generatedAt": "2026-09-12T18:40:05.467Z",
   "windowHours": 48,
-  "totalCollected": 247,
+  "totalCollected": 252,
   "nsfwPolicy": "include",
   "nsfwCount": 7,
   "sourceLabels": {
@@ -29,9 +29,9 @@
       "label": "Reddit",
       "home": "https://www.reddit.com",
       "status": "ok",
-      "fetched": 129,
-      "kept": 97,
-      "note": "via atom feed · 24 requests · dropped r/Pathfinder_RPG, r/Warhammer40k, r/FanArt, r/ImaginaryCharacters, r/ImaginaryWesteros, r/AnimeSketch, r/awwnime, r/ImaginaryLandscapes, r/ImaginaryCityscapes, r/ImaginaryMythology, r/ImaginaryWildlands · request budget spent",
+      "fetched": 134,
+      "kept": 102,
+      "note": "via atom feed · 30 requests · dropped r/Pathfinder_RPG (unreachable (429)), r/Warhammer40k (unreachable (429)), r/FanArt (unreachable (429)), r/ImaginaryCharacters (unreachable (429)), r/ImaginaryWesteros (unreachable (429)), r/AnimeSketch (unreachable (429)), r/awwnime (unreachable (429)), r/ImaginaryLandscapes (unreachable (429))",
       "nsfw": 0,
       "error": null
     },
@@ -204,8 +204,8 @@
         "https://cdn.donmai.us/180x180/99/30/9930c593f7f08867eb1313cb44baf7e8.jpg",
         "https://cdn.donmai.us/original/99/30/9930c593f7f08867eb1313cb44baf7e8.jpg"
       ],
-      "value": 366,
-      "scoreLabel": "score 366 · 344 favourites",
+      "value": 367,
+      "scoreLabel": "score 367 · 345 favourites",
       "postedAt": "2026-09-11T21:32:34.255Z",
       "nsfw": true,
       "context": "sono bisque doll wa koi wo suru",
@@ -500,8 +500,8 @@
         "https://cdn.donmai.us/180x180/ff/52/ff52bcc40575248fa7a1bd5d8a11d311.jpg",
         "https://cdn.donmai.us/original/ff/52/ff52bcc40575248fa7a1bd5d8a11d311.png"
       ],
-      "value": 255,
-      "scoreLabel": "score 255 · 243 favourites",
+      "value": 256,
+      "scoreLabel": "score 256 · 243 favourites",
       "postedAt": "2026-09-12T03:50:48.072Z",
       "nsfw": true,
       "context": "aogiri koukou",
