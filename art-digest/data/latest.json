@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-12T18:43:03.250Z",
+  "generatedAt": "2026-09-12T18:48:10.026Z",
   "windowHours": 48,
-  "totalCollected": 252,
+  "totalCollected": 306,
   "nsfwPolicy": "include",
   "nsfwCount": 7,
   "sourceLabels": {
@@ -29,9 +29,9 @@
       "label": "Reddit",
       "home": "https://www.reddit.com",
       "status": "ok",
-      "fetched": 134,
-      "kept": 102,
-      "note": "via atom feed · 30 requests · dropped r/Pathfinder_RPG (unreachable (429)), r/Warhammer40k (unreachable (429)), r/FanArt (unreachable (429)), r/ImaginaryCharacters (unreachable (429)), r/ImaginaryWesteros (unreachable (429)), r/AnimeSketch (unreachable (429)), r/awwnime (unreachable (429)), r/ImaginaryLandscapes (unreachable (429))",
+      "fetched": 168,
+      "kept": 156,
+      "note": "via atom feed · 5 requests · dropped r/ImaginaryArchitecture (unreachable (429)), r/characterdrawing (unreachable (429)), r/DnD (unreachable (429)), r/DungeonsAndDragons (unreachable (429)), r/battlemaps (unreachable (429)), r/Pathfinder_RPG (unreachable (429)), r/Warhammer40k (unreachable (429)), r/FanArt (unreachable (429)), r/ImaginaryCharacters (unreachable (429))",
       "nsfw": 0,
       "error": null
     },
@@ -162,12 +162,12 @@
       "url": "https://www.reddit.com/r/painting/comments/1weg9qs/paintings_from_my_last_show/",
       "image": "https://preview.redd.it/hej1a3di34ph1.jpeg?width=640&crop=smart&auto=webp&s=600273de682ebb4e75c7a64b811d4022984b2926",
       "thumb": "https://preview.redd.it/hej1a3di34ph1.jpeg?width=640&crop=smart&auto=webp&s=600273de682ebb4e75c7a64b811d4022984b2926",
-      "value": 92,
-      "scoreLabel": "#9 top today in r/painting",
+      "value": 94,
+      "scoreLabel": "#7 top today in r/painting",
       "nsfw": false,
       "postedAt": "2026-09-12T15:58:09.000Z",
       "context": "r/painting",
-      "heat": 93
+      "heat": 94
     },
     {
       "id": "artstation:QxXkml",
@@ -204,12 +204,12 @@
         "https://cdn.donmai.us/180x180/99/30/9930c593f7f08867eb1313cb44baf7e8.jpg",
         "https://cdn.donmai.us/original/99/30/9930c593f7f08867eb1313cb44baf7e8.jpg"
       ],
-      "value": 368,
-      "scoreLabel": "score 368 · 346 favourites",
+      "value": 369,
+      "scoreLabel": "score 369 · 347 favourites",
       "postedAt": "2026-09-11T21:32:34.255Z",
       "nsfw": true,
       "context": "sono bisque doll wa koi wo suru",
-      "heat": 91
+      "heat": 92
     },
     {
       "id": "pixiv:149538486",
@@ -228,19 +228,19 @@
       "heat": 42
     },
     {
-      "id": "reddit:1we1ilc",
+      "id": "reddit:1wefjbp",
       "source": "reddit",
-      "title": "Dungeon Meowster",
-      "artist": "u/LegsIRL",
-      "artistUrl": "https://www.reddit.com/user/LegsIRL",
-      "url": "https://www.reddit.com/r/DungeonsAndDragons/comments/1we1ilc/dungeon_meowster/",
-      "image": "https://preview.redd.it/hgmpkp4oe0ph1.jpeg?width=640&crop=smart&auto=webp&s=0430008b7e3a8977a41f952bc849b28bc6f93529",
-      "thumb": "https://preview.redd.it/hgmpkp4oe0ph1.jpeg?width=640&crop=smart&auto=webp&s=0430008b7e3a8977a41f952bc849b28bc6f93529",
-      "value": 86,
-      "scoreLabel": "#15 top today in r/DungeonsAndDragons",
+      "title": "Various Forms 다양한 형태 by 김경환(Kyounghwan Kim) tahraart",
+      "artist": "u/snoopmask10",
+      "artistUrl": "https://www.reddit.com/user/snoopmask10",
+      "url": "https://www.reddit.com/r/ImaginaryTechnology/comments/1wefjbp/various_forms_다양한_형태_by_김경환kyounghwan_kim/",
+      "image": "https://preview.redd.it/z8y3h9bzx3ph1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=44e31c0ea4dcfa04ab22e5ca7f629be205c4d0e8",
+      "thumb": "https://preview.redd.it/z8y3h9bzx3ph1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=44e31c0ea4dcfa04ab22e5ca7f629be205c4d0e8",
+      "value": 83,
+      "scoreLabel": "#18 top today in r/ImaginaryTechnology",
       "nsfw": false,
-      "postedAt": "2026-09-12T03:33:35.000Z",
-      "context": "r/DungeonsAndDragons",
+      "postedAt": "2026-09-12T15:27:50.000Z",
+      "context": "r/ImaginaryTechnology",
       "heat": 85
     },
     {
@@ -278,8 +278,8 @@
         "https://cdn.donmai.us/180x180/5d/d5/5dd5b8bd87aea92bd35a1ad221231b49.jpg",
         "https://cdn.donmai.us/original/5d/d5/5dd5b8bd87aea92bd35a1ad221231b49.mp4"
       ],
-      "value": 318,
-      "scoreLabel": "score 318 · 309 favourites",
+      "value": 319,
+      "scoreLabel": "score 319 · 310 favourites",
       "postedAt": "2026-09-11T22:29:19.636Z",
       "nsfw": true,
       "context": "zenless zone zero",
@@ -302,20 +302,20 @@
       "heat": 37
     },
     {
-      "id": "reddit:1wefjbp",
+      "id": "reddit:1wdxc79",
       "source": "reddit",
-      "title": "Various Forms 다양한 형태 by 김경환(Kyounghwan Kim) tahraart",
-      "artist": "u/snoopmask10",
-      "artistUrl": "https://www.reddit.com/user/snoopmask10",
-      "url": "https://www.reddit.com/r/ImaginaryTechnology/comments/1wefjbp/various_forms_다양한_형태_by_김경환kyounghwan_kim/",
-      "image": "https://preview.redd.it/z8y3h9bzx3ph1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=44e31c0ea4dcfa04ab22e5ca7f629be205c4d0e8",
-      "thumb": "https://preview.redd.it/z8y3h9bzx3ph1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=44e31c0ea4dcfa04ab22e5ca7f629be205c4d0e8",
-      "value": 79,
-      "scoreLabel": "#22 top today in r/ImaginaryTechnology",
+      "title": "[OC] Mouse knight by bouboulonlon (me)",
+      "artist": "u/Bouboulonlon_art",
+      "artistUrl": "https://www.reddit.com/user/Bouboulonlon_art",
+      "url": "https://www.reddit.com/r/conceptart/comments/1wdxc79/oc_mouse_knight_by_bouboulonlon_me/",
+      "image": "https://preview.redd.it/gjh1e71bfzoh1.png?width=640&crop=smart&auto=webp&s=bc09c28c1ba3e43a8b91e8d5f3fffa7d020f76de",
+      "thumb": "https://preview.redd.it/gjh1e71bfzoh1.png?width=640&crop=smart&auto=webp&s=bc09c28c1ba3e43a8b91e8d5f3fffa7d020f76de",
+      "value": 85,
+      "scoreLabel": "#16 top today in r/conceptart",
       "nsfw": false,
-      "postedAt": "2026-09-12T15:27:50.000Z",
-      "context": "r/ImaginaryTechnology",
-      "heat": 82
+      "postedAt": "2026-09-12T00:15:36.000Z",
+      "context": "r/conceptart",
+      "heat": 83
     },
     {
       "id": "artstation:wOJW1X",
@@ -376,20 +376,20 @@
       "heat": 33
     },
     {
-      "id": "reddit:1wdxc79",
+      "id": "reddit:1wdzhls",
       "source": "reddit",
-      "title": "[OC] Mouse knight by bouboulonlon (me)",
-      "artist": "u/Bouboulonlon_art",
-      "artistUrl": "https://www.reddit.com/user/Bouboulonlon_art",
-      "url": "https://www.reddit.com/r/conceptart/comments/1wdxc79/oc_mouse_knight_by_bouboulonlon_me/",
-      "image": "https://preview.redd.it/gjh1e71bfzoh1.png?width=640&crop=smart&auto=webp&s=bc09c28c1ba3e43a8b91e8d5f3fffa7d020f76de",
-      "thumb": "https://preview.redd.it/gjh1e71bfzoh1.png?width=640&crop=smart&auto=webp&s=bc09c28c1ba3e43a8b91e8d5f3fffa7d020f76de",
-      "value": 81,
-      "scoreLabel": "#20 top today in r/conceptart",
+      "title": "Aquarium Cats!! drawn by me",
+      "artist": "u/gray_sweatpants_",
+      "artistUrl": "https://www.reddit.com/user/gray_sweatpants_",
+      "url": "https://www.reddit.com/r/DigitalArt/comments/1wdzhls/aquarium_cats_drawn_by_me/",
+      "image": "https://preview.redd.it/llyet003xzoh1.jpeg?width=640&crop=smart&auto=webp&s=eafbc37483ab7c319f0be5b2b3dcf6005cca85e6",
+      "thumb": "https://preview.redd.it/llyet003xzoh1.jpeg?width=640&crop=smart&auto=webp&s=eafbc37483ab7c319f0be5b2b3dcf6005cca85e6",
+      "value": 80,
+      "scoreLabel": "#21 top today in r/DigitalArt",
       "nsfw": false,
-      "postedAt": "2026-09-12T00:15:36.000Z",
-      "context": "r/conceptart",
-      "heat": 80
+      "postedAt": "2026-09-12T01:55:01.000Z",
+      "context": "r/DigitalArt",
+      "heat": 79
     },
     {
       "id": "artstation:6vN5Nx",
@@ -426,8 +426,8 @@
         "https://cdn.donmai.us/180x180/e8/05/e805023c8dd451be173aaab6aad516c7.jpg",
         "https://cdn.donmai.us/original/e8/05/e805023c8dd451be173aaab6aad516c7.png"
       ],
-      "value": 309,
-      "scoreLabel": "score 309 · 284 favourites",
+      "value": 310,
+      "scoreLabel": "score 310 · 285 favourites",
       "postedAt": "2026-09-11T11:47:49.063Z",
       "nsfw": false,
       "context": "goddess of victory: nikke",
@@ -450,20 +450,20 @@
       "heat": 32
     },
     {
-      "id": "reddit:1wdzhls",
+      "id": "reddit:1web5rp",
       "source": "reddit",
-      "title": "Aquarium Cats!! drawn by me",
-      "artist": "u/gray_sweatpants_",
-      "artistUrl": "https://www.reddit.com/user/gray_sweatpants_",
-      "url": "https://www.reddit.com/r/DigitalArt/comments/1wdzhls/aquarium_cats_drawn_by_me/",
-      "image": "https://preview.redd.it/llyet003xzoh1.jpeg?width=640&crop=smart&auto=webp&s=eafbc37483ab7c319f0be5b2b3dcf6005cca85e6",
-      "thumb": "https://preview.redd.it/llyet003xzoh1.jpeg?width=640&crop=smart&auto=webp&s=eafbc37483ab7c319f0be5b2b3dcf6005cca85e6",
-      "value": 74,
-      "scoreLabel": "#27 top today in r/DigitalArt",
+      "title": "Naerys' Makeover by Jota Saraiva",
+      "artist": "u/Pop_Budget",
+      "artistUrl": "https://www.reddit.com/user/Pop_Budget",
+      "url": "https://www.reddit.com/r/ImaginaryWesteros/comments/1web5rp/naerys_makeover_by_jota_saraiva/",
+      "image": "https://preview.redd.it/2mkxaush03ph1.jpeg?width=640&crop=smart&auto=webp&s=ba823ce6e5a39ac1205c34ac8a28fd0c23ea636a",
+      "thumb": "https://preview.redd.it/2mkxaush03ph1.jpeg?width=640&crop=smart&auto=webp&s=ba823ce6e5a39ac1205c34ac8a28fd0c23ea636a",
+      "value": 68,
+      "scoreLabel": "#1 top today in r/ImaginaryWesteros",
       "nsfw": false,
-      "postedAt": "2026-09-12T01:55:01.000Z",
-      "context": "r/DigitalArt",
-      "heat": 75
+      "postedAt": "2026-09-12T12:19:32.000Z",
+      "context": "r/ImaginaryWesteros",
+      "heat": 73
     },
     {
       "id": "artstation:RqyO3A",
@@ -500,8 +500,8 @@
         "https://cdn.donmai.us/180x180/ff/52/ff52bcc40575248fa7a1bd5d8a11d311.jpg",
         "https://cdn.donmai.us/original/ff/52/ff52bcc40575248fa7a1bd5d8a11d311.png"
       ],
-      "value": 257,
-      "scoreLabel": "score 257 · 244 favourites",
+      "value": 259,
+      "scoreLabel": "score 259 · 246 favourites",
       "postedAt": "2026-09-12T03:50:48.072Z",
       "nsfw": true,
       "context": "aogiri koukou",
