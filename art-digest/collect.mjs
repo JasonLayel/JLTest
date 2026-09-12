@@ -303,10 +303,10 @@ export const REDDIT_DEFAULTS = {
   // Reddit rate-limits by request count, so the whole list goes out in three
   // multireddit requests rather than many small ones.
   groupSize: 9,
-  budget: 20,
+  budget: 24,
   pause: 5000,
   backoff: 20_000,
-  retries: 2,
+  retries: 1,
   // A request budget bounds how many times Reddit is asked, but not how long
   // each one takes, so the search also runs against a clock.
   deadlineMs: 240_000,
@@ -347,10 +347,13 @@ export async function harvestSubreddits(subs, run, options = {}) {
   };
 
   /**
-   * A 404 means a name in this group is gone, so the group is halved to find
-   * it. Anything else — 429 above all — means Reddit is refusing traffic, and
-   * splitting would only send more of it: wait, then ask for the same group
-   * again.
+   * Two failures look alike and want opposite handling. A 404 means a name in
+   * the group is gone, so halve it and find the name. Anything else — 429
+   * above all — usually means Reddit is refusing traffic, where splitting
+   * would only send more of it, so wait and ask for the same group again.
+   * When the retry doesn't clear it either, one subreddit in the group is
+   * refusing rather than the whole of Reddit, and halving is the way to find
+   * that one too.
    */
   const harvest = async (group, attemptsLeft = retries) => {
     if (spent) {
@@ -379,6 +382,13 @@ export async function harvestSubreddits(subs, run, options = {}) {
     if (attemptsLeft > 0) {
       await sleep(backoff);
       await harvest(group, attemptsLeft - 1);
+      return;
+    }
+    if (group.length > 1) {
+      const mid = Math.ceil(group.length / 2);
+      await harvest(group.slice(0, mid));
+      await sleep(pause);
+      await harvest(group.slice(mid));
       return;
     }
     drop(group, `unreachable${result.status ? ` (${result.status})` : ''}`);

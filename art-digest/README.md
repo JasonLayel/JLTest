@@ -56,9 +56,11 @@ differently:
 
 - **404** — a name in the group is gone. The group is halved and each half
   retried until the bad name is alone, then dropped and reported.
-- **429 or worse** — Reddit is refusing traffic. The *same* group is retried
-  after a pause; splitting would only send more requests. Halving on a 429 is
-  what once made 14 live subreddits look dead.
+- **429 or worse** — usually Reddit refusing traffic, so the *same* group is
+  retried after a pause; splitting first would only send more requests, which
+  is what once made 14 live subreddits look dead. If the retry doesn't clear
+  it either, it is one subreddit refusing rather than all of Reddit, and the
+  group is halved to find it.
 
 Every drop is reported in the digest with its reason, and the run is capped at
 20 requests and four minutes.

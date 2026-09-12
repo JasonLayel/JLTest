@@ -431,14 +431,14 @@ test('subreddits: one dead name is isolated by halving, not by asking one by one
   assert.ok(!result.budgetSpent);
 });
 
-test('subreddits: rate limiting is waited out, never split into more requests', async () => {
-  // Reddit limits by request count, so a 429 must not fan out into halves.
+test('subreddits: passing rate limiting is waited out, not split into more requests', async () => {
+  // Reddit limits by request count, so a 429 must not immediately fan out.
   let calls = 0;
   const sizes = [];
   const run = async (group) => {
     sizes.push(group.length);
     calls++;
-    if (calls <= 2) {
+    if (calls === 1) {
       const err = new Error('HTTP 429 Too Many Requests');
       err.status = 429;
       throw err;
@@ -446,9 +446,29 @@ test('subreddits: rate limiting is waited out, never split into more requests', 
     return { items: group.map((sub) => ({ id: sub })), fetched: group.length };
   };
   const result = await harvestSubreddits(SUBS.slice(0, 9), run, { pause: 0, backoff: 0, groupSize: 9 });
-  assert.deepEqual(sizes, [9, 9, 9], 'the same group is retried, not halved');
+  assert.deepEqual(sizes, [9, 9], 'the same group is retried whole');
   assert.equal(result.items.length, 9, 'and it lands once the limit clears');
   assert.deepEqual(result.dropped, []);
+});
+
+test('subreddits: one subreddit that keeps refusing is found, not blamed on its group', async () => {
+  // A group that fails past its retry is usually one bad member, not all nine.
+  const sizes = [];
+  const run = async (group) => {
+    sizes.push(group.length);
+    if (group.includes('sub5')) {
+      const err = new Error('HTTP 429 Too Many Requests');
+      err.status = 429;
+      throw err;
+    }
+    return { items: group.map((sub) => ({ id: sub })), fetched: group.length };
+  };
+  const result = await harvestSubreddits(SUBS.slice(0, 9), run, { pause: 0, backoff: 0, groupSize: 9 });
+  assert.deepEqual(result.dropped, ['r/sub5 (unreachable (429))'], 'only the one that refuses is dropped');
+  assert.equal(result.items.length, 8, 'the other eight land');
+  assert.equal(sizes[0], 9, 'the group is tried whole first');
+  assert.equal(sizes[1], 9, 'and retried whole before any splitting');
+  assert.ok(sizes.slice(2).every((n) => n < 9), 'only then does it halve');
 });
 
 test('subreddits: a dead name is separated from a throttled one', async () => {
