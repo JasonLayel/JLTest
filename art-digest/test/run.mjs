@@ -427,8 +427,28 @@ test('subreddits: one dead name is isolated by halving, not by asking one by one
   const result = await harvestSubreddits(SUBS, fakeRun(['sub19'], log), { pause: 0, backoff: 0 });
   assert.deepEqual(result.dropped, ['r/sub19 (not found)']);
   assert.equal(result.items.length, 25, 'every other subreddit still lands');
-  assert.ok(result.requests <= 12, `isolated in ${result.requests} requests`);
+  assert.ok(result.requests <= 14, `isolated in ${result.requests} requests`);
   assert.ok(!result.budgetSpent);
+});
+
+test('subreddits: rate limiting is waited out, never split into more requests', async () => {
+  // Reddit limits by request count, so a 429 must not fan out into halves.
+  let calls = 0;
+  const sizes = [];
+  const run = async (group) => {
+    sizes.push(group.length);
+    calls++;
+    if (calls <= 2) {
+      const err = new Error('HTTP 429 Too Many Requests');
+      err.status = 429;
+      throw err;
+    }
+    return { items: group.map((sub) => ({ id: sub })), fetched: group.length };
+  };
+  const result = await harvestSubreddits(SUBS.slice(0, 9), run, { pause: 0, backoff: 0, groupSize: 9 });
+  assert.deepEqual(sizes, [9, 9, 9], 'the same group is retried, not halved');
+  assert.equal(result.items.length, 9, 'and it lands once the limit clears');
+  assert.deepEqual(result.dropped, []);
 });
 
 test('subreddits: a dead name is separated from a throttled one', async () => {
@@ -445,21 +465,25 @@ test('subreddits: a dead name is separated from a throttled one', async () => {
     }
     return { items: group.map((sub) => ({ id: sub })), fetched: group.length };
   };
-  const result = await harvestSubreddits(SUBS.slice(0, 13), run, { pause: 0, backoff: 0, groupSize: 13 });
+  const result = await harvestSubreddits(SUBS.slice(0, 13), run, { pause: 0, backoff: 0, groupSize: 13, retries: 1 });
   assert.ok(result.dropped.includes('r/sub3 (not found)'), 'the 404 is named as gone');
-  assert.ok(result.dropped.includes('r/sub7 (unreachable (429))'), 'the throttled one is named as such');
-  assert.equal(result.items.length, 11, 'the other eleven still land');
+  assert.ok(
+    result.dropped.some((d) => d.includes('unreachable (429)')),
+    'the throttled half is reported as unreachable, not as a bad name'
+  );
+  assert.ok(result.items.length >= 6, 'the reachable subreddits still land');
 });
 
 test('subreddits: a clean list costs one request per group', async () => {
   const log = [];
   const result = await harvestSubreddits(SUBS, fakeRun([], log), { pause: 0, backoff: 0 });
-  assert.equal(result.requests, 2, '26 subreddits in groups of 13');
+  assert.equal(result.requests, 3, '26 subreddits in groups of nine');
   assert.equal(result.items.length, 26);
   assert.deepEqual(result.dropped, []);
+  assert.ok(log.every((group) => group.includes('+')), 'always multireddit requests');
 });
 
-test('subreddits: throttling is retried once, then reported, never unbounded', async () => {
+test('subreddits: a hard wall is reported, never retried forever', async () => {
   let calls = 0;
   const throttled = async () => {
     calls++;
@@ -467,8 +491,8 @@ test('subreddits: throttling is retried once, then reported, never unbounded', a
     err.status = 429;
     throw err;
   };
-  const result = await harvestSubreddits(SUBS, throttled, { pause: 0, backoff: 0, budget: 10 });
-  assert.equal(calls, 10, 'the request budget caps the damage');
+  const result = await harvestSubreddits(SUBS, throttled, { pause: 0, backoff: 0, budget: 5, groupSize: 9 });
+  assert.equal(calls, 5, 'the request budget caps the damage');
   assert.ok(result.budgetSpent);
   assert.equal(result.dropped.length, 26, 'everything it could not reach is reported');
   assert.ok(

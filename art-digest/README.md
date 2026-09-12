@@ -49,11 +49,19 @@ it stays a plain static page with no server, no build and no API keys.
 
 ### Subreddits
 
-Fetched as one multireddit request per group of 13. A group that fails is
-halved and each half retried, so a name that is misspelled, private or banned
-is isolated in a handful of requests and reported in the digest — asking one
-subreddit at a time instead gets the run throttled, which looks identical to a
-dozen dead subreddits. The whole run is capped at 24 requests.
+Fetched as one multireddit request per group of nine — three requests for the
+whole list. Reddit rate-limits by request count, so the number of requests
+matters more than their size, and the two failure modes are handled
+differently:
+
+- **404** — a name in the group is gone. The group is halved and each half
+  retried until the bad name is alone, then dropped and reported.
+- **429 or worse** — Reddit is refusing traffic. The *same* group is retried
+  after a pause; splitting would only send more requests. Halving on a 429 is
+  what once made 14 live subreddits look dead.
+
+Every drop is reported in the digest with its reason, and the run is capped at
+20 requests and four minutes.
 
 | Group | Subreddits |
 | --- | --- |

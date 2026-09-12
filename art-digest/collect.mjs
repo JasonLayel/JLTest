@@ -300,17 +300,20 @@ async function redditToken() {
  * subreddit, which Reddit throttles hard enough to look like 14 dead subs.
  */
 export const REDDIT_DEFAULTS = {
-  groupSize: 13,
-  budget: 40,
-  pause: 1500,
-  backoff: 5000,
+  // Reddit rate-limits by request count, so the whole list goes out in three
+  // multireddit requests rather than many small ones.
+  groupSize: 9,
+  budget: 20,
+  pause: 5000,
+  backoff: 20_000,
+  retries: 2,
   // A request budget bounds how many times Reddit is asked, but not how long
   // each one takes, so the search also runs against a clock.
   deadlineMs: 240_000,
 };
 
 export async function harvestSubreddits(subs, run, options = {}) {
-  const { groupSize, budget, pause, backoff, deadlineMs, now = () => Date.now() } = {
+  const { groupSize, budget, pause, backoff, retries, deadlineMs, now = () => Date.now() } = {
     ...REDDIT_DEFAULTS,
     ...options,
   };
@@ -343,39 +346,42 @@ export async function harvestSubreddits(subs, run, options = {}) {
     }
   };
 
-  const harvest = async (group) => {
+  /**
+   * A 404 means a name in this group is gone, so the group is halved to find
+   * it. Anything else — 429 above all — means Reddit is refusing traffic, and
+   * splitting would only send more of it: wait, then ask for the same group
+   * again.
+   */
+  const harvest = async (group, attemptsLeft = retries) => {
     if (spent) {
       drop(group, 'budget spent');
       return;
     }
-    const first = await attempt(group);
-    if (first.ok) return;
-    if (first.spent) {
+    const result = await attempt(group);
+    if (result.ok) return;
+    if (result.spent) {
       drop(group, 'budget spent');
       return;
     }
 
-    if (group.length === 1) {
-      // 404 is the one answer that means the subreddit is really gone; anything
-      // else gets one retry after a pause, which separates a rate-limited
-      // request from a subreddit that is genuinely unreachable.
-      if (first.status === 404) {
+    if (result.status === 404) {
+      if (group.length === 1) {
         drop(group, 'not found');
         return;
       }
-      await sleep(backoff);
-      const retry = await attempt(group);
-      if (!retry.ok) drop(group, retry.spent ? 'budget spent' : `unreachable${retry.status ? ` (${retry.status})` : ''}`);
+      const mid = Math.ceil(group.length / 2);
+      await harvest(group.slice(0, mid));
+      await sleep(pause);
+      await harvest(group.slice(mid));
       return;
     }
 
-    // A group only fails because something inside it does: halve it and look.
-    // No backoff after a 404 — nothing is being throttled, so splitting is free.
-    if (first.status !== 404) await sleep(backoff);
-    const mid = Math.ceil(group.length / 2);
-    await harvest(group.slice(0, mid));
-    await sleep(pause);
-    await harvest(group.slice(mid));
+    if (attemptsLeft > 0) {
+      await sleep(backoff);
+      await harvest(group, attemptsLeft - 1);
+      return;
+    }
+    drop(group, `unreachable${result.status ? ` (${result.status})` : ''}`);
   };
 
   for (let i = 0; i < subs.length; i += groupSize) {
