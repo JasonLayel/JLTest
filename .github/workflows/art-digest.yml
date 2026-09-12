@@ -52,6 +52,8 @@ jobs:
           REDDIT_CLIENT_SECRET: ${{ secrets.REDDIT_CLIENT_SECRET }}
           DEVIANTART_CLIENT_ID: ${{ secrets.DEVIANTART_CLIENT_ID }}
           DEVIANTART_CLIENT_SECRET: ${{ secrets.DEVIANTART_CLIENT_SECRET }}
+          # Pixiv only serves its R-18 ranking to a logged-in session.
+          PIXIV_SESSION: ${{ secrets.PIXIV_SESSION }}
         run: node art-digest/collect.mjs
 
       - name: Summarize the run
@@ -61,7 +63,7 @@ jobs:
             const out = [];
             out.push(`## 🎨 ${d.items.length} picks · ${new Date(d.generatedAt).toUTCString()}`, "");
             for (const s of d.sources) {
-              out.push(`- ${s.status === "ok" ? "✅" : "❌"} **${s.label}** — ${s.status === "ok" ? `${s.kept} kept of ${s.fetched}${s.note ? ` (${s.note})` : ""}` : s.error}`);
+              out.push(`- ${s.status === "ok" ? "✅" : "❌"} **${s.label}** — ${s.status === "ok" ? `${s.kept} kept of ${s.fetched}${s.nsfw ? `, ${s.nsfw} marked 18+` : ""}${s.note ? ` (${s.note})` : ""}` : s.error}`);
               if (s.sample) out.push("", "  <details><summary>sample row</summary>", "", "  ```json", `  ${JSON.stringify(s.sample, null, 2).split("\n").join("\n  ")}`, "  ```", "  </details>", "");
             }
             out.push("", "| # | Source | Piece | Artist | Heat |", "|---|---|---|---|---|");

@@ -12,6 +12,9 @@
   --reddit: #ff4500;
   --pixiv: #3d9bff;
   --deviantart: #00e59b;
+  --bluesky: #a78bfa;
+  --danbooru: #ffc247;
+  --nsfw: #ff5d8f;
   --radius: 14px;
 }
 
@@ -250,6 +253,45 @@ body {
 @keyframes shimmer { to { background-position: -220% 0; } }
 
 .empty { text-align: center; color: var(--muted); padding: 48px 0; }
+
+/* ------------------------------------------------------------------ 18+ */
+
+.nsfw-tag {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: var(--nsfw);
+  color: #1a0b12;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.badge-nsfw {
+  margin-left: 6px;
+  color: var(--nsfw);
+}
+
+.is-blurred .thumb-link img { filter: blur(22px); transform: scale(1.06); }
+.is-blurred .nsfw-tag { display: none; }
+
+.reveal {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: rgba(14, 8, 18, 0.35);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+}
+
+.reveal:hover { background: rgba(14, 8, 18, 0.2); }
 
 /* ---------------------------------------------------------------- footer */
 

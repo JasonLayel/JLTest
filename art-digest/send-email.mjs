@@ -40,10 +40,13 @@ const encodeHeader = (text) =>
   /^[\x20-\x7e]*$/.test(text) ? text : `=?UTF-8?B?${b64(text)}?=`;
 
 export function plainTextDigest(digest) {
-  const lines = [`Today's best new digital art — ${digest.items.length} picks`, ''];
+  const lines = [
+    `Today's best new digital art — ${digest.items.length} picks${digest.nsfwCount ? ` (${digest.nsfwCount} marked 18+)` : ''}`,
+    '',
+  ];
   digest.items.forEach((item, i) => {
     lines.push(
-      `${i + 1}. ${item.title}${item.artist ? ` — ${item.artist}` : ''}`,
+      `${i + 1}. ${item.title}${item.artist ? ` — ${item.artist}` : ''}${item.nsfw ? ' [18+]' : ''}`,
       `   ${digest.sourceLabels?.[item.source] || item.source} · ${item.scoreLabel} · heat ${item.heat}`,
       `   ${item.url}`,
       ''

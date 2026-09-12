@@ -14,6 +14,8 @@
     reddit: { label: 'Reddit', color: 'var(--reddit)' },
     pixiv: { label: 'Pixiv', color: 'var(--pixiv)' },
     deviantart: { label: 'DeviantArt', color: 'var(--deviantart)' },
+    bluesky: { label: 'Bluesky', color: 'var(--bluesky)' },
+    danbooru: { label: 'Danbooru', color: 'var(--danbooru)' },
   };
 
   const $ = (id) => document.getElementById(id);
@@ -28,6 +30,8 @@
     digest: null,
     source: 'all',
     sort: 'heat',
+    rating: 'all', // all | sfw | nsfw
+    blur: false,
   };
 
   /* ------------------------------------------------------------- helpers */
@@ -37,6 +41,8 @@
       const saved = JSON.parse(localStorage.getItem(PREFS_KEY) || '{}');
       if (saved.source) state.source = saved.source;
       if (saved.sort === 'new' || saved.sort === 'heat') state.sort = saved.sort;
+      if (['all', 'sfw', 'nsfw'].includes(saved.rating)) state.rating = saved.rating;
+      state.blur = Boolean(saved.blur);
     } catch {
       /* private mode or blocked storage: defaults are fine */
     }
@@ -44,7 +50,10 @@
 
   function savePrefs() {
     try {
-      localStorage.setItem(PREFS_KEY, JSON.stringify({ source: state.source, sort: state.sort }));
+      localStorage.setItem(
+        PREFS_KEY,
+        JSON.stringify({ source: state.source, sort: state.sort, rating: state.rating, blur: state.blur })
+      );
     } catch {
       /* nothing to do — prefs are a convenience */
     }
@@ -68,13 +77,18 @@
 
   function render() {
     renderFilters();
+    renderRatingFilter();
     renderGrid();
     renderSources();
   }
 
   function visibleItems() {
     const items = (state.digest?.items || []).filter(
-      (item) => state.source === 'all' || item.source === state.source
+      (item) =>
+        (state.source === 'all' || item.source === state.source) &&
+        (state.rating === 'all' ||
+          (state.rating === 'sfw' && !item.nsfw) ||
+          (state.rating === 'nsfw' && item.nsfw))
     );
     if (state.sort === 'new') {
       return [...items].sort((a, b) => (Date.parse(b.postedAt) || 0) - (Date.parse(a.postedAt) || 0));
@@ -112,6 +126,51 @@
     Object.entries(SOURCE_META).forEach(([id, meta]) => {
       if (counts[id]) box.append(make(id, meta.label, counts[id], meta.color));
     });
+  }
+
+  function renderRatingFilter() {
+    const box = $('ratings');
+    box.textContent = '';
+    const items = state.digest?.items || [];
+    const adult = items.filter((item) => item.nsfw).length;
+    if (!adult) {
+      box.classList.add('hidden');
+      return;
+    }
+    box.classList.remove('hidden');
+
+    const chip = (rating, label, count) => {
+      const button = el('button', 'chip');
+      button.type = 'button';
+      button.append(label);
+      if (count != null) button.append(el('span', 'count', String(count)));
+      button.classList.toggle('is-on', state.rating === rating);
+      button.setAttribute('aria-pressed', String(state.rating === rating));
+      if (rating === 'nsfw') button.style.setProperty('--chip-color', 'var(--nsfw)');
+      button.addEventListener('click', () => {
+        state.rating = rating;
+        savePrefs();
+        render();
+      });
+      return button;
+    };
+
+    box.append(chip('all', 'Everything', items.length));
+    box.append(chip('sfw', 'SFW', items.length - adult));
+    box.append(chip('nsfw', '18+', adult));
+
+    const blur = el('button', 'chip');
+    blur.type = 'button';
+    blur.append(state.blur ? '👁 Blurred' : '👁 Unblurred');
+    blur.title = 'Blur 18+ thumbnails until you click them';
+    blur.classList.toggle('is-on', state.blur);
+    blur.setAttribute('aria-pressed', String(state.blur));
+    blur.addEventListener('click', () => {
+      state.blur = !state.blur;
+      savePrefs();
+      render();
+    });
+    box.append(blur);
   }
 
   function renderCard(item, index) {
@@ -152,10 +211,28 @@
 
     link.append(el('span', 'rank', `#${index + 1}`));
     if (Number.isFinite(item.heat)) link.append(el('span', 'heat', `🔥 ${item.heat}`));
+
+    if (item.nsfw) {
+      card.classList.add('is-nsfw');
+      link.append(el('span', 'nsfw-tag', '18+'));
+      if (state.blur) {
+        card.classList.add('is-blurred');
+        const reveal = el('button', 'reveal', '18+ · click to show');
+        reveal.type = 'button';
+        reveal.addEventListener('click', (event) => {
+          event.preventDefault();
+          card.classList.remove('is-blurred');
+          reveal.remove();
+        });
+        link.append(reveal);
+      }
+    }
     card.append(link);
 
     const body = el('div', 'card-body');
-    body.append(el('span', 'badge', item.context ? `${meta.label} · ${item.context}` : meta.label));
+    const badge = el('span', 'badge', item.context ? `${meta.label} · ${item.context}` : meta.label);
+    if (item.nsfw) badge.append(el('span', 'badge-nsfw', '18+'));
+    body.append(badge);
 
     const title = el('h2', 'card-title');
     const titleLink = el('a', null, item.title || 'Untitled');

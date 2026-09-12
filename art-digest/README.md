@@ -1,8 +1,9 @@
 # 🎨 Daily Digital Art Digest
 
 A small widget that collects the most popular **new** digital art from
-**ArtStation**, **Reddit**, **Pixiv** and **DeviantArt**, ranks it into one
-list, and sends it to you.
+**ArtStation**, **Reddit** (two dozen art subreddits), **Pixiv**,
+**DeviantArt**, **Bluesky** and **Danbooru**, ranks it into one list, and sends
+it to you.
 
 Live page: <https://petulent-princess-productivity.web.app/art-digest/>
 
@@ -40,9 +41,48 @@ it stays a plain static page with no server, no build and no API keys.
 | Source | Endpoint | Popularity signal |
 | --- | --- | --- |
 | ArtStation | community trending explore feed | position in the trending feed (the feed carries no like counts), or likes when the projects feed answers |
-| Reddit | `top?t=day` across r/Art, r/DigitalArt, r/ImaginaryLandscapes, r/ImaginaryCharacters, r/ConceptArt, r/SciFiArt, r/FantasyArt | upvotes, or feed position on the Atom fallback |
-| Pixiv | public daily illustration ranking | bookmarks |
+| Reddit | `top?t=day` across the subreddits below | upvotes, or feed position on the Atom fallback |
+| Pixiv | daily illustration ranking (plus the R-18 ranking with a session cookie) | bookmarks |
 | DeviantArt | Daily Deviations (API) or `boost:popular max_age:24h in:digitalart` RSS | favourites, or position in the feed |
+| Bluesky | `searchPosts` over the art hashtags, public AppView, no credentials | likes |
+| Danbooru | `order:score age:1d` | score and favourites |
+
+### Subreddits
+
+Fetched in groups of six, so a name that is misspelled, private or banned is
+dropped and reported in the digest instead of costing the rest of the group.
+
+| Group | Subreddits |
+| --- | --- |
+| Fine art | r/Art, r/DigitalArt, r/painting, r/ImaginaryBestOf |
+| Concept art | r/ConceptArt, r/SpecArt, r/SciFiArt, r/FantasyArt, r/ImaginaryTechnology, r/ImaginaryArchitecture |
+| Tabletop & character art | r/characterdrawing, r/DnD, r/DungeonsAndDragons, r/battlemaps, r/Pathfinder_RPG, r/Warhammer40k |
+| Fandom | r/FanArt, r/ImaginaryCharacters, r/ImaginaryMonsters, r/ImaginaryWesteros, r/AnimeSketch, r/awwnime |
+| Worlds | r/ImaginaryLandscapes, r/ImaginaryCityscapes, r/ImaginaryMythology, r/ImaginaryWildlands |
+
+`ART_DIGEST_EXTRA_SUBS=foo,bar` adds to this list; `ART_DIGEST_SUBS=foo,bar`
+replaces it entirely. Within Reddit's share of the digest, each subreddit gets a
+pick before any subreddit gets a second one, so r/Art can't crowd out the
+niche ones.
+
+### Adult work
+
+Adult work is **kept and flagged**, not filtered out: every item carries
+`nsfw: true|false`, the widget shows an `18+` badge with an
+Everything / SFW / 18+ filter and an optional blur, and the email labels each
+adult pick. `ART_DIGEST_NSFW=exclude` drops them instead; `only` keeps nothing
+else.
+
+What each source actually returns:
+
+| Source | Adult work |
+| --- | --- |
+| Reddit | `over_18` posts included and flagged. On the Atom fallback the flag comes from the feed's nsfw category, which is less reliable than the JSON API's |
+| Danbooru | `questionable` and `explicit` ratings flagged |
+| DeviantArt | mature deviations requested from the API and flagged |
+| Bluesky | posts labelled porn / sexual / nudity / graphic-media flagged |
+| ArtStation | adult work is flagged, but the logged-out explore feed rarely carries any |
+| Pixiv | the R-18 ranking is only served to a logged-in session — set `PIXIV_SESSION` to your own `PHPSESSID` cookie to include it |
 
 Adult/NSFW posts are filtered out of every source. A source that fails is
 reported in the digest and in the widget footer instead of failing the run —
@@ -57,8 +97,10 @@ differently from a home connection:
 
 | Source | Without credentials, from CI |
 | --- | --- |
-| Pixiv | works |
+| Pixiv | works (all-ages ranking only) |
 | ArtStation | works |
+| Bluesky | works |
+| Danbooru | works |
 | Reddit | the JSON API answers `403 Blocked`; the collector falls back to the Atom feed, which works but has no vote counts. Set `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` (a *script* app at <https://www.reddit.com/prefs/apps>) to get the real API and real upvote counts |
 | DeviantArt | `403` on every RSS host. Set `DEVIANTART_CLIENT_ID` / `DEVIANTART_CLIENT_SECRET` (register at <https://www.deviantart.com/developers/apps>) and the collector uses the official Daily Deviations API instead |
 
@@ -85,7 +127,12 @@ python3 -m http.server 8000     # then open /art-digest/
 | --- | --- | --- |
 | `ART_DIGEST_LIMIT` | `24` | How many pieces to keep |
 | `ART_DIGEST_WINDOW_HOURS` | `48` | How new "new" has to be |
-| `ART_DIGEST_SUBS` | see above | Comma-separated subreddits |
+| `ART_DIGEST_SUBS` | see above | Comma-separated subreddits, replacing the default list |
+| `ART_DIGEST_EXTRA_SUBS` | unset | Comma-separated subreddits to add to the default list |
+| `ART_DIGEST_TAGS` | conceptart, characterart, dnd, fanart, digitalart | Bluesky hashtags to search |
+| `ART_DIGEST_SOURCES` | all | Comma-separated source ids to run (`artstation,reddit,pixiv,deviantart,bluesky,danbooru`) |
+| `ART_DIGEST_NSFW` | `include` | `include`, `exclude` or `only` |
+| `PIXIV_SESSION` | unset | A Pixiv `PHPSESSID` cookie, which unlocks the R-18 daily ranking |
 | `ART_DIGEST_PIXIV_PROXY` | `https://i.pixiv.re` | Pixiv blocks hotlinked thumbnails, so they're re-served through a mirror. Set to empty to drop Pixiv thumbnails instead |
 | `ART_DIGEST_OUT` | `art-digest/data` | Output directory |
 | `REDDIT_CLIENT_ID` / `REDDIT_CLIENT_SECRET` | unset | Optional. Reddit blocks datacenter IPs on the public JSON API; with these set the collector uses app-only OAuth instead |

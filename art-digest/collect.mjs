@@ -28,16 +28,47 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
+/**
+ * The subreddits to read, grouped for legibility only — they are fetched
+ * together. Replace the whole set with ART_DIGEST_SUBS, or keep these and add
+ * to them with ART_DIGEST_EXTRA_SUBS (both comma-separated). A subreddit that
+ * does not exist or has gone private is dropped and named in the digest, so a
+ * bad entry never costs the rest of the list.
+ */
+export const DEFAULT_SUBS = {
+  'fine art': ['Art', 'DigitalArt', 'painting', 'ImaginaryBestOf'],
+  'concept art': ['ConceptArt', 'SpecArt', 'SciFiArt', 'FantasyArt', 'ImaginaryTechnology', 'ImaginaryArchitecture'],
+  'tabletop & character art': ['characterdrawing', 'DnD', 'DungeonsAndDragons', 'battlemaps', 'Pathfinder_RPG', 'Warhammer40k'],
+  fandom: ['FanArt', 'ImaginaryCharacters', 'ImaginaryMonsters', 'ImaginaryWesteros', 'AnimeSketch', 'awwnime'],
+  worlds: ['ImaginaryLandscapes', 'ImaginaryCityscapes', 'ImaginaryMythology', 'ImaginaryWildlands'],
+};
+
+const splitList = (value) => (value || '').split(',').map((s) => s.trim()).filter(Boolean);
+
 const CONFIG = {
   limit: int(process.env.ART_DIGEST_LIMIT, 24),
   windowHours: int(process.env.ART_DIGEST_WINDOW_HOURS, 48),
   outDir: resolve(process.env.ART_DIGEST_OUT || join(HERE, 'data')),
-  subs: (process.env.ART_DIGEST_SUBS ||
-    'Art,DigitalArt,ImaginaryLandscapes,ImaginaryCharacters,ConceptArt,SciFiArt,FantasyArt'
-  ).split(',').map((s) => s.trim()).filter(Boolean),
+  subs: [
+    ...new Set([
+      ...(process.env.ART_DIGEST_SUBS ? splitList(process.env.ART_DIGEST_SUBS) : Object.values(DEFAULT_SUBS).flat()),
+      ...splitList(process.env.ART_DIGEST_EXTRA_SUBS),
+    ]),
+  ],
+  // Bluesky hashtags to search, comma-separated.
+  tags: splitList(process.env.ART_DIGEST_TAGS) .length
+    ? splitList(process.env.ART_DIGEST_TAGS)
+    : ['conceptart', 'characterart', 'dnd', 'fanart', 'digitalart'],
+  sources: splitList(process.env.ART_DIGEST_SOURCES),
+  // include (default) | exclude | only. Adult work is kept and flagged rather
+  // than dropped; the widget and the email label it, and can filter on it.
+  nsfw: (process.env.ART_DIGEST_NSFW || 'include').trim().toLowerCase(),
   // i.pximg.net refuses hotlinks, so thumbnails go through a mirror that adds
   // the Referer Pixiv wants. Set to "" to drop Pixiv thumbnails entirely.
   pixivProxy: process.env.ART_DIGEST_PIXIV_PROXY ?? 'https://i.pixiv.re',
+  // Pixiv only serves its R-18 ranking to a logged-in session; paste your own
+  // PHPSESSID cookie here (as a secret) to include it.
+  pixivSession: process.env.PIXIV_SESSION || '',
   siteUrl: 'https://petulent-princess-productivity.web.app/art-digest/',
 };
 
@@ -132,6 +163,17 @@ export function sampleShape(row, depth = 1) {
 /** First non-empty value among several candidate paths. */
 const pick = (...values) => values.find((v) => typeof v === 'string' && v.trim()) || '';
 
+/**
+ * Adult work is flagged at the source rather than dropped there, so the policy
+ * lives in one place: "include" (default) keeps everything, "exclude" drops the
+ * flagged items, "only" keeps just those.
+ */
+export function applyNsfwPolicy(items, mode = 'include') {
+  if (mode === 'exclude') return items.filter((item) => !item.nsfw);
+  if (mode === 'only') return items.filter((item) => item.nsfw);
+  return items;
+}
+
 /* ---------------------------------------------------------------- sources */
 
 /** Reddit: top posts of the day across the art subreddits. */
@@ -140,7 +182,7 @@ export function normalizeReddit(payload, subreddit = '') {
   return children
     .map((child) => child?.data)
     .filter(Boolean)
-    .filter((p) => !p.over_18 && !p.stickied && !p.is_self)
+    .filter((p) => !p.stickied && !p.is_self)
     .map((p) => {
       const preview = p.preview?.images?.[0];
       const image =
@@ -162,6 +204,7 @@ export function normalizeReddit(payload, subreddit = '') {
         value: Number(p.score) || 0,
         scoreLabel: `${compact(Number(p.score) || 0)} upvotes`,
         postedAt: iso(p.created_utc),
+        nsfw: Boolean(p.over_18),
         context: clean(p.subreddit_name_prefixed || (subreddit && `r/${subreddit}`) || ''),
       };
     })
@@ -190,9 +233,10 @@ export function normalizeRedditRss(xml, subreddit = '') {
       const author = tag(block, 'name').replace(/^\/u\//, '');
       const id = (tag(block, 'id').match(/t3_(\w+)/) || [])[1] || String(index);
       // A multireddit feed tags every entry with the subreddit it came from.
+      const categories = [...block.matchAll(/<category[^>]+term="([^"]+)"/gi)].map((m) => m[1]);
       const sub =
         subreddit ||
-        (block.match(/<category[^>]+term="([^"]+)"/i) || [])[1] ||
+        categories.find((term) => !/^nsfw$/i.test(term)) ||
         (link.match(/reddit\.com\/r\/([^/]+)/i) || [])[1] ||
         '';
       return {
@@ -206,6 +250,9 @@ export function normalizeRedditRss(xml, subreddit = '') {
         thumb: https(decodeEntities(image)),
         value: Math.max(1, entries.length - index),
         scoreLabel: `#${index + 1} top today${sub ? ` in r/${sub}` : ''}`,
+        // The feed marks adult posts with an nsfw category; without the JSON
+        // API that flag is all there is to go on.
+        nsfw: categories.some((term) => /^nsfw$/i.test(term)) || /\bnsfw\b/i.test(tag(block, 'title')),
         postedAt: (() => {
           const d = new Date(tag(block, 'updated') || tag(block, 'published'));
           return Number.isNaN(d.valueOf()) ? null : d.toISOString();
@@ -240,19 +287,24 @@ async function redditToken() {
   }
 }
 
+/** Subreddits are asked for in small groups, so one bad name costs only its group. */
+const REDDIT_GROUP_SIZE = 6;
+
+const groupsOf = (list, size) =>
+  Array.from({ length: Math.ceil(list.length / size) }, (_, i) => list.slice(i * size, i * size + size));
+
 async function collectReddit(cfg) {
   const token = await redditToken();
-  const multi = cfg.subs.join('+');
 
   // Reddit turns away unauthenticated datacenter traffic, and not always the
   // same way, so try the richest route first and fall back to the Atom feed.
-  // Every route asks for all the subreddits at once: one request is far less
-  // likely to be rate-limited than seven.
+  // Each route takes a group of subreddits as one multireddit request: far
+  // less likely to be rate-limited than one request per subreddit.
   const routes = [
     token && {
       name: 'oauth',
-      run: () =>
-        get(`https://oauth.reddit.com/r/${multi}/top.json?t=day&limit=100&raw_json=1`, {
+      run: (subs) =>
+        get(`https://oauth.reddit.com/r/${subs.join('+')}/top.json?t=day&limit=50&raw_json=1`, {
           headers: { Authorization: `Bearer ${token}` },
         }).then((payload) => ({
           items: normalizeReddit(payload),
@@ -261,8 +313,8 @@ async function collectReddit(cfg) {
     },
     {
       name: 'public json',
-      run: () =>
-        get(`https://www.reddit.com/r/${multi}/top.json?t=day&limit=100&raw_json=1`, {
+      run: (subs) =>
+        get(`https://www.reddit.com/r/${subs.join('+')}/top.json?t=day&limit=50&raw_json=1`, {
           headers: { 'User-Agent': BROWSER_UA },
           attempts: 2,
         }).then((payload) => ({
@@ -272,8 +324,8 @@ async function collectReddit(cfg) {
     },
     {
       name: 'atom feed',
-      run: () =>
-        get(`https://www.reddit.com/r/${multi}/top.rss?t=day&limit=100`, {
+      run: (subs) =>
+        get(`https://www.reddit.com/r/${subs.join('+')}/top.rss?t=day&limit=50`, {
           as: 'text',
           headers: { 'User-Agent': BROWSER_UA, Accept: 'application/atom+xml,text/xml' },
           attempts: 2,
@@ -284,20 +336,56 @@ async function collectReddit(cfg) {
     },
   ].filter(Boolean);
 
+  const items = [];
+  const dropped = [];
   const errors = [];
-  for (const route of routes) {
-    try {
-      const result = await route.run();
-      if (!result.items.length) {
-        errors.push(`${route.name}: ${result.fetched} rows, none usable`);
-        continue;
+  let fetched = 0;
+  let working = null;
+
+  for (const group of groupsOf(cfg.subs, REDDIT_GROUP_SIZE)) {
+    // Once a route answers, reuse it instead of re-probing for every group.
+    let ok = false;
+    for (const route of working ? [working] : routes) {
+      try {
+        const result = await route.run(group);
+        items.push(...result.items);
+        fetched += result.fetched;
+        working = route;
+        ok = true;
+        break;
+      } catch (err) {
+        errors.push(`${route.name}: ${err.message}`);
       }
-      return { ...result, note: route.name === 'oauth' ? '' : `via ${route.name}` };
-    } catch (err) {
-      errors.push(`${route.name}: ${err.message}`);
     }
+
+    if (!ok) {
+      // A group that fails outright usually holds one subreddit that is
+      // misspelled, private or banned — find it rather than lose the rest.
+      const route = working || routes.at(-1);
+      for (const sub of group) {
+        try {
+          const result = await route.run([sub]);
+          items.push(...result.items);
+          fetched += result.fetched;
+          working = route;
+        } catch {
+          dropped.push(`r/${sub}`);
+        }
+        await sleep(600);
+      }
+    }
+    await sleep(600); // stay well inside Reddit's rate limit
   }
-  throw new Error(errors.join(' | '));
+
+  if (!items.length) throw new Error(errors.slice(0, 3).join(' | ') || 'no posts returned');
+  return {
+    items,
+    fetched,
+    note: [
+      working && working.name !== 'oauth' ? `via ${working.name}` : '',
+      dropped.length ? `dropped ${dropped.join(', ')}` : '',
+    ].filter(Boolean).join(' · '),
+  };
 }
 
 /**
@@ -324,7 +412,7 @@ export function artstationSize(url, size) {
  */
 export function normalizeArtStation(payload) {
   const rows = payload?.data ?? payload?.projects ?? (Array.isArray(payload) ? payload : []);
-  const usable = rows.filter((p) => p && !p.adult_content && !p.hide_as_adult);
+  const usable = rows.filter(Boolean);
   const hasLikes = usable.some((p) => Number(p.likes_count ?? p.likes ?? 0) > 0);
 
   return usable
@@ -360,6 +448,7 @@ export function normalizeArtStation(payload) {
         ].filter(Boolean),
         value: hasLikes ? likes : usable.length - index,
         scoreLabel: hasLikes ? `${compact(likes)} likes` : `#${index + 1} trending`,
+        nsfw: Boolean(p.adult_content || p.hide_as_adult),
         postedAt: p.published_at ? new Date(p.published_at).toISOString() : null,
         context: 'Trending',
       };
@@ -381,7 +470,7 @@ async function collectArtStation() {
 }
 
 /** Pixiv: the public daily illustration ranking (all-ages only). */
-export function normalizePixiv(payload, { pixivProxy = '' } = {}) {
+export function normalizePixiv(payload, { pixivProxy = '', nsfwRanking = false } = {}) {
   const proxyThumb = (url) => {
     const clean = https(url);
     if (!clean) return '';
@@ -391,10 +480,6 @@ export function normalizePixiv(payload, { pixivProxy = '' } = {}) {
 
   return (payload?.contents ?? [])
     .filter((p) => p && p.illust_type !== '2') // skip ugoira (animated) entries
-    .filter((p) => {
-      const t = p.illust_content_type || {};
-      return !t.sexual && !t.grotesque && !t.antisocial;
-    })
     .map((p) => {
       const big = String(p.url || '').replace('/c/240x480/', '/c/600x1200_90/');
       return {
@@ -408,6 +493,7 @@ export function normalizePixiv(payload, { pixivProxy = '' } = {}) {
         thumb: proxyThumb(p.url),
         value: Number(p.rating_count) || 0,
         scoreLabel: `${compact(Number(p.rating_count) || 0)} bookmarks · #${p.rank} today`,
+        nsfw: Boolean(nsfwRanking || p.illust_content_type?.sexual || p.illust_content_type?.grotesque),
         postedAt: iso(Number(p.illust_upload_timestamp)),
         context: `Daily ranking #${p.rank}`,
       };
@@ -415,12 +501,32 @@ export function normalizePixiv(payload, { pixivProxy = '' } = {}) {
 }
 
 async function collectPixiv(cfg) {
-  const payload = await get(
-    'https://www.pixiv.net/ranking.php?mode=daily&content=illust&format=json&p=1',
-    { headers: { 'User-Agent': BROWSER_UA, Referer: 'https://www.pixiv.net/', Accept: 'application/json' } }
-  );
+  const headers = { 'User-Agent': BROWSER_UA, Referer: 'https://www.pixiv.net/', Accept: 'application/json' };
+  const ranking = (mode, extra = {}) =>
+    get(`https://www.pixiv.net/ranking.php?mode=${mode}&content=illust&format=json&p=1`, {
+      headers: { ...headers, ...extra },
+    });
+
+  const payload = await ranking('daily');
   const items = normalizePixiv(payload, cfg);
-  return { items, fetched: (payload?.contents ?? []).length, sample: sampleShape(payload?.contents?.[0]) };
+  let fetched = (payload?.contents ?? []).length;
+  let note = '';
+
+  // The R-18 ranking is only served to a logged-in session, so it needs the
+  // reader's own cookie; without one Pixiv stays all-ages.
+  if (cfg.nsfw !== 'exclude' && cfg.pixivSession) {
+    try {
+      const adult = await ranking('daily_r18', { Cookie: `PHPSESSID=${cfg.pixivSession}` });
+      const adultItems = normalizePixiv(adult, { ...cfg, nsfwRanking: true });
+      items.push(...adultItems);
+      fetched += (adult?.contents ?? []).length;
+      note = `${adultItems.length} from the R-18 ranking`;
+    } catch (err) {
+      note = `R-18 ranking unavailable (${err.message})`;
+    }
+  }
+
+  return { items, fetched, note, sample: sampleShape(payload?.contents?.[0]) };
 }
 
 /** DeviantArt: the popular-this-week RSS feed for digital art. */
@@ -436,9 +542,7 @@ export function normalizeDeviantArt(xml) {
     return clean(m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, '$1').replace(/<[^>]+>/g, ''));
   };
 
-  return blocks
-    .filter((block) => !/<media:rating>\s*adult/i.test(block))
-    .map((block, index) => {
+  return blocks.map((block, index) => {
       const thumbs = [...block.matchAll(/<media:thumbnail[^>]*url="([^"]*)"/gi)].map((m) => decodeEntities(m[1]));
       const full = attr(block, 'media:content', 'url');
       const author = tag(block, 'media:credit') || attr(block, 'media:credit', 'url');
@@ -456,6 +560,7 @@ export function normalizeDeviantArt(xml) {
         // position in the feed is the only signal available.
         value: Math.max(1, blocks.length - index),
         scoreLabel: `#${index + 1} most popular`,
+        nsfw: /<media:rating>\s*adult/i.test(block),
         postedAt: (() => {
           const d = new Date(tag(block, 'pubDate'));
           return Number.isNaN(d.valueOf()) ? null : d.toISOString();
@@ -473,7 +578,7 @@ export function normalizeDeviantArt(xml) {
  */
 export function normalizeDeviantArtApi(payload) {
   return (payload?.results ?? [])
-    .filter((d) => d && !d.is_mature && !d.is_deleted)
+    .filter((d) => d && !d.is_deleted)
     .map((d) => ({
       id: `deviantart:${d.deviationid}`,
       source: 'deviantart',
@@ -485,6 +590,7 @@ export function normalizeDeviantArtApi(payload) {
       thumb: https(pick(d.preview?.src, d.thumbs?.at(-1)?.src, d.content?.src)),
       value: Number(d.stats?.favourites) || 0,
       scoreLabel: `${compact(Number(d.stats?.favourites) || 0)} favourites`,
+      nsfw: Boolean(d.is_mature),
       postedAt: iso(Number(d.published_time)),
       context: 'Daily Deviation',
     }))
@@ -504,11 +610,12 @@ async function deviantArtToken() {
   }
 }
 
-async function collectDeviantArt() {
+async function collectDeviantArt(cfg = {}) {
   const token = await deviantArtToken();
   if (token) {
+    const mature = cfg.nsfw === 'exclude' ? 'false' : 'true';
     const payload = await get(
-      `https://www.deviantart.com/api/v1/oauth2/browse/dailydeviations?mature_content=false&access_token=${token}`,
+      `https://www.deviantart.com/api/v1/oauth2/browse/dailydeviations?mature_content=${mature}&access_token=${token}`,
       { headers: { 'User-Agent': BROWSER_UA } }
     );
     const items = normalizeDeviantArtApi(payload);
@@ -540,11 +647,128 @@ async function collectDeviantArt() {
   };
 }
 
+/**
+ * Bluesky: the art hashtags, ranked by likes. The public AppView needs no
+ * credentials, which is why it is the one "everywhere else" outlet here that
+ * works out of the box.
+ */
+export function normalizeBluesky(payload, tag = '') {
+  return (payload?.posts ?? [])
+    .map((post) => {
+      const embed = post.embed?.images ? post.embed : post.embed?.media;
+      const image = embed?.images?.[0];
+      const handle = post.author?.handle || '';
+      const rkey = String(post.uri || '').split('/').pop();
+      const text = clean(post.record?.text || '');
+      const labels = [
+        ...(post.labels || []).map((l) => l.val),
+        ...(image?.labels || []).map((l) => l.val),
+      ];
+      return {
+        id: `bluesky:${rkey}`,
+        source: 'bluesky',
+        title: text.split(/[.!?\n]/)[0].slice(0, 120) || 'Untitled',
+        artist: clean(post.author?.displayName || (handle ? `@${handle}` : '')),
+        artistUrl: handle ? `https://bsky.app/profile/${handle}` : '',
+        url: handle && rkey ? `https://bsky.app/profile/${handle}/post/${rkey}` : '',
+        image: https(image?.fullsize || ''),
+        thumb: https(image?.thumb || image?.fullsize || ''),
+        thumbFallbacks: [https(image?.fullsize || '')].filter(Boolean),
+        value: Number(post.likeCount) || 0,
+        scoreLabel: `${compact(Number(post.likeCount) || 0)} likes`,
+        postedAt: post.record?.createdAt || post.indexedAt || null,
+        nsfw: labels.some((val) => /porn|sexual|nudity|graphic-media/i.test(val)),
+        context: tag ? `#${tag}` : 'Bluesky',
+      };
+    })
+    .filter((item) => item.url && item.thumb);
+}
+
+async function collectBluesky(cfg) {
+  const items = [];
+  let fetched = 0;
+  const failed = [];
+
+  for (const tag of cfg.tags) {
+    try {
+      const payload = await get(
+        'https://public.api.bsky.app/xrpc/app.bsky.feed.searchPosts' +
+          `?q=${encodeURIComponent(`#${tag}`)}&sort=top&limit=25`,
+        { headers: { Accept: 'application/json' } }
+      );
+      fetched += (payload?.posts ?? []).length;
+      items.push(...normalizeBluesky(payload, tag));
+    } catch (err) {
+      failed.push(`#${tag} (${err.message})`);
+    }
+    await sleep(400);
+  }
+
+  if (!items.length && failed.length) throw new Error(failed.join('; '));
+  return { items, fetched, note: failed.length ? `skipped ${failed.length} tag(s)` : '' };
+}
+
+/**
+ * Danbooru: the day's highest-scoring fan art. Anonymous searches allow two
+ * tags, which `order:score age:1d` uses up, so ratings are filtered here
+ * instead of in the query.
+ */
+const DANBOORU_RATINGS = { g: 'general', s: 'sensitive', q: 'questionable', e: 'explicit' };
+
+export function normalizeDanbooru(rows) {
+  return (Array.isArray(rows) ? rows : [])
+    .filter((p) => p && !p.is_banned && !p.is_deleted)
+    .map((p) => {
+      const artist = (p.tag_string_artist || '').split(/\s+/).filter(Boolean)[0] || '';
+      const fandom = (p.tag_string_copyright || '').split(/\s+/).filter(Boolean)[0] || '';
+      const character = (p.tag_string_character || '').split(/\s+/).filter(Boolean)[0] || '';
+      const pretty = (tag) => tag.replace(/_\(.*\)$/, '').replace(/_/g, ' ').trim();
+      return {
+        id: `danbooru:${p.id}`,
+        source: 'danbooru',
+        title: [character && pretty(character), fandom && `(${pretty(fandom)})`].filter(Boolean).join(' ') || 'Untitled',
+        artist: artist ? pretty(artist) : '',
+        // Prefer the artist's own posting when the uploader recorded it.
+        artistUrl: /^https?:\/\//.test(p.source || '')
+          ? https(p.source)
+          : artist
+            ? `https://danbooru.donmai.us/posts?tags=${encodeURIComponent(artist)}`
+            : '',
+        url: `https://danbooru.donmai.us/posts/${p.id}`,
+        image: https(pick(p.large_file_url, p.file_url, p.preview_file_url)),
+        thumb: https(pick(p.large_file_url, p.preview_file_url, p.file_url)),
+        thumbFallbacks: [https(pick(p.preview_file_url)), https(pick(p.file_url))].filter(Boolean),
+        value: Number(p.score) || 0,
+        scoreLabel: `score ${compact(Number(p.score) || 0)} · ${compact(Number(p.fav_count) || 0)} favourites`,
+        postedAt: p.created_at ? new Date(p.created_at).toISOString() : null,
+        nsfw: p.rating === 'q' || p.rating === 'e',
+        context: fandom ? pretty(fandom) : DANBOORU_RATINGS[p.rating] || 'Top today',
+      };
+    })
+    .filter((item) => item.thumb);
+}
+
+async function collectDanbooru(cfg) {
+  const rows = await get(
+    'https://danbooru.donmai.us/posts.json?tags=order%3Ascore+age%3A1d&limit=50',
+    { headers: { 'User-Agent': BOT_UA, Accept: 'application/json' } }
+  );
+  const items = normalizeDanbooru(rows);
+  return {
+    items,
+    fetched: Array.isArray(rows) ? rows.length : 0,
+    note: cfg.nsfw === 'exclude' ? 'general and sensitive ratings only' : '',
+    sample: sampleShape(Array.isArray(rows) ? rows[0] : null),
+  };
+}
+
 export const SOURCES = [
   { id: 'artstation', label: 'ArtStation', home: 'https://www.artstation.com', collect: collectArtStation },
   { id: 'reddit', label: 'Reddit', home: 'https://www.reddit.com', collect: collectReddit },
   { id: 'pixiv', label: 'Pixiv', home: 'https://www.pixiv.net', collect: collectPixiv },
   { id: 'deviantart', label: 'DeviantArt', home: 'https://www.deviantart.com', collect: collectDeviantArt },
+  { id: 'bluesky', label: 'Bluesky', home: 'https://bsky.app', collect: collectBluesky },
+  { id: 'danbooru', label: 'Danbooru', home: 'https://danbooru.donmai.us', collect: collectDanbooru },
 ];
 
 /* ---------------------------------------------------------------- ranking */
@@ -577,14 +801,34 @@ export function rankItems(bySource, { limit = 24, windowHours = 48, now = Date.n
     ranked.set(source, dedupe(scored));
   }
 
-  // Round-robin across sources, best first.
+  // Round-robin across sources, best first — and within a source, take a
+  // different subreddit or hashtag each round before repeating one, so a
+  // single busy corner (r/Art, say) can't fill Reddit's whole share.
   const out = [];
   const order = [...ranked.keys()].sort((a, b) => (ranked.get(b)[0]?.heat ?? 0) - (ranked.get(a)[0]?.heat ?? 0));
+  const taken = new Map(order.map((source) => [source, new Set()]));
+  const used = new Set();
+
+  const nextFrom = (source, round) => {
+    const list = ranked.get(source);
+    const seen = taken.get(source);
+    const unseen = list.find((item) => !used.has(item.id) && !seen.has(item.context || ''));
+    if (unseen) return unseen;
+    // Every corner has had a turn this pass: start the next one.
+    if (seen.size) {
+      seen.clear();
+      return list.find((item) => !used.has(item.id));
+    }
+    return list[round];
+  };
+
   for (let round = 0; out.length < limit; round++) {
     let added = 0;
     for (const source of order) {
-      const item = ranked.get(source)[round];
-      if (!item) continue;
+      const item = nextFrom(source, round);
+      if (!item || used.has(item.id)) continue;
+      used.add(item.id);
+      taken.get(source).add(item.context || '');
       out.push(item);
       added++;
       if (out.length >= limit) break;
@@ -664,7 +908,9 @@ const SOURCE_COLORS = {
   artstation: '#13aff0',
   reddit: '#ff4500',
   pixiv: '#0096fa',
-  deviantart: '#00e59b',
+  deviantart: '#00b377',
+  bluesky: '#7c5cf0',
+  danbooru: '#c8860a',
 };
 
 /** Table-based HTML so it survives email clients. */
@@ -689,7 +935,7 @@ export function renderEmail(digest, { siteUrl = CONFIG.siteUrl } = {}) {
               </td>
               <td valign="top" style="padding:12px 16px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;">
                 <div style="font-size:11px;color:${color};font-weight:700;letter-spacing:.04em;text-transform:uppercase;">
-                  ${index + 1}. ${esc(digest.sourceLabels[item.source] || item.source)}${item.context ? ` · ${esc(item.context)}` : ''}
+                  ${index + 1}. ${esc(digest.sourceLabels[item.source] || item.source)}${item.context ? ` · ${esc(item.context)}` : ''}${item.nsfw ? ' <span style="color:#d6336c;">· 18+</span>' : ''}
                 </div>
                 <div style="margin:4px 0 2px;font-size:16px;line-height:1.3;font-weight:600;">
                   <a href="${esc(item.url)}" style="color:#1c1420;text-decoration:none;">${esc(item.title)}</a>
@@ -715,7 +961,7 @@ export function renderEmail(digest, { siteUrl = CONFIG.siteUrl } = {}) {
     <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
       <tr><td style="padding-bottom:18px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;">
         <div style="font-size:22px;font-weight:700;color:#1c1420;">🎨 Today's best new digital art</div>
-        <div style="font-size:13px;color:#6b6270;margin-top:4px;">${esc(date)} · top ${digest.items.length} of ${digest.totalCollected} new pieces</div>
+        <div style="font-size:13px;color:#6b6270;margin-top:4px;">${esc(date)} · top ${digest.items.length} of ${digest.totalCollected} new pieces${digest.nsfwCount ? ` · ${digest.nsfwCount} marked 18+` : ''}</div>
       </td></tr>
       ${cards}
       <tr><td style="padding-top:6px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:12px;color:#8a8194;">
@@ -733,13 +979,17 @@ export function renderEmail(digest, { siteUrl = CONFIG.siteUrl } = {}) {
 export async function buildDigest(cfg = CONFIG) {
   const bySource = {};
   const report = [];
+  const sources = cfg.sources?.length
+    ? SOURCES.filter((s) => cfg.sources.includes(s.id))
+    : SOURCES;
 
-  const results = await Promise.allSettled(SOURCES.map((s) => s.collect(cfg)));
+  const results = await Promise.allSettled(sources.map((s) => s.collect(cfg)));
 
-  SOURCES.forEach((source, i) => {
+  sources.forEach((source, i) => {
     const result = results[i];
     if (result.status === 'fulfilled') {
-      const { items, fetched, note, sample } = result.value;
+      const { items: collected, fetched, note, sample } = result.value;
+      const items = applyNsfwPolicy(collected, cfg.nsfw);
       bySource[source.id] = items;
       report.push({
         id: source.id,
@@ -750,7 +1000,10 @@ export async function buildDigest(cfg = CONFIG) {
         status: items.length || !fetched ? 'ok' : 'changed',
         fetched,
         kept: items.length,
-        note: note || '',
+        note: [note, collected.length - items.length ? `${collected.length - items.length} filtered by the ${cfg.nsfw} policy` : '']
+          .filter(Boolean)
+          .join(' · '),
+        nsfw: items.filter((item) => item.nsfw).length,
         error: items.length || !fetched ? null : `returned ${fetched} rows, none usable — the response shape changed`,
         ...(items.length || !fetched ? {} : { sample: sample ?? null }),
       });
@@ -779,7 +1032,9 @@ export async function buildDigest(cfg = CONFIG) {
     generatedAt: new Date().toISOString(),
     windowHours: cfg.windowHours,
     totalCollected: Object.values(bySource).reduce((n, list) => n + list.length, 0),
-    sourceLabels: Object.fromEntries(SOURCES.map((s) => [s.id, s.label])),
+    nsfwPolicy: cfg.nsfw,
+    nsfwCount: items.filter((item) => item.nsfw).length,
+    sourceLabels: Object.fromEntries(sources.map((s) => [s.id, s.label])),
     sources: report,
     items,
   };

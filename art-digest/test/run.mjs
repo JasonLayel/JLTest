@@ -14,6 +14,9 @@ import {
   normalizePixiv,
   normalizeDeviantArt,
   normalizeDeviantArtApi,
+  normalizeBluesky,
+  normalizeDanbooru,
+  applyNsfwPolicy,
   rankItems,
   resolveThumbnails,
   renderEmail,
@@ -77,9 +80,10 @@ const redditPayload = {
   },
 };
 
-test('reddit: keeps only SFW image posts', () => {
+test('reddit: keeps image posts, including adult ones, and flags them', () => {
   const items = normalizeReddit(redditPayload, 'Art');
-  assert.equal(items.length, 1, 'NSFW, self and image-less posts are dropped');
+  assert.equal(items.length, 2, 'self posts and posts with no image are still dropped');
+  assert.deepEqual(items.map((i) => i.nsfw), [false, true], 'over_18 becomes the nsfw flag');
 });
 
 test('reddit: decodes entities in titles and image URLs', () => {
@@ -112,6 +116,16 @@ const redditAtom = `<?xml version="1.0" encoding="UTF-8"?>
   <content type="html">&lt;p&gt;no image here&lt;/p&gt;</content>
 </entry>
 </feed>`;
+
+test('reddit atom: reads the nsfw category when the JSON API is unavailable', () => {
+  const feed = redditAtom.replace(
+    '<title>The Lighthouse at Var</title>',
+    '<category term="nsfw" label="NSFW" /><title>The Lighthouse at Var</title>'
+  );
+  const [item] = normalizeRedditRss(feed);
+  assert.equal(item.nsfw, true);
+  assert.equal(item.context, 'r/Art', 'the nsfw tag is not mistaken for the subreddit');
+});
 
 test('reddit atom: used when the JSON API refuses, ranked by feed position', () => {
   const items = normalizeRedditRss(redditAtom, 'Art');
@@ -195,15 +209,16 @@ test('artstationSize: only rewrites a real size segment', () => {
   assert.equal(artstationSize('', 'large'), '');
 });
 
-test('artstation: drops adult content', () => {
+test('artstation: keeps adult work and flags it', () => {
   const items = normalizeArtStation({
     data: [
       { hash_id: 'ok1', title: 'fine', url: 'https://www.artstation.com/artwork/ok1', smaller_square_cover_url: 'https://c/s/smaller_square/a.jpg', user: {} },
-      { hash_id: 'adult1', title: 'nope', url: 'https://www.artstation.com/artwork/adult1', adult_content: true, smaller_square_cover_url: 'https://c/s/smaller_square/b.jpg', user: {} },
-      { hash_id: 'adult2', title: 'nope', url: 'https://www.artstation.com/artwork/adult2', hide_as_adult: true, smaller_square_cover_url: 'https://c/s/smaller_square/c.jpg', user: {} },
+      { hash_id: 'adult1', title: 'adult', url: 'https://www.artstation.com/artwork/adult1', adult_content: true, smaller_square_cover_url: 'https://c/s/smaller_square/b.jpg', user: {} },
+      { hash_id: 'adult2', title: 'hidden', url: 'https://www.artstation.com/artwork/adult2', hide_as_adult: true, smaller_square_cover_url: 'https://c/s/smaller_square/c.jpg', user: {} },
     ],
   });
-  assert.deepEqual(items.map((i) => i.id), ['artstation:ok1']);
+  assert.deepEqual(items.map((i) => i.id), ['artstation:ok1', 'artstation:adult1', 'artstation:adult2']);
+  assert.deepEqual(items.map((i) => i.nsfw), [false, true, true]);
 });
 
 /* ------------------------------------------------------------------- pixiv */
@@ -228,14 +243,23 @@ const pixivPayload = {
   ],
 };
 
-test('pixiv: filters R-18 and animations, proxies hotlink-blocked thumbnails', () => {
+test('pixiv: keeps R-18 flagged, drops animations, proxies blocked thumbnails', () => {
   const items = normalizePixiv(pixivPayload, { pixivProxy: 'https://i.pixiv.re' });
-  assert.equal(items.length, 1);
+  assert.equal(items.length, 2, 'ugoira is still skipped; the R-18 entry is kept');
+  assert.deepEqual(items.map((i) => i.nsfw), [false, true]);
   const [item] = items;
   assert.equal(item.url, 'https://www.pixiv.net/artworks/90210');
   assert.equal(item.thumb, 'https://i.pixiv.re/c/240x480/img-master/img/2026/09/10/00/00/00/90210_p0_master1200.jpg');
   assert.ok(item.image.includes('/c/600x1200_90/'), 'the large image uses a bigger master size');
   assert.equal(item.scoreLabel, '12.5k bookmarks · #1 today');
+});
+
+test('pixiv: the R-18 ranking marks everything it returns as adult', () => {
+  const items = normalizePixiv(
+    { contents: [{ illust_id: 5, title: 'x', user_name: 'y', rank: 1, rating_count: 10, illust_type: '0', url: 'https://i.pximg.net/a.jpg', illust_content_type: {} }] },
+    { pixivProxy: 'https://i.pixiv.re', nsfwRanking: true }
+  );
+  assert.equal(items[0].nsfw, true);
 });
 
 test('pixiv: an empty proxy drops thumbnails instead of shipping broken ones', () => {
@@ -267,9 +291,10 @@ const deviantartXml = `<?xml version="1.0" encoding="utf-8"?>
 </item>
 </channel></rss>`;
 
-test('deviantart: parses the RSS feed and skips mature deviations', () => {
+test('deviantart: parses the RSS feed and flags mature deviations', () => {
   const items = normalizeDeviantArt(deviantartXml);
-  assert.equal(items.length, 1);
+  assert.equal(items.length, 2);
+  assert.deepEqual(items.map((i) => i.nsfw), [false, true]);
   const [item] = items;
   assert.equal(item.id, 'deviantart:998877');
   assert.equal(item.title, 'Ember Fox');
@@ -279,7 +304,7 @@ test('deviantart: parses the RSS feed and skips mature deviations', () => {
   assert.ok(item.postedAt.startsWith('2026-09-11'), 'pubDate parsed to ISO');
 });
 
-test('deviantart api: normalizes daily deviations and skips mature ones', () => {
+test('deviantart api: normalizes daily deviations and flags mature ones', () => {
   const items = normalizeDeviantArtApi({
     results: [
       {
@@ -297,7 +322,8 @@ test('deviantart api: normalizes daily deviations and skips mature ones', () => 
       { deviationid: 'no-img', title: 'No image', url: 'https://www.deviantart.com/x/art/no-img', author: { username: 'x' }, stats: { favourites: 5 } },
     ],
   });
-  assert.deepEqual(items.map((i) => i.id), ['deviantart:abc-123']);
+  assert.deepEqual(items.map((i) => i.id), ['deviantart:abc-123', 'deviantart:m-1']);
+  assert.deepEqual(items.map((i) => i.nsfw), [false, true]);
   const [item] = items;
   assert.equal(item.artist, 'Aurelia');
   assert.equal(item.artistUrl, 'https://www.deviantart.com/Aurelia');
@@ -306,6 +332,93 @@ test('deviantart api: normalizes daily deviations and skips mature ones', () => 
   assert.equal(item.scoreLabel, '4.2k favourites');
   assert.equal(item.context, 'Daily Deviation');
   assert.ok(item.postedAt.startsWith('2026-09-11'));
+});
+
+/* ---------------------------------------------------------------- bluesky */
+
+const blueskyPayload = {
+  posts: [
+    {
+      uri: 'at://did:plc:abc/app.bsky.feed.post/3kxyz',
+      author: { handle: 'mira.bsky.social', displayName: 'Mira Solis' },
+      record: { text: 'Ashfall Cathedral. Finally finished!\nOils over a 3D block-in. #conceptart', createdAt: '2026-09-11T09:00:00.000Z' },
+      embed: { images: [{ thumb: 'https://cdn.bsky.app/thumb/1.jpg', fullsize: 'https://cdn.bsky.app/full/1.jpg' }] },
+      likeCount: 2410,
+    },
+    {
+      uri: 'at://did:plc:def/app.bsky.feed.post/3kabc',
+      author: { handle: 'inky.bsky.social' },
+      // A quote-post with media nests the images one level deeper.
+      embed: { media: { images: [{ thumb: 'https://cdn.bsky.app/thumb/2.jpg', fullsize: 'https://cdn.bsky.app/full/2.jpg' }] } },
+      record: { text: 'late night sketch', createdAt: '2026-09-11T04:00:00.000Z' },
+      likeCount: 180,
+      labels: [{ val: 'nudity' }],
+    },
+    { uri: 'at://did:plc:ghi/app.bsky.feed.post/3knope', author: { handle: 'text.bsky.social' }, record: { text: 'no picture here' }, likeCount: 9000 },
+  ],
+};
+
+test('bluesky: reads both embed shapes, titles from the post text, flags labels', () => {
+  const items = normalizeBluesky(blueskyPayload, 'conceptart');
+  assert.equal(items.length, 2, 'posts without an image are dropped');
+  const [first, second] = items;
+  assert.equal(first.title, 'Ashfall Cathedral', 'the first sentence becomes the title');
+  assert.equal(first.artist, 'Mira Solis');
+  assert.equal(first.url, 'https://bsky.app/profile/mira.bsky.social/post/3kxyz');
+  assert.equal(first.thumb, 'https://cdn.bsky.app/thumb/1.jpg');
+  assert.equal(first.context, '#conceptart');
+  assert.equal(first.nsfw, false);
+  assert.equal(second.artist, '@inky.bsky.social', 'falls back to the handle');
+  assert.equal(second.thumb, 'https://cdn.bsky.app/thumb/2.jpg', 'quote-post media is found');
+  assert.equal(second.nsfw, true, 'a nudity label marks the post adult');
+});
+
+/* --------------------------------------------------------------- danbooru */
+
+test('danbooru: titles from character and series, credits the original source', () => {
+  const items = normalizeDanbooru([
+    {
+      id: 7001,
+      score: 312,
+      fav_count: 640,
+      rating: 'e',
+      created_at: '2026-09-11T06:00:00.000Z',
+      source: 'https://www.pixiv.net/artworks/149478161',
+      tag_string_artist: 'kaze_(artist)',
+      tag_string_character: 'ganyu_(genshin_impact)',
+      tag_string_copyright: 'genshin_impact',
+      large_file_url: 'https://cdn.donmai.us/sample/7001.jpg',
+      preview_file_url: 'https://cdn.donmai.us/preview/7001.jpg',
+    },
+    { id: 7002, score: 120, rating: 'g', tag_string_artist: 'solo_artist', preview_file_url: 'https://cdn.donmai.us/preview/7002.jpg' },
+    { id: 7003, score: 999, rating: 'q', is_deleted: true, preview_file_url: 'https://cdn.donmai.us/preview/7003.jpg' },
+    { id: 7004, score: 888, rating: 'q', is_banned: true, preview_file_url: 'https://cdn.donmai.us/preview/7004.jpg' },
+  ]);
+
+  assert.deepEqual(items.map((i) => i.id), ['danbooru:7001', 'danbooru:7002'], 'deleted and banned posts are skipped');
+  const [first, second] = items;
+  assert.equal(first.title, 'ganyu (genshin impact)');
+  assert.equal(first.artist, 'kaze');
+  assert.equal(first.artistUrl, 'https://www.pixiv.net/artworks/149478161', 'links the artist\'s own posting when known');
+  assert.equal(first.url, 'https://danbooru.donmai.us/posts/7001');
+  assert.equal(first.scoreLabel, 'score 312 · 640 favourites');
+  assert.equal(first.nsfw, true, 'explicit is adult');
+  assert.equal(second.nsfw, false, 'general is not');
+  assert.equal(second.artistUrl, 'https://danbooru.donmai.us/posts?tags=solo_artist', 'falls back to the artist tag');
+});
+
+/* ------------------------------------------------------------ nsfw policy */
+
+test('nsfw policy: include keeps everything, exclude and only split it', () => {
+  const items = [
+    { id: 'a', nsfw: false },
+    { id: 'b', nsfw: true },
+    { id: 'c', nsfw: false },
+  ];
+  assert.deepEqual(applyNsfwPolicy(items).map((i) => i.id), ['a', 'b', 'c'], 'include is the default');
+  assert.deepEqual(applyNsfwPolicy(items, 'include').map((i) => i.id), ['a', 'b', 'c']);
+  assert.deepEqual(applyNsfwPolicy(items, 'exclude').map((i) => i.id), ['a', 'c']);
+  assert.deepEqual(applyNsfwPolicy(items, 'only').map((i) => i.id), ['b']);
 });
 
 /* ----------------------------------------------------------------- ranking */
@@ -334,6 +447,23 @@ test('ranking: interleaves sources so one site cannot dominate', () => {
   assert.equal(ranked.length, 12);
   const counts = ranked.reduce((acc, i) => ({ ...acc, [i.source]: (acc[i.source] || 0) + 1 }), {});
   assert.deepEqual(counts, { reddit: 4, artstation: 4, pixiv: 4 });
+});
+
+test('ranking: spreads a source across its subreddits before repeating one', () => {
+  // r/Art has the loudest posts; without diversity it would take every slot.
+  const fromSub = (sub, count, top) =>
+    makeItems('reddit', count, top).map((item, i) => ({
+      ...item,
+      id: `${sub}-${i}`,
+      title: `${sub} piece ${i}`,
+      artist: `${sub} artist ${i}`,
+      context: sub,
+    }));
+  const reddit = [...fromSub('r/Art', 8, 9000), ...fromSub('r/DnD', 3, 400), ...fromSub('r/ConceptArt', 3, 300)];
+  const ranked = rankItems({ reddit }, { limit: 6, windowHours: 48, now: NOW });
+  const subs = ranked.map((i) => i.context);
+  assert.deepEqual(subs.slice(0, 3).sort(), ['r/Art', 'r/ConceptArt', 'r/DnD'], 'one from each before any repeat');
+  assert.equal(new Set(ranked.map((i) => i.id)).size, 6, 'no duplicates');
 });
 
 test('ranking: drops anything older than the window', () => {
@@ -406,9 +536,10 @@ test('email: renders every item, escapes markup, and links the widget', () => {
       { id: 'reddit', label: 'Reddit', status: 'ok', kept: 8 },
       { id: 'pixiv', label: 'Pixiv', status: 'failed', kept: 0 },
     ],
+    nsfwCount: 1,
     items: [
       { ...makeItems('reddit', 1, 900)[0], title: '<script>alert(1)</script>', heat: 91, context: 'r/Art' },
-      { ...makeItems('pixiv', 1, 900)[0], heat: 80, thumb: '' , image: ''},
+      { ...makeItems('pixiv', 1, 900)[0], heat: 80, thumb: '', image: '', nsfw: true },
     ],
   };
   const html = renderEmail(digest, { siteUrl: 'https://example.com/art-digest/' });
@@ -417,6 +548,8 @@ test('email: renders every item, escapes markup, and links the widget', () => {
   assert.ok(html.includes('1. Reddit · r/Art'));
   assert.ok(html.includes('✕ Pixiv'), 'failed sources are reported');
   assert.ok(html.includes('https://example.com/art-digest/'));
+  assert.ok(html.includes('· 18+'), 'adult picks are labelled');
+  assert.ok(html.includes('1 marked 18+'), 'the header counts them');
   assert.equal((html.match(/<tr>\s*<td style="padding:0 0 18px 0;">/g) || []).length, 2);
 });
 
