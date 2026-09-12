@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-12T18:54:12.569Z",
+  "generatedAt": "2026-09-12T18:59:08.901Z",
   "windowHours": 48,
-  "totalCollected": 407,
+  "totalCollected": 359,
   "nsfwPolicy": "include",
   "nsfwCount": 7,
   "sourceLabels": {
@@ -29,9 +29,9 @@
       "label": "Reddit",
       "home": "https://www.reddit.com",
       "status": "ok",
-      "fetched": 379,
-      "kept": 257,
-      "note": "via atom feed · 19 requests · dropped r/battlemaps (unreachable (429)), r/ImaginaryLandscapes (budget spent), r/ImaginaryCityscapes (budget spent), r/ImaginaryMythology (budget spent), r/ImaginaryWildlands (budget spent) · request budget spent",
+      "fetched": 249,
+      "kept": 209,
+      "note": "via atom feed · 17 requests · dropped r/ImaginaryLandscapes (unreachable (429))",
       "nsfw": 0,
       "error": null
     },
@@ -130,8 +130,8 @@
         "https://cdn.donmai.us/180x180/4c/a0/4ca063967c5505cbd2a9c124cf84b91f.jpg",
         "https://cdn.donmai.us/original/4c/a0/4ca063967c5505cbd2a9c124cf84b91f.mp4"
       ],
-      "value": 381,
-      "scoreLabel": "score 381 · 366 favourites",
+      "value": 382,
+      "scoreLabel": "score 382 · 367 favourites",
       "postedAt": "2026-09-11T12:29:34.707Z",
       "nsfw": true,
       "context": "blue archive",
@@ -204,8 +204,8 @@
         "https://cdn.donmai.us/180x180/99/30/9930c593f7f08867eb1313cb44baf7e8.jpg",
         "https://cdn.donmai.us/original/99/30/9930c593f7f08867eb1313cb44baf7e8.jpg"
       ],
-      "value": 369,
-      "scoreLabel": "score 369 · 347 favourites",
+      "value": 370,
+      "scoreLabel": "score 370 · 348 favourites",
       "postedAt": "2026-09-11T21:32:34.255Z",
       "nsfw": true,
       "context": "sono bisque doll wa koi wo suru",
@@ -278,8 +278,8 @@
         "https://cdn.donmai.us/180x180/5d/d5/5dd5b8bd87aea92bd35a1ad221231b49.jpg",
         "https://cdn.donmai.us/original/5d/d5/5dd5b8bd87aea92bd35a1ad221231b49.mp4"
       ],
-      "value": 319,
-      "scoreLabel": "score 319 · 310 favourites",
+      "value": 320,
+      "scoreLabel": "score 320 · 311 favourites",
       "postedAt": "2026-09-11T22:29:19.636Z",
       "nsfw": true,
       "context": "zenless zone zero",
@@ -302,20 +302,20 @@
       "heat": 37
     },
     {
-      "id": "reddit:1we5iq4",
+      "id": "reddit:1webfps",
       "source": "reddit",
-      "title": "[RF] Moira Scuggs for u/kiwibreakfast",
-      "artist": "u/Lys_shrug",
-      "artistUrl": "https://www.reddit.com/user/Lys_shrug",
-      "url": "https://www.reddit.com/r/characterdrawing/comments/1we5iq4/rf_moira_scuggs_for_ukiwibreakfast/",
-      "image": "https://preview.redd.it/lb3atow3g1ph1.png?width=140&height=140&crop=1:1,smart&auto=webp&s=8cb7f9d4e3c017f8f8ec4ac5777b4c387fa6323c",
-      "thumb": "https://preview.redd.it/lb3atow3g1ph1.png?width=140&height=140&crop=1:1,smart&auto=webp&s=8cb7f9d4e3c017f8f8ec4ac5777b4c387fa6323c",
+      "title": "Art by Il_ho | 101ho_",
+      "artist": "u/Cyborg_Ape",
+      "artistUrl": "https://www.reddit.com/user/Cyborg_Ape",
+      "url": "https://www.reddit.com/r/ImaginaryMonsters/comments/1webfps/art_by_il_ho_101ho/",
+      "image": "https://preview.redd.it/s4nit8gt23ph1.jpeg?width=640&crop=smart&auto=webp&s=89abdf330b16aa67a31c69a1b82a25148ced7ad1",
+      "thumb": "https://preview.redd.it/s4nit8gt23ph1.jpeg?width=640&crop=smart&auto=webp&s=89abdf330b16aa67a31c69a1b82a25148ced7ad1",
       "value": 93,
-      "scoreLabel": "#8 top today in r/characterdrawing",
+      "scoreLabel": "#8 top today in r/ImaginaryMonsters",
       "nsfw": false,
-      "postedAt": "2026-09-12T07:04:05.000Z",
-      "context": "r/characterdrawing",
-      "heat": 91
+      "postedAt": "2026-09-12T12:32:31.000Z",
+      "context": "r/ImaginaryMonsters",
+      "heat": 93
     },
     {
       "id": "artstation:wOJW1X",
@@ -376,20 +376,20 @@
       "heat": 33
     },
     {
-      "id": "reddit:1wdvxlu",
+      "id": "reddit:1we1ilc",
       "source": "reddit",
-      "title": "A touch of magic—you decide which one",
-      "artist": "u/Adorable_Level2420",
-      "artistUrl": "https://www.reddit.com/user/Adorable_Level2420",
-      "url": "https://www.reddit.com/r/ImaginaryCharacters/comments/1wdvxlu/a_touch_of_magicyou_decide_which_one/",
-      "image": "https://preview.redd.it/wpeww8qi3zoh1.jpeg?width=640&crop=smart&auto=webp&s=b211cfda247f366171eedd0bd0deeb988bb0223a",
-      "thumb": "https://preview.redd.it/wpeww8qi3zoh1.jpeg?width=640&crop=smart&auto=webp&s=b211cfda247f366171eedd0bd0deeb988bb0223a",
-      "value": 89,
-      "scoreLabel": "#12 top today in r/ImaginaryCharacters",
+      "title": "Dungeon Meowster",
+      "artist": "u/LegsIRL",
+      "artistUrl": "https://www.reddit.com/user/LegsIRL",
+      "url": "https://www.reddit.com/r/DungeonsAndDragons/comments/1we1ilc/dungeon_meowster/",
+      "image": "https://preview.redd.it/hgmpkp4oe0ph1.jpeg?width=640&crop=smart&auto=webp&s=0430008b7e3a8977a41f952bc849b28bc6f93529",
+      "thumb": "https://preview.redd.it/hgmpkp4oe0ph1.jpeg?width=640&crop=smart&auto=webp&s=0430008b7e3a8977a41f952bc849b28bc6f93529",
+      "value": 91,
+      "scoreLabel": "#10 top today in r/DungeonsAndDragons",
       "nsfw": false,
-      "postedAt": "2026-09-11T23:14:23.000Z",
-      "context": "r/ImaginaryCharacters",
-      "heat": 86
+      "postedAt": "2026-09-12T03:33:35.000Z",
+      "context": "r/DungeonsAndDragons",
+      "heat": 89
     },
     {
       "id": "artstation:6vN5Nx",
@@ -450,19 +450,19 @@
       "heat": 32
     },
     {
-      "id": "reddit:1wdsyxi",
+      "id": "reddit:1wefjbp",
       "source": "reddit",
-      "title": "\"Reclaimed\" (OC)",
-      "artist": "u/BespokeCube",
-      "artistUrl": "https://www.reddit.com/user/BespokeCube",
-      "url": "https://www.reddit.com/r/ImaginaryArchitecture/comments/1wdsyxi/reclaimed_oc/",
-      "image": "https://preview.redd.it/zzkfjltqiyoh1.jpeg?width=640&crop=smart&auto=webp&s=cf19e045339a9aca450db215d6b888a9851e6d9d",
-      "thumb": "https://preview.redd.it/zzkfjltqiyoh1.jpeg?width=640&crop=smart&auto=webp&s=cf19e045339a9aca450db215d6b888a9851e6d9d",
-      "value": 89,
-      "scoreLabel": "#12 top today in r/ImaginaryArchitecture",
+      "title": "Various Forms 다양한 형태 by 김경환(Kyounghwan Kim) tahraart",
+      "artist": "u/snoopmask10",
+      "artistUrl": "https://www.reddit.com/user/snoopmask10",
+      "url": "https://www.reddit.com/r/ImaginaryTechnology/comments/1wefjbp/various_forms_다양한_형태_by_김경환kyounghwan_kim/",
+      "image": "https://preview.redd.it/z8y3h9bzx3ph1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=44e31c0ea4dcfa04ab22e5ca7f629be205c4d0e8",
+      "thumb": "https://preview.redd.it/z8y3h9bzx3ph1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=44e31c0ea4dcfa04ab22e5ca7f629be205c4d0e8",
+      "value": 83,
+      "scoreLabel": "#18 top today in r/ImaginaryTechnology",
       "nsfw": false,
-      "postedAt": "2026-09-11T21:12:53.000Z",
-      "context": "r/ImaginaryArchitecture",
+      "postedAt": "2026-09-12T15:27:50.000Z",
+      "context": "r/ImaginaryTechnology",
       "heat": 85
     },
     {
@@ -500,12 +500,12 @@
         "https://cdn.donmai.us/180x180/ff/52/ff52bcc40575248fa7a1bd5d8a11d311.jpg",
         "https://cdn.donmai.us/original/ff/52/ff52bcc40575248fa7a1bd5d8a11d311.png"
       ],
-      "value": 259,
-      "scoreLabel": "score 259 · 246 favourites",
+      "value": 262,
+      "scoreLabel": "score 262 · 248 favourites",
       "postedAt": "2026-09-12T03:50:48.072Z",
       "nsfw": true,
       "context": "aogiri koukou",
-      "heat": 70
+      "heat": 71
     },
     {
       "id": "pixiv:149542894",
