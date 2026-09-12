@@ -299,10 +299,22 @@ async function redditToken() {
  * or banned is isolated in a handful of requests — rather than one request per
  * subreddit, which Reddit throttles hard enough to look like 14 dead subs.
  */
-export const REDDIT_DEFAULTS = { groupSize: 13, budget: 40, pause: 1500, backoff: 5000 };
+export const REDDIT_DEFAULTS = {
+  groupSize: 13,
+  budget: 40,
+  pause: 1500,
+  backoff: 5000,
+  // A request budget bounds how many times Reddit is asked, but not how long
+  // each one takes, so the search also runs against a clock.
+  deadlineMs: 240_000,
+};
 
 export async function harvestSubreddits(subs, run, options = {}) {
-  const { groupSize, budget, pause, backoff } = { ...REDDIT_DEFAULTS, ...options };
+  const { groupSize, budget, pause, backoff, deadlineMs, now = () => Date.now() } = {
+    ...REDDIT_DEFAULTS,
+    ...options,
+  };
+  const startedAt = now();
   const items = [];
   const dropped = [];
   const errors = [];
@@ -315,7 +327,7 @@ export async function harvestSubreddits(subs, run, options = {}) {
   const drop = (subs, reason) => dropped.push(...subs.map((sub) => `r/${sub} (${reason})`));
 
   const attempt = async (group) => {
-    if (requests >= budget) {
+    if (requests >= budget || now() - startedAt > deadlineMs) {
       spent = true;
       return { ok: false, spent: true };
     }
@@ -371,7 +383,7 @@ export async function harvestSubreddits(subs, run, options = {}) {
     await sleep(pause);
   }
 
-  return { items, fetched, dropped, errors, requests, budgetSpent: spent };
+  return { items, fetched, dropped, errors, requests, budgetSpent: spent, elapsedMs: now() - startedAt };
 }
 
 async function collectReddit(cfg) {

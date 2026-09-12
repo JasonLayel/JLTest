@@ -477,6 +477,28 @@ test('subreddits: throttling is retried once, then reported, never unbounded', a
   );
 });
 
+test('subreddits: a slow day stops at the deadline, not at the budget', async () => {
+  let clock = 0;
+  let calls = 0;
+  const slow = async () => {
+    calls++;
+    clock += 30_000; // every request burns half a minute before failing
+    const err = new Error('HTTP 504 Gateway Timeout');
+    err.status = 504;
+    throw err;
+  };
+  const result = await harvestSubreddits(SUBS, slow, {
+    pause: 0,
+    backoff: 0,
+    budget: 40,
+    deadlineMs: 120_000,
+    now: () => clock,
+  });
+  assert.ok(calls <= 6, `stopped after ${calls} requests rather than 40`);
+  assert.ok(result.budgetSpent);
+  assert.equal(result.dropped.length, 26);
+});
+
 /* ------------------------------------------------------------ nsfw policy */
 
 test('nsfw policy: include keeps everything, exclude and only split it', () => {
