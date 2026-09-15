@@ -301,6 +301,11 @@
   /* --------------------------------------------------------------- data */
 
   async function fetchDigest() {
+    // A single-file copy of the page carries its digest inline, so there is
+    // nothing to fetch and it works anywhere — including offline.
+    if (window.__ART_DIGEST__ && Array.isArray(window.__ART_DIGEST__.items)) {
+      return window.__ART_DIGEST__;
+    }
     const res = await fetch(`${FEED_URL}?t=${Date.now()}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const digest = await res.json();

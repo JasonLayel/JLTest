@@ -23,6 +23,7 @@ import {
   rankItems,
   resolveThumbnails,
   renderEmail,
+  renderFeed,
 } from '../collect.mjs';
 
 let passed = 0;
@@ -881,6 +882,29 @@ test('sampleShape: trims a raw row to something loggable', () => {
 
 // Run in declaration order so the output reads top to bottom.
 for (const run of pending) await run();
+
+/* -------------------------------------------------------------------- feed */
+
+test('feed: one item per artwork, with the image and the 18+ marker', () => {
+  const digest = {
+    generatedAt: new Date(NOW).toISOString(),
+    sourceLabels: { reddit: 'Reddit', danbooru: 'Danbooru' },
+    items: [
+      { id: 'reddit:a', source: 'reddit', title: 'Kyudo & Ink', artist: 'u/painterly', url: 'https://www.reddit.com/r/Art/comments/a/', thumb: 'https://preview.redd.it/a.jpg', heat: 94, scoreLabel: '9k upvotes', context: 'r/Art', postedAt: new Date(NOW - 3600_000).toISOString(), nsfw: false },
+      { id: 'danbooru:b', source: 'danbooru', title: 'piece', artist: 'someone', url: 'https://danbooru.donmai.us/posts/2', thumb: '', heat: 80, scoreLabel: 'score 200', context: 'original', postedAt: null, nsfw: true },
+    ],
+  };
+  const xml = renderFeed(digest, { siteUrl: 'https://example.com/', feedUrl: 'https://example.com/data/feed.xml' });
+
+  assert.equal((xml.match(/<item>/g) || []).length, 2, 'one entry per piece, not per day');
+  assert.ok(xml.includes('<title>Kyudo &amp; Ink — u/painterly</title>'), 'titles are escaped');
+  assert.ok(xml.includes('<guid isPermaLink="false">reddit:a</guid>'), 'a stable guid keeps read state');
+  assert.ok(xml.includes('<media:content url="https://preview.redd.it/a.jpg"'), 'the image is offered to the reader');
+  assert.ok(xml.includes('[18+] piece'), 'adult pieces say so in the title');
+  assert.ok(!xml.includes('<media:content url=""'), 'an item with no image omits the tag');
+  assert.ok(xml.includes('<atom:link href="https://example.com/data/feed.xml"'), 'the feed points at itself');
+  assert.match(xml, /^<\?xml version="1\.0" encoding="UTF-8"\?>/);
+});
 
 console.log(`\n${passed} passed, ${failures.length} failed`);
 if (failures.length) process.exit(1);

@@ -1164,6 +1164,58 @@ export function renderEmail(digest, { siteUrl = CONFIG.siteUrl, imageSrc = null 
 </body></html>`;
 }
 
+/* -------------------------------------------------------------------- feed */
+
+const rfc822 = (iso) => {
+  const d = new Date(iso);
+  return Number.isNaN(d.valueOf()) ? new Date().toUTCString() : d.toUTCString();
+};
+
+/**
+ * One RSS item per artwork, so a reader tracks what has been seen piece by
+ * piece rather than day by day. Readers fetch images themselves, from the
+ * reader's own connection, which is why the feed can link them rather than
+ * having to carry them the way the email does.
+ */
+export function renderFeed(digest, { siteUrl = CONFIG.siteUrl, feedUrl = `${CONFIG.siteUrl}data/feed.xml` } = {}) {
+  const items = digest.items
+    .map((item) => {
+      const label = digest.sourceLabels?.[item.source] || item.source;
+      const thumb = item.thumb || item.image;
+      const body = [
+        thumb ? `<p><a href="${esc(item.url)}"><img src="${esc(thumb)}" alt="" style="max-width:100%"></a></p>` : '',
+        `<p>${esc(item.artist || 'Unknown artist')} · ${esc(label)}${item.context ? ` · ${esc(item.context)}` : ''}</p>`,
+        `<p>🔥 ${item.heat} · ${esc(item.scoreLabel)}${item.nsfw ? ' · <strong>18+</strong>' : ''}</p>`,
+      ].join('');
+      return `    <item>
+      <title>${esc(item.nsfw ? '[18+] ' : '')}${esc(item.title)}${item.artist ? ` — ${esc(item.artist)}` : ''}</title>
+      <link>${esc(item.url)}</link>
+      <guid isPermaLink="false">${esc(item.id)}</guid>
+      <pubDate>${rfc822(item.postedAt || digest.generatedAt)}</pubDate>
+      <category>${esc(label)}</category>
+      <description><![CDATA[${body}]]></description>${
+        thumb ? `\n      <media:content url="${esc(thumb)}" medium="image"/>` : ''
+      }
+    </item>`;
+    })
+    .join('\n');
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:media="http://search.yahoo.com/mrss/" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Daily Digital Art Digest</title>
+    <link>${esc(siteUrl)}</link>
+    <atom:link href="${esc(feedUrl)}" rel="self" type="application/rss+xml"/>
+    <description>The most popular new digital art from ArtStation, Reddit, Pixiv, DeviantArt, Bluesky and Danbooru, collected daily and ranked together.</description>
+    <language>en</language>
+    <lastBuildDate>${rfc822(digest.generatedAt)}</lastBuildDate>
+    <ttl>720</ttl>
+${items}
+  </channel>
+</rss>
+`;
+}
+
 /* ------------------------------------------------------------------- main */
 
 export async function buildDigest(cfg = CONFIG) {
@@ -1241,6 +1293,7 @@ async function main() {
   await writeFile(join(CONFIG.outDir, 'latest.json'), json);
   await writeFile(join(CONFIG.outDir, 'archive', `${day}.json`), json);
   await writeFile(join(CONFIG.outDir, 'email.html'), `${renderEmail(digest)}\n`);
+  await writeFile(join(CONFIG.outDir, 'feed.xml'), renderFeed(digest));
 
   for (const s of digest.sources) {
     const detail = s.status === 'ok' ? `${s.kept} kept of ${s.fetched}${s.note ? ` — ${s.note}` : ''}` : s.error;

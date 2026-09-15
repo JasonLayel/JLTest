@@ -34,6 +34,7 @@ it stays a plain static page with no server, no build and no API keys.
 | `test/smtp.mjs` | Mail round-trip against a throwaway local SMTP server |
 | `data/latest.json` | The current digest (written by CI) |
 | `data/email.html` | The same digest as a ready-to-send HTML email |
+| `data/feed.xml` | The same digest as an RSS feed, one entry per artwork |
 | `data/archive/*.json` | One snapshot per day |
 
 ## Sources
@@ -222,6 +223,13 @@ up as a message body:
 ```sh
 curl -s https://raw.githubusercontent.com/JasonLayel/JLTest/master/art-digest/data/email.html
 ```
+
+## Subscribing in a reader
+
+`data/feed.xml` is a standard RSS feed with one entry per artwork, so a reader
+tracks what you have seen piece by piece. Readers fetch the images themselves,
+over your own connection, which is why the feed can link them where the email
+has to carry them.
 
 ## Tests
 
