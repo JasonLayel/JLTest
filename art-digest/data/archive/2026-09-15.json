@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-09-15T12:18:01.800Z",
+  "generatedAt": "2026-09-15T12:22:52.746Z",
   "windowHours": 48,
-  "totalCollected": 356,
+  "totalCollected": 422,
   "nsfwPolicy": "include",
-  "nsfwCount": 6,
+  "nsfwCount": 8,
   "sourceLabels": {
     "artstation": "ArtStation",
     "reddit": "Reddit",
@@ -29,10 +29,10 @@
       "label": "Reddit",
       "home": "https://www.reddit.com",
       "status": "ok",
-      "fetched": 335,
-      "kept": 206,
-      "note": "via atom feed · 24 requests · dropped r/ImaginaryWesteros (budget spent), r/AnimeSketch (budget spent), r/awwnime (budget spent), r/ImaginaryLandscapes (budget spent), r/ImaginaryCityscapes (budget spent), r/ImaginaryMythology (budget spent), r/ImaginaryWildlands (budget spent), r/rule34 (budget spent), r/hentai (budget spent) · request budget spent",
-      "nsfw": 10,
+      "fetched": 314,
+      "kept": 272,
+      "note": "via atom feed · 17 requests · dropped r/ecchi (unreachable (429)), r/ImaginaryLandscapes (unreachable (429)), r/ImaginaryCityscapes (unreachable (429)), r/ImaginaryWesteros (unreachable (429)), r/AnimeSketch (unreachable (429))",
+      "nsfw": 99,
       "error": null
     },
     {
@@ -88,12 +88,12 @@
       "url": "https://www.reddit.com/r/Warhammer40k/comments/1wgvw7c/my_groovy_1960s_hippie_marine/",
       "image": "https://preview.redd.it/r4nzy7q1pnph1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=996bb293a80c69ce97e20b713b582b5d5e801de0",
       "thumb": "https://preview.redd.it/r4nzy7q1pnph1.jpg?width=140&height=140&crop=1:1,smart&auto=webp&s=996bb293a80c69ce97e20b713b582b5d5e801de0",
-      "value": 98,
-      "scoreLabel": "#3 top today in r/Warhammer40k",
+      "value": 97,
+      "scoreLabel": "#4 top today in r/Warhammer40k",
       "nsfw": false,
       "postedAt": "2026-09-15T09:52:44.000Z",
       "context": "r/Warhammer40k",
-      "heat": 98
+      "heat": 97
     },
     {
       "id": "artstation:eglvYw",
@@ -102,13 +102,13 @@
       "artist": "Tooth Wu",
       "artistUrl": "https://www.artstation.com/tooth",
       "url": "https://www.artstation.com/artwork/eglvYw",
-      "image": "https://cdnb.artstation.com/p/assets/images/images/102/433/201/20260915051541/small_square/tooth-wu-f1.jpg?1789467342",
-      "thumb": "https://cdnb.artstation.com/p/assets/images/images/102/433/201/20260915051541/small_square/tooth-wu-f1.jpg?1789467342",
+      "image": "https://cdnb.artstation.com/p/assets/images/images/102/433/201/20260915071748/small_square/tooth-wu-f1.jpg?1789474668",
+      "thumb": "https://cdnb.artstation.com/p/assets/images/images/102/433/201/20260915071748/small_square/tooth-wu-f1.jpg?1789474668",
       "thumbFallbacks": [
-        "https://cdnb.artstation.com/p/assets/images/images/102/433/201/20260915051541/large/tooth-wu-f1.jpg?1789467342",
-        "https://cdnb.artstation.com/p/assets/images/images/102/433/201/20260915051541/small/tooth-wu-f1.jpg?1789467342",
-        "https://cdnb.artstation.com/p/assets/images/images/102/433/201/20260915051541/small_square/tooth-wu-f1.jpg?1789467342",
-        "https://cdnb.artstation.com/p/assets/images/images/102/433/201/20260915051541/smaller_square/tooth-wu-f1.jpg?1789467342"
+        "https://cdnb.artstation.com/p/assets/images/images/102/433/201/20260915071748/large/tooth-wu-f1.jpg?1789474668",
+        "https://cdnb.artstation.com/p/assets/images/images/102/433/201/20260915071748/small/tooth-wu-f1.jpg?1789474668",
+        "https://cdnb.artstation.com/p/assets/images/images/102/433/201/20260915071748/small_square/tooth-wu-f1.jpg?1789474668",
+        "https://cdnb.artstation.com/p/assets/images/images/102/433/201/20260915071748/smaller_square/tooth-wu-f1.jpg?1789474668"
       ],
       "value": 50,
       "scoreLabel": "#1 trending",
@@ -130,8 +130,8 @@
         "https://cdn.donmai.us/180x180/eb/ea/ebea64f2797eb7edd73c6edc16820d9f.jpg",
         "https://cdn.donmai.us/original/eb/ea/ebea64f2797eb7edd73c6edc16820d9f.jpg"
       ],
-      "value": 310,
-      "scoreLabel": "score 310 · 285 favourites",
+      "value": 312,
+      "scoreLabel": "score 312 · 287 favourites",
       "postedAt": "2026-09-14T05:04:09.509Z",
       "nsfw": true,
       "context": "re:zero kara hajimeru isekai seikatsu",
@@ -154,20 +154,20 @@
       "heat": 88
     },
     {
-      "id": "reddit:1wg7dss",
+      "id": "reddit:1wg99gi",
       "source": "reddit",
-      "title": "Liquid Sunshine, Michael Alfano, sculpture, 2020",
-      "artist": "u/unpaid-pukegreencow",
-      "artistUrl": "https://www.reddit.com/user/unpaid-pukegreencow",
-      "url": "https://www.reddit.com/r/Art/comments/1wg7dss/liquid_sunshine_michael_alfano_sculpture_2020/",
-      "image": "https://preview.redd.it/ez7bor19diph1.jpeg?width=640&crop=smart&auto=webp&s=09505e81b8e21e8b538f0bb876185db505b7ec19",
-      "thumb": "https://preview.redd.it/ez7bor19diph1.jpeg?width=640&crop=smart&auto=webp&s=09505e81b8e21e8b538f0bb876185db505b7ec19",
+      "title": "Megumin blowjob (al10_hacc) [Konosuba]",
+      "artist": "u/That-casual-guy",
+      "artistUrl": "https://www.reddit.com/user/That-casual-guy",
+      "url": "https://www.reddit.com/r/hentai/comments/1wg99gi/megumin_blowjob_al10_hacc_konosuba/",
+      "image": "https://external-preview.redd.it/q_GNbH7QBlRhu0xUECguShFI5Sn45XuUVuaRnwUH4Q4.jpeg?width=320&crop=smart&auto=webp&s=9c4af5fb0c8c2949a009a43c675ebadfa1945f2a",
+      "thumb": "https://external-preview.redd.it/q_GNbH7QBlRhu0xUECguShFI5Sn45XuUVuaRnwUH4Q4.jpeg?width=320&crop=smart&auto=webp&s=9c4af5fb0c8c2949a009a43c675ebadfa1945f2a",
       "value": 100,
-      "scoreLabel": "#1 top today in r/Art",
-      "nsfw": false,
-      "postedAt": "2026-09-14T15:57:43.000Z",
-      "context": "r/Art",
-      "heat": 94
+      "scoreLabel": "#1 top today in r/hentai",
+      "nsfw": true,
+      "postedAt": "2026-09-14T17:04:01.000Z",
+      "context": "r/hentai",
+      "heat": 95
     },
     {
       "id": "artstation:Xagvry",
@@ -192,24 +192,24 @@
       "heat": 92
     },
     {
-      "id": "danbooru:12191448",
+      "id": "danbooru:12190623",
       "source": "danbooru",
-      "title": "(original)",
-      "artist": "ie",
-      "artistUrl": "https://i.pximg.net/img-original/img/2026/09/14/22/00/03/149671396_p0.png",
-      "url": "https://danbooru.donmai.us/posts/12191448",
+      "title": "izuna (arknights)",
+      "artist": "mouma",
+      "artistUrl": "https://i.pximg.net/img-original/img/2026/05/15/19/23/59/144803503_p0.jpg",
+      "url": "https://danbooru.donmai.us/posts/12190623",
       "image": "",
       "thumb": "",
       "thumbFallbacks": [
-        "https://cdn.donmai.us/180x180/0f/ed/0fedef76feae591ee430e19d24f7adfb.jpg",
-        "https://cdn.donmai.us/original/0f/ed/0fedef76feae591ee430e19d24f7adfb.png"
+        "https://cdn.donmai.us/180x180/74/92/7492a2aece01614c23f5de3841755396.jpg",
+        "https://cdn.donmai.us/original/74/92/7492a2aece01614c23f5de3841755396.jpg"
       ],
-      "value": 295,
-      "scoreLabel": "score 295 · 274 favourites",
-      "postedAt": "2026-09-14T13:01:35.533Z",
+      "value": 299,
+      "scoreLabel": "score 299 · 281 favourites",
+      "postedAt": "2026-09-14T09:59:28.385Z",
       "nsfw": true,
-      "context": "original",
-      "heat": 90
+      "context": "arknights",
+      "heat": 89
     },
     {
       "id": "pixiv:149667269",
@@ -228,19 +228,19 @@
       "heat": 43
     },
     {
-      "id": "reddit:1wg4y73",
+      "id": "reddit:1wg7dss",
       "source": "reddit",
-      "title": "Unicorn by Hannah Comstock",
-      "artist": "u/Cyborg_Ape",
-      "artistUrl": "https://www.reddit.com/user/Cyborg_Ape",
-      "url": "https://www.reddit.com/r/ImaginaryMonsters/comments/1wg4y73/unicorn_by_hannah_comstock/",
-      "image": "https://preview.redd.it/k3psz400xhph1.gif?width=640&crop=smart&s=68378252f4381c0be39adcac51c583a2c565833d",
-      "thumb": "https://preview.redd.it/k3psz400xhph1.gif?width=640&crop=smart&s=68378252f4381c0be39adcac51c583a2c565833d",
+      "title": "Liquid Sunshine, Michael Alfano, sculpture, 2020",
+      "artist": "u/unpaid-pukegreencow",
+      "artistUrl": "https://www.reddit.com/user/unpaid-pukegreencow",
+      "url": "https://www.reddit.com/r/Art/comments/1wg7dss/liquid_sunshine_michael_alfano_sculpture_2020/",
+      "image": "https://preview.redd.it/ez7bor19diph1.jpeg?width=640&crop=smart&auto=webp&s=09505e81b8e21e8b538f0bb876185db505b7ec19",
+      "thumb": "https://preview.redd.it/ez7bor19diph1.jpeg?width=640&crop=smart&auto=webp&s=09505e81b8e21e8b538f0bb876185db505b7ec19",
       "value": 100,
-      "scoreLabel": "#1 top today in r/ImaginaryMonsters",
+      "scoreLabel": "#1 top today in r/Art",
       "nsfw": false,
-      "postedAt": "2026-09-14T14:26:47.000Z",
-      "context": "r/ImaginaryMonsters",
+      "postedAt": "2026-09-14T15:57:43.000Z",
+      "context": "r/Art",
       "heat": 94
     },
     {
@@ -266,23 +266,23 @@
       "heat": 90
     },
     {
-      "id": "danbooru:12190623",
+      "id": "danbooru:12191448",
       "source": "danbooru",
-      "title": "izuna (arknights)",
-      "artist": "mouma",
-      "artistUrl": "https://i.pximg.net/img-original/img/2026/05/15/19/23/59/144803503_p0.jpg",
-      "url": "https://danbooru.donmai.us/posts/12190623",
+      "title": "(original)",
+      "artist": "ie",
+      "artistUrl": "https://i.pximg.net/img-original/img/2026/09/14/22/00/03/149671396_p0.png",
+      "url": "https://danbooru.donmai.us/posts/12191448",
       "image": "",
       "thumb": "",
       "thumbFallbacks": [
-        "https://cdn.donmai.us/180x180/74/92/7492a2aece01614c23f5de3841755396.jpg",
-        "https://cdn.donmai.us/original/74/92/7492a2aece01614c23f5de3841755396.jpg"
+        "https://cdn.donmai.us/180x180/0f/ed/0fedef76feae591ee430e19d24f7adfb.jpg",
+        "https://cdn.donmai.us/original/0f/ed/0fedef76feae591ee430e19d24f7adfb.png"
       ],
-      "value": 297,
-      "scoreLabel": "score 297 · 279 favourites",
-      "postedAt": "2026-09-14T09:59:28.385Z",
+      "value": 296,
+      "scoreLabel": "score 296 · 275 favourites",
+      "postedAt": "2026-09-14T13:01:35.533Z",
       "nsfw": true,
-      "context": "arknights",
+      "context": "original",
       "heat": 89
     },
     {
@@ -302,20 +302,20 @@
       "heat": 36
     },
     {
-      "id": "reddit:1wg2etx",
+      "id": "reddit:1wg4y73",
       "source": "reddit",
-      "title": "«king of beeches» 2024",
-      "artist": "u/Anastasia_Trusova",
-      "artistUrl": "https://www.reddit.com/user/Anastasia_Trusova",
-      "url": "https://www.reddit.com/r/painting/comments/1wg2etx/king_of_beeches_2024/",
-      "image": "https://preview.redd.it/4ch1vjkxehph1.jpeg?width=640&crop=smart&auto=webp&s=c11c589d02463b68447540d444fe22e0216bcc59",
-      "thumb": "https://preview.redd.it/4ch1vjkxehph1.jpeg?width=640&crop=smart&auto=webp&s=c11c589d02463b68447540d444fe22e0216bcc59",
-      "value": 97,
-      "scoreLabel": "#4 top today in r/painting",
+      "title": "Unicorn by Hannah Comstock",
+      "artist": "u/Cyborg_Ape",
+      "artistUrl": "https://www.reddit.com/user/Cyborg_Ape",
+      "url": "https://www.reddit.com/r/ImaginaryMonsters/comments/1wg4y73/unicorn_by_hannah_comstock/",
+      "image": "https://preview.redd.it/k3psz400xhph1.gif?width=640&crop=smart&s=68378252f4381c0be39adcac51c583a2c565833d",
+      "thumb": "https://preview.redd.it/k3psz400xhph1.gif?width=640&crop=smart&s=68378252f4381c0be39adcac51c583a2c565833d",
+      "value": 100,
+      "scoreLabel": "#1 top today in r/ImaginaryMonsters",
       "nsfw": false,
-      "postedAt": "2026-09-14T12:45:21.000Z",
-      "context": "r/painting",
-      "heat": 91
+      "postedAt": "2026-09-14T14:26:47.000Z",
+      "context": "r/ImaginaryMonsters",
+      "heat": 94
     },
     {
       "id": "artstation:eglXnD",
@@ -352,8 +352,8 @@
         "https://cdn.donmai.us/180x180/17/32/1732bd0937c51d5a06b6bc76917db683.jpg",
         "https://cdn.donmai.us/original/17/32/1732bd0937c51d5a06b6bc76917db683.jpg"
       ],
-      "value": 280,
-      "scoreLabel": "score 280 · 259 favourites",
+      "value": 282,
+      "scoreLabel": "score 282 · 261 favourites",
       "postedAt": "2026-09-14T18:27:45.988Z",
       "nsfw": false,
       "context": "blue archive",
@@ -376,20 +376,20 @@
       "heat": 29
     },
     {
-      "id": "reddit:1wgblqb",
+      "id": "reddit:1wg60dt",
       "source": "reddit",
-      "title": "[OC] Vaelis Aerwyn , Art by me",
-      "artist": "u/SauloSouzaArtwork",
-      "artistUrl": "https://www.reddit.com/user/SauloSouzaArtwork",
-      "url": "https://www.reddit.com/r/ImaginaryCharacters/comments/1wgblqb/oc_vaelis_aerwyn_art_by_me/",
-      "image": "https://preview.redd.it/hs6pvet23jph1.png?width=140&height=140&crop=1:1,smart&auto=webp&s=9b0b5944b184529bfa8aa31e6194a138d32781c2",
-      "thumb": "https://preview.redd.it/hs6pvet23jph1.png?width=140&height=140&crop=1:1,smart&auto=webp&s=9b0b5944b184529bfa8aa31e6194a138d32781c2",
-      "value": 94,
-      "scoreLabel": "#7 top today in r/ImaginaryCharacters",
-      "nsfw": false,
-      "postedAt": "2026-09-14T18:24:33.000Z",
-      "context": "r/ImaginaryCharacters",
-      "heat": 90
+      "title": "Malevola couch sex (Araneesama) [Dispatch]",
+      "artist": "u/noelleworshipper",
+      "artistUrl": "https://www.reddit.com/user/noelleworshipper",
+      "url": "https://www.reddit.com/r/rule34/comments/1wg60dt/malevola_couch_sex_araneesama_dispatch/",
+      "image": "https://preview.redd.it/7glvhcw64iph1.png?width=140&height=140&crop=1:1,smart&auto=webp&s=e0672290b1137efc25300b4510a5bce73c46f936",
+      "thumb": "https://preview.redd.it/7glvhcw64iph1.png?width=140&height=140&crop=1:1,smart&auto=webp&s=e0672290b1137efc25300b4510a5bce73c46f936",
+      "value": 98,
+      "scoreLabel": "#3 top today in r/rule34",
+      "nsfw": true,
+      "postedAt": "2026-09-14T15:07:05.000Z",
+      "context": "r/rule34",
+      "heat": 92
     },
     {
       "id": "artstation:q0eXxR",
@@ -426,8 +426,8 @@
         "https://cdn.donmai.us/180x180/77/d8/77d8b8659bc41bd56162585f0f9bc801.jpg",
         "https://cdn.donmai.us/original/77/d8/77d8b8659bc41bd56162585f0f9bc801.jpg"
       ],
-      "value": 289,
-      "scoreLabel": "score 289 · 269 favourites",
+      "value": 290,
+      "scoreLabel": "score 290 · 270 favourites",
       "postedAt": "2026-09-14T04:59:02.791Z",
       "nsfw": true,
       "context": "zenless zone zero",
@@ -450,20 +450,20 @@
       "heat": 27
     },
     {
-      "id": "reddit:1wgg7c6",
+      "id": "reddit:1wg2etx",
       "source": "reddit",
-      "title": "[OC] Elemental Sorceress, Did you like the combination between a fairy and an elf?",
-      "artist": "u/Maxgalore_",
-      "artistUrl": "https://www.reddit.com/user/Maxgalore_",
-      "url": "https://www.reddit.com/r/characterdrawing/comments/1wgg7c6/oc_elemental_sorceress_did_you_like_the/",
-      "image": "https://preview.redd.it/7vmznjp8wjph1.png?width=640&crop=smart&auto=webp&s=e14f7c168dde29b9d02f2ef507a52061ddd99f0a",
-      "thumb": "https://preview.redd.it/7vmznjp8wjph1.png?width=640&crop=smart&auto=webp&s=e14f7c168dde29b9d02f2ef507a52061ddd99f0a",
-      "value": 92,
-      "scoreLabel": "#9 top today in r/characterdrawing",
+      "title": "«king of beeches» 2024",
+      "artist": "u/Anastasia_Trusova",
+      "artistUrl": "https://www.reddit.com/user/Anastasia_Trusova",
+      "url": "https://www.reddit.com/r/painting/comments/1wg2etx/king_of_beeches_2024/",
+      "image": "https://preview.redd.it/4ch1vjkxehph1.jpeg?width=640&crop=smart&auto=webp&s=c11c589d02463b68447540d444fe22e0216bcc59",
+      "thumb": "https://preview.redd.it/4ch1vjkxehph1.jpeg?width=640&crop=smart&auto=webp&s=c11c589d02463b68447540d444fe22e0216bcc59",
+      "value": 97,
+      "scoreLabel": "#4 top today in r/painting",
       "nsfw": false,
-      "postedAt": "2026-09-14T21:08:51.000Z",
-      "context": "r/characterdrawing",
-      "heat": 89
+      "postedAt": "2026-09-14T12:45:21.000Z",
+      "context": "r/painting",
+      "heat": 91
     },
     {
       "id": "artstation:KRewnR",
@@ -505,7 +505,7 @@
       "postedAt": "2026-09-14T12:54:27.076Z",
       "nsfw": true,
       "context": "umamusume",
-      "heat": 81
+      "heat": 80
     },
     {
       "id": "pixiv:149640516",
