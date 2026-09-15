@@ -1026,8 +1026,14 @@ async function urlResolves(url, { referer = '' } = {}) {
 /**
  * Some thumbnails are derived rather than given: ArtStation's are upsized from
  * a square cover, Pixiv's go through a mirror. The email can't retry a broken
- * image the way the widget can, so every thumbnail is checked here and either
- * swapped for the source's fallback or dropped, leaving a text card.
+ * image the way the widget can, so each candidate is checked here and the
+ * first one that loads wins.
+ *
+ * A candidate that fails is not thrown away, though. This check runs from a
+ * datacenter, while the reader loads the image from their own connection or
+ * through Gmail's proxy, and a CDN that refuses the former will happily serve
+ * the latter — which is exactly what silently cost every Danbooru thumbnail.
+ * So when nothing verifies, the best candidate still ships, marked unverified.
  */
 export async function resolveThumbnails(items, { check = urlResolves, concurrency = 8 } = {}) {
   const queue = [...items];
@@ -1049,11 +1055,20 @@ export async function resolveThumbnails(items, { check = urlResolves, concurrenc
           break;
         }
       }
-      if (resolved === item.thumb) continue;
-      item.thumb = resolved;
-      // The big version is derived from the same guess as the thumbnail, so
-      // when the guess was wrong fall back to what did resolve.
-      item.image = resolved;
+      if (resolved) {
+        if (resolved === item.thumb) continue;
+        item.thumb = resolved;
+        // The big version is derived from the same guess as the thumbnail, so
+        // when the guess was wrong fall back to what did resolve.
+        item.image = resolved;
+        continue;
+      }
+      // Nothing answered us. Keep the first candidate rather than shipping a
+      // blank card: the reader's connection may well be served where ours was
+      // refused, and the widget still walks the fallbacks if it isn't.
+      item.thumb = ladder[0] || '';
+      item.image = item.image || item.thumb;
+      if (item.thumb) item.thumbVerified = false;
     }
   };
   await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, worker));
@@ -1197,8 +1212,10 @@ export async function buildDigest(cfg = CONFIG) {
   const items = await resolveThumbnails(
     rankItems(bySource, { limit: cfg.limit, windowHours: cfg.windowHours })
   );
-  const broken = items.filter((item) => !item.thumb).length;
-  if (broken) console.log(`${broken} of ${items.length} thumbnails did not resolve and were dropped`);
+  const unverified = items.filter((item) => item.thumbVerified === false).length;
+  const missing = items.filter((item) => !item.thumb).length;
+  if (unverified) console.log(`${unverified} of ${items.length} thumbnails would not verify from CI and ship unchecked`);
+  if (missing) console.log(`${missing} of ${items.length} items have no thumbnail at all`);
 
   return {
     generatedAt: new Date().toISOString(),

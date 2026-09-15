@@ -142,6 +142,15 @@ differently from a home connection:
 Both are repository secrets (*Settings → Secrets and variables → Actions*) and
 both are optional — the digest ships with whatever sources answer.
 
+### Thumbnails
+
+Thumbnails are checked before the digest ships, because the email cannot retry
+a broken image the way the widget can. The check runs from CI, though, and the
+reader does not: a CDN that refuses a datacenter will serve a browser or
+Gmail's proxy perfectly well. So a candidate that fails verification is marked
+`thumbVerified: false` and shipped anyway rather than dropped — dropping it is
+what quietly cost every Danbooru image for four days.
+
 ### Ranking
 
 Upvotes, likes and bookmarks aren't the same currency, so each piece is scored

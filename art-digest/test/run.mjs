@@ -703,6 +703,15 @@ test('ranking: removes duplicate posts of the same piece', () => {
 
 /* -------------------------------------------------------------- thumbnails */
 
+test('thumbnails: a host that refuses us may still serve the reader', async () => {
+  // The check runs from a datacenter; the reader does not. Refusing everything
+  // must not empty the card — that lost every Danbooru image for four days.
+  const items = [{ url: 'https://danbooru.donmai.us/posts/1', thumb: 'https://cdn.donmai.us/180x180/a.jpg', thumbFallbacks: ['https://cdn.donmai.us/original/a.jpg'], image: '' }];
+  await resolveThumbnails(items, { check: async () => false });
+  assert.equal(items[0].thumb, 'https://cdn.donmai.us/180x180/a.jpg', 'the image still ships');
+  assert.equal(items[0].thumbVerified, false, 'flagged so the run can report it');
+});
+
 test('thumbnails: walks the candidate ladder down to one that resolves', async () => {
   const items = [
     {
@@ -723,8 +732,8 @@ test('thumbnails: walks the candidate ladder down to one that resolves', async (
   assert.equal(items[0].thumb, 'https://cdn/small_square/a.jpg', 'the first resolving candidate wins');
   assert.equal(items[0].image, 'https://cdn/small_square/a.jpg', 'the big version follows the thumbnail');
   assert.ok(!tried.includes('https://cdn/smaller_square/a.jpg'), 'the ladder stops at the first hit');
-  assert.equal(items[1].thumb, '', 'nothing resolves: the card goes text-only rather than broken');
-  assert.equal(items[1].image, '');
+  assert.equal(items[1].thumb, 'https://cdn/medium/b.jpg', 'nothing resolves: the best candidate ships anyway');
+  assert.equal(items[1].thumbVerified, false, 'marked unverified rather than dropped');
   assert.equal(items[2].thumb, 'https://cdn/good.jpg', 'a working thumbnail is left alone');
 });
 
@@ -753,7 +762,7 @@ test('thumbnails: every item is checked even past the concurrency limit', async 
   const seen = [];
   await resolveThumbnails(items, { concurrency: 3, check: async (url) => { seen.push(url); return false; } });
   assert.equal(seen.length, 20);
-  assert.ok(items.every((i) => i.thumb === ''));
+  assert.ok(items.every((i) => i.thumbVerified === false));
 });
 
 /* ------------------------------------------------------------------- email */
