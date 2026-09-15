@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-15T18:33:30.319Z",
+  "generatedAt": "2026-09-15T18:41:19.401Z",
   "windowHours": 48,
-  "totalCollected": 335,
+  "totalCollected": 348,
   "nsfwPolicy": "include",
   "nsfwCount": 5,
   "sourceLabels": {
@@ -29,9 +29,9 @@
       "label": "Reddit",
       "home": "https://www.reddit.com",
       "status": "ok",
-      "fetched": 230,
-      "kept": 185,
-      "note": "via atom feed · 19 requests · dropped r/ecchi (unreachable (429)), r/ImaginaryLandscapes (unreachable (429)), r/ImaginaryMythology (unreachable (429)), r/ImaginaryWildlands (unreachable (429)), r/rule34 (unreachable (429)), r/hentai (unreachable (429))",
+      "fetched": 309,
+      "kept": 198,
+      "note": "via atom feed · 27 requests · dropped r/ecchi (unreachable (429)), r/ImaginaryCharacters (unreachable (429)), r/awwnime (unreachable (429)), r/ImaginaryLandscapes (unreachable (429)), r/ImaginaryCityscapes (unreachable (429)), r/ImaginaryMythology (unreachable (429)), r/ImaginaryWildlands (unreachable (429)), r/rule34 (unreachable (429)), r/hentai (unreachable (429)), r/ImaginaryWesteros (budget spent), r/AnimeSketch (budget spent) · request budget spent",
       "nsfw": 0,
       "error": null
     },
@@ -455,20 +455,20 @@
       "thumbVerified": false
     },
     {
-      "id": "reddit:1wgvzuc",
+      "id": "reddit:1wgg7c6",
       "source": "reddit",
-      "title": "Space Mermaid Nyx by Vincent Coviello",
-      "artist": "u/One_Giant_Nostril",
-      "artistUrl": "https://www.reddit.com/user/One_Giant_Nostril",
-      "url": "https://www.reddit.com/r/ImaginaryMonsters/comments/1wgvzuc/space_mermaid_nyx_by_vincent_coviello/",
-      "image": "https://preview.redd.it/8lyusnx1qnph1.jpeg?width=640&crop=smart&auto=webp&s=fa73c8cf11b54c507030206cc70cb2504c555537",
-      "thumb": "https://preview.redd.it/8lyusnx1qnph1.jpeg?width=640&crop=smart&auto=webp&s=fa73c8cf11b54c507030206cc70cb2504c555537",
-      "value": 91,
-      "scoreLabel": "#10 top today in r/ImaginaryMonsters",
+      "title": "[OC] Elemental Sorceress, Did you like the combination between a fairy and an elf?",
+      "artist": "u/Maxgalore_",
+      "artistUrl": "https://www.reddit.com/user/Maxgalore_",
+      "url": "https://www.reddit.com/r/characterdrawing/comments/1wgg7c6/oc_elemental_sorceress_did_you_like_the/",
+      "image": "https://preview.redd.it/7vmznjp8wjph1.png?width=640&crop=smart&auto=webp&s=e14f7c168dde29b9d02f2ef507a52061ddd99f0a",
+      "thumb": "https://preview.redd.it/7vmznjp8wjph1.png?width=640&crop=smart&auto=webp&s=e14f7c168dde29b9d02f2ef507a52061ddd99f0a",
+      "value": 93,
+      "scoreLabel": "#8 top today in r/characterdrawing",
       "nsfw": false,
-      "postedAt": "2026-09-15T09:58:30.000Z",
-      "context": "r/ImaginaryMonsters",
-      "heat": 90
+      "postedAt": "2026-09-14T21:08:51.000Z",
+      "context": "r/characterdrawing",
+      "heat": 88
     },
     {
       "id": "artstation:6vNZQx",
@@ -514,20 +514,20 @@
       "thumbVerified": false
     },
     {
-      "id": "reddit:1wgw1dj",
+      "id": "reddit:1wh14br",
       "source": "reddit",
-      "title": "Star Wars Alphabet by Herve Groussin",
-      "artist": "u/One_Giant_Nostril",
-      "artistUrl": "https://www.reddit.com/user/One_Giant_Nostril",
-      "url": "https://www.reddit.com/r/ImaginaryTechnology/comments/1wgw1dj/star_wars_alphabet_by_herve_groussin/",
-      "image": "https://preview.redd.it/q4wjcipfqnph1.jpeg?width=640&crop=smart&auto=webp&s=0c991facbb549505312f53c00da5f080397955c2",
-      "thumb": "https://preview.redd.it/q4wjcipfqnph1.jpeg?width=640&crop=smart&auto=webp&s=0c991facbb549505312f53c00da5f080397955c2",
-      "value": 79,
-      "scoreLabel": "#22 top today in r/ImaginaryTechnology",
+      "title": "The Siege of Caer Dineval (QuestCon 2026)",
+      "artist": "u/Icewind_Dad",
+      "artistUrl": "https://www.reddit.com/user/Icewind_Dad",
+      "url": "https://www.reddit.com/r/DungeonsAndDragons/comments/1wh14br/the_siege_of_caer_dineval_questcon_2026/",
+      "image": "https://preview.redd.it/hbiubdqiwoph1.jpg?width=140&height=105&auto=webp&s=88ca2c4cac03aee4c531f3b5fe2f3a3a0bd21e50",
+      "thumb": "https://preview.redd.it/hbiubdqiwoph1.jpg?width=140&height=105&auto=webp&s=88ca2c4cac03aee4c531f3b5fe2f3a3a0bd21e50",
+      "value": 80,
+      "scoreLabel": "#21 top today in r/DungeonsAndDragons",
       "nsfw": false,
-      "postedAt": "2026-09-15T10:00:44.000Z",
-      "context": "r/ImaginaryTechnology",
-      "heat": 81
+      "postedAt": "2026-09-15T13:56:27.000Z",
+      "context": "r/DungeonsAndDragons",
+      "heat": 83
     }
   ]
 }
