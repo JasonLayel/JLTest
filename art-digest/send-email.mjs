@@ -25,11 +25,78 @@ import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { connect } from 'node:tls';
+import { renderEmail } from './collect.mjs';
 import { randomUUID } from 'node:crypto';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+const BROWSER_UA =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
 const DATA = process.env.ART_DIGEST_OUT || join(HERE, 'data');
 const SITE = 'https://petulent-princess-productivity.web.app/art-digest/';
+
+/* ------------------------------------------------------------ attachments */
+
+const IMAGE_TYPES = {
+  jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+  gif: 'image/gif', webp: 'image/webp', avif: 'image/avif',
+};
+
+/**
+ * Downloads each thumbnail so the message can carry it.
+ *
+ * Remote images in an email are fetched by the reader's mail client — Gmail
+ * routes them through its own proxy, which is a datacenter address that some
+ * art CDNs refuse, and which never runs at all if the reader has "ask before
+ * displaying external images" switched on. Either way the picture is missing.
+ * An attached image is part of the message and always renders.
+ */
+export async function collectInlineImages(items, options = {}) {
+  const { maxBytes = 200_000, totalBytes = 8_000_000, fetchImpl = fetch, timeout = 15_000 } = options;
+  const attachments = [];
+  const byItem = new Map();
+  let used = 0;
+
+  for (const [index, item] of items.entries()) {
+    const url = item.thumb || item.image;
+    if (!url || used >= totalBytes) continue;
+    try {
+      const res = await fetchImpl(url, {
+        headers: {
+          'User-Agent': BROWSER_UA,
+          Accept: 'image/avif,image/webp,image/*,*/*;q=0.8',
+          // Hotlink checks expect the page the image belongs to.
+          ...(item.url ? { Referer: `${new URL(item.url).origin}/` } : {}),
+        },
+        signal: AbortSignal.timeout(timeout),
+      });
+      if (!res.ok) continue;
+
+      const declared = Number(res.headers.get('content-length') || 0);
+      if (declared > maxBytes) continue;
+      const body = Buffer.from(await res.arrayBuffer());
+      if (!body.length || body.length > maxBytes || used + body.length > totalBytes) continue;
+
+      const type =
+        (res.headers.get('content-type') || '').split(';')[0].trim() ||
+        IMAGE_TYPES[(url.split('?')[0].split('.').pop() || '').toLowerCase()] ||
+        'image/jpeg';
+      if (!type.startsWith('image/')) continue;
+
+      const cid = `art-${index + 1}@art-digest`;
+      attachments.push({ cid, type, body, filename: `art-${index + 1}.${type.split('/')[1] || 'jpg'}` });
+      byItem.set(item.id ?? item.url, cid);
+      used += body.length;
+    } catch {
+      // One unreachable thumbnail is not worth failing the digest over; the
+      // card falls back to the remote URL.
+    }
+  }
+
+  return { attachments, bytes: used, srcFor: (item) => {
+    const cid = byItem.get(item.id ?? item.url);
+    return cid ? `cid:${cid}` : '';
+  } };
+}
 
 /* ---------------------------------------------------------------- message */
 
@@ -60,29 +127,58 @@ export function plainTextDigest(digest) {
   return lines.join('\n');
 }
 
-export function buildMessage({ digest, html, from, fromName, to, date = new Date() }) {
-  const boundary = `=_art_digest_${randomUUID()}`;
+export function buildMessage({ digest, html, from, fromName, to, date = new Date(), attachments = [] }) {
+  const alt = `=_alt_${randomUUID()}`;
   const day = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
-  return [
+
+  const body = [
+    `--${alt}`,
+    'Content-Type: text/plain; charset=UTF-8',
+    'Content-Transfer-Encoding: base64',
+    '',
+    wrap(plainTextDigest(digest)),
+    `--${alt}`,
+    'Content-Type: text/html; charset=UTF-8',
+    'Content-Transfer-Encoding: base64',
+    '',
+    wrap(html),
+    `--${alt}--`,
+  ];
+
+  const headers = [
     `From: ${encodeHeader(fromName)} <${from}>`,
     `To: ${to}`,
     `Subject: ${encodeHeader(`🎨 Today's best new digital art — ${digest.items.length} picks (${day})`)}`,
     `Date: ${date.toUTCString()}`,
     `Message-ID: <${randomUUID()}@art-digest>`,
     'MIME-Version: 1.0',
-    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+  ];
+
+  if (!attachments.length) {
+    return [...headers, `Content-Type: multipart/alternative; boundary="${alt}"`, '', ...body, ''].join('\r\n');
+  }
+
+  // The pictures belong to the HTML part rather than being separate downloads,
+  // which is what multipart/related means and what makes them render inline.
+  const rel = `=_rel_${randomUUID()}`;
+  return [
+    ...headers,
+    `Content-Type: multipart/related; type="multipart/alternative"; boundary="${rel}"`,
     '',
-    `--${boundary}`,
-    'Content-Type: text/plain; charset=UTF-8',
-    'Content-Transfer-Encoding: base64',
+    `--${rel}`,
+    `Content-Type: multipart/alternative; boundary="${alt}"`,
     '',
-    wrap(plainTextDigest(digest)),
-    `--${boundary}`,
-    'Content-Type: text/html; charset=UTF-8',
-    'Content-Transfer-Encoding: base64',
-    '',
-    wrap(html),
-    `--${boundary}--`,
+    ...body,
+    ...attachments.flatMap((file) => [
+      `--${rel}`,
+      `Content-Type: ${file.type}`,
+      'Content-Transfer-Encoding: base64',
+      `Content-ID: <${file.cid}>`,
+      `Content-Disposition: inline; filename="${file.filename}"`,
+      '',
+      file.body.toString('base64').replace(/(.{76})/g, '$1\r\n'),
+    ]),
+    `--${rel}--`,
     '',
   ].join('\r\n');
 }
@@ -181,12 +277,25 @@ async function main() {
     return;
   }
 
+  // Carry the pictures in the message rather than asking the reader's mail
+  // client to fetch them; anything that won't download keeps its remote URL.
+  const inline = process.env.DIGEST_INLINE_IMAGES === 'off'
+    ? { attachments: [], bytes: 0, srcFor: () => '' }
+    : await collectInlineImages(digest.items);
+  const body = inline.attachments.length
+    ? renderEmail(digest, { imageSrc: inline.srcFor })
+    : html;
+  console.log(
+    `${inline.attachments.length} of ${digest.items.length} thumbnails attached inline (${Math.round(inline.bytes / 1024)} KB)`
+  );
+
   const message = buildMessage({
     digest,
-    html,
+    html: body,
     from: user || 'art-digest@localhost',
     fromName: process.env.DIGEST_FROM_NAME || 'Daily Art Digest',
     to: to || 'nobody@localhost',
+    attachments: inline.attachments,
   });
 
   if (dryRun || !user || !pass) {

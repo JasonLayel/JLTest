@@ -78,12 +78,23 @@ const server = createServer(
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
 const { port } = server.address();
 
+// A one-pixel PNG standing in for a downloaded thumbnail.
+const pixel = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+  'base64'
+);
+const attachments = [
+  { cid: 'art-1@art-digest', type: 'image/png', body: pixel, filename: 'art-1.png' },
+  { cid: 'art-2@art-digest', type: 'image/png', body: pixel, filename: 'art-2.png' },
+];
+
 const message = buildMessage({
   digest,
-  html: '<html><body><h1>digest</h1></body></html>',
+  html: '<html><body><h1>digest</h1><img src="cid:art-1@art-digest"><img src="cid:art-2@art-digest"></body></html>',
   from: 'sender@example.com',
   fromName: 'Daily Art Digest',
   to: 'reader@example.com',
+  attachments,
 });
 
 const result = await sendSmtp({
@@ -100,10 +111,10 @@ const result = await sendSmtp({
 server.close();
 
 const decodePart = (type) => {
-  const part = received.message.split(/--=_art_digest_[^\r\n]*/).find((p) => p.includes(`Content-Type: ${type}`));
+  const part = received.message.split(/--=_(?:alt|rel)_[^\r\n]*/).find((p) => p.includes(`Content-Type: ${type}`));
   assert.ok(part, `${type} part is present`);
   const body = part.slice(part.indexOf('\r\n\r\n') + 4).replace(/\s/g, '');
-  return Buffer.from(body, 'base64').toString('utf8');
+  return Buffer.from(body, 'base64');
 };
 
 const checks = [
@@ -122,17 +133,32 @@ const checks = [
     assert.match(subject, /^=\?UTF-8\?B\?/);
     assert.match(Buffer.from(subject.slice(10, -2), 'base64').toString('utf8'), /🎨 Today's best new digital art — 2 picks/);
   }],
+  ['the message is multipart/related so the pictures belong to the HTML', () => {
+    assert.match(received.message, /Content-Type: multipart\/related; type="multipart\/alternative"/);
+    assert.match(received.message, /Content-Type: multipart\/alternative/);
+  }],
+  ['each image rides along as an inline part the HTML points at', () => {
+    for (const file of attachments) {
+      assert.ok(received.message.includes(`Content-ID: <${file.cid}>`), `${file.cid} is attached`);
+      assert.ok(received.message.includes(`Content-Disposition: inline; filename="${file.filename}"`));
+      assert.ok(decodePart('text/html').toString('utf8').includes(`cid:${file.cid}`), 'and the HTML references it');
+    }
+    // The bytes survive the trip: the part decodes back to the exact PNG.
+    const part = received.message.split(/--=_rel_[^\r\n]*/).find((p) => p.includes('Content-ID: <art-1@art-digest>'));
+    const body = part.slice(part.indexOf('\r\n\r\n') + 4).replace(/\s/g, '');
+    assert.ok(Buffer.from(body, 'base64').equals(pixel), 'the image arrives byte for byte');
+  }],
   ['both alternatives are present and decode', () => {
-    const text = decodePart('text/plain');
-    const html = decodePart('text/html');
+    const text = decodePart('text/plain').toString('utf8');
+    const html = decodePart('text/html').toString('utf8');
     assert.match(text, /1\. 夜明けの街角 — kaze/);
     assert.match(text, /Unavailable in this run: DeviantArt/);
     assert.match(text, /https:\/\/www\.pixiv\.net\/artworks\/1/);
-    assert.equal(html, '<html><body><h1>digest</h1></body></html>');
+    assert.match(html, /<h1>digest<\/h1>/);
   }],
   ['a line that is only a dot is stuffed, not treated as end-of-message', () => {
     assert.ok(plainTextDigest(digest).includes('\n2. .'), 'the fixture really does contain a bare dot line');
-    assert.match(decodePart('text/plain'), /2\. \. — u\/dot/, 'and it arrives intact');
+    assert.match(decodePart('text/plain').toString('utf8'), /2\. \. — u\/dot/, 'and it arrives intact');
   }],
 ];
 

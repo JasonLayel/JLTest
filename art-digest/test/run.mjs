@@ -5,6 +5,7 @@
  */
 
 import assert from 'node:assert/strict';
+import { collectInlineImages } from '../send-email.mjs';
 import {
   normalizeReddit,
   normalizeRedditRss,
@@ -763,6 +764,73 @@ test('thumbnails: every item is checked even past the concurrency limit', async 
   await resolveThumbnails(items, { concurrency: 3, check: async (url) => { seen.push(url); return false; } });
   assert.equal(seen.length, 20);
   assert.ok(items.every((i) => i.thumbVerified === false));
+});
+
+/* ---------------------------------------------------------- inline images */
+
+const imageResponse = (bytes, type = 'image/jpeg') => ({
+  ok: true,
+  headers: new Map([['content-length', String(bytes)], ['content-type', type]]),
+  arrayBuffer: async () => new Uint8Array(bytes).buffer,
+});
+// The real fetch returns Headers; a Map answers .get the same way.
+
+test('inline images: downloads what it can and rewrites those cards to cid:', async () => {
+  const items = [
+    { id: 'a', url: 'https://danbooru.donmai.us/posts/1', thumb: 'https://cdn.donmai.us/a.jpg' },
+    { id: 'b', url: 'https://www.reddit.com/r/Art/comments/b/', thumb: 'https://preview.redd.it/b.png' },
+  ];
+  const seen = [];
+  const { attachments, srcFor, bytes } = await collectInlineImages(items, {
+    fetchImpl: async (url, options) => {
+      seen.push([url, options.headers.Referer]);
+      return imageResponse(1024, url.endsWith('.png') ? 'image/png' : 'image/jpeg');
+    },
+  });
+
+  assert.equal(attachments.length, 2);
+  assert.equal(bytes, 2048);
+  assert.deepEqual(seen[0], ['https://cdn.donmai.us/a.jpg', 'https://danbooru.donmai.us/']);
+  assert.match(srcFor(items[0]), /^cid:art-1@/);
+  assert.match(srcFor(items[1]), /^cid:art-2@/);
+  assert.equal(attachments[1].type, 'image/png');
+  assert.match(attachments[1].filename, /\.png$/);
+});
+
+test('inline images: a card whose image will not download keeps its remote URL', async () => {
+  const items = [
+    { id: 'ok', url: 'https://site/1', thumb: 'https://cdn/ok.jpg' },
+    { id: 'refused', url: 'https://site/2', thumb: 'https://cdn/refused.jpg' },
+    { id: 'gone', url: 'https://site/3', thumb: 'https://cdn/boom.jpg' },
+    { id: 'none', url: 'https://site/4', thumb: '' },
+  ];
+  const { attachments, srcFor } = await collectInlineImages(items, {
+    fetchImpl: async (url) => {
+      if (url.includes('refused')) return { ok: false, status: 403, headers: new Map(), arrayBuffer: async () => new ArrayBuffer(0) };
+      if (url.includes('boom')) throw new Error('connection reset');
+      return imageResponse(512);
+    },
+  });
+  assert.equal(attachments.length, 1, 'only the one that downloaded is attached');
+  assert.match(srcFor(items[0]), /^cid:/);
+  assert.equal(srcFor(items[1]), '', 'the refused card falls back to its URL');
+  assert.equal(srcFor(items[2]), '', 'and so does the one that threw');
+  assert.equal(srcFor(items[3]), '');
+});
+
+test('inline images: oversized and non-image responses are skipped, and the total is capped', async () => {
+  const items = Array.from({ length: 5 }, (_, i) => ({ id: `i${i}`, url: 'https://site/x', thumb: `https://cdn/${i}.jpg` }));
+  const { attachments, bytes } = await collectInlineImages(items, {
+    maxBytes: 1000,
+    totalBytes: 2000,
+    fetchImpl: async (url) => {
+      if (url.endsWith('0.jpg')) return imageResponse(5000); // too big on its own
+      if (url.endsWith('1.jpg')) return imageResponse(400, 'text/html'); // not an image
+      return imageResponse(900);
+    },
+  });
+  assert.deepEqual(attachments.map((a) => a.cid.split('@')[0]), ['art-3', 'art-4'], 'the oversized and the non-image are skipped');
+  assert.ok(bytes <= 2000, 'and the run stops at the total cap');
 });
 
 /* ------------------------------------------------------------------- email */

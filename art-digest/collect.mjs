@@ -1101,7 +1101,7 @@ const SOURCE_COLORS = {
 };
 
 /** Table-based HTML so it survives email clients. */
-export function renderEmail(digest, { siteUrl = CONFIG.siteUrl } = {}) {
+export function renderEmail(digest, { siteUrl = CONFIG.siteUrl, imageSrc = null } = {}) {
   const date = new Date(digest.generatedAt).toLocaleDateString('en-US', {
     weekday: 'long', month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC',
   });
@@ -1109,7 +1109,10 @@ export function renderEmail(digest, { siteUrl = CONFIG.siteUrl } = {}) {
   const cards = digest.items
     .map((item, index) => {
       const color = SOURCE_COLORS[item.source] || '#8b5cf6';
-      const thumb = item.thumb || item.image;
+      // The sender can swap in a cid: reference for an image it attached, so
+      // the message carries its own pictures instead of asking the reader's
+      // mail client to fetch them.
+      const thumb = (imageSrc && imageSrc(item)) || item.thumb || item.image;
       return `
       <tr>
         <td style="padding:0 0 18px 0;">
