@@ -1000,18 +1000,24 @@ export function rankItems(bySource, { limit = 24, windowHours = 48, now = Date.n
 
 /* -------------------------------------------------------------- thumbnails */
 
-/** HEAD (or a one-byte GET, for hosts that refuse HEAD) to see if a URL resolves. */
-async function urlResolves(url) {
-  const headers = { 'User-Agent': BROWSER_UA, Referer: 'https://www.google.com/' };
+/**
+ * Does this image actually load? HEAD first, and a one-byte GET whenever that
+ * is refused for any reason — some CDNs answer 403 to HEAD rather than the 405
+ * the spec suggests, which silently cost every Danbooru thumbnail. The referer
+ * is the page the image belongs to, which is what a browser showing it would
+ * send and what hotlink checks expect.
+ */
+async function urlResolves(url, { referer = '' } = {}) {
+  const headers = { 'User-Agent': BROWSER_UA, ...(referer ? { Referer: referer } : {}) };
+  const ok = (res) => res.ok || res.status === 206;
   try {
-    let res = await fetch(url, { method: 'HEAD', headers, signal: AbortSignal.timeout(12_000) });
-    if (res.status === 405 || res.status === 501) {
-      res = await fetch(url, {
-        headers: { ...headers, Range: 'bytes=0-0' },
-        signal: AbortSignal.timeout(12_000),
-      });
-    }
-    return res.ok || res.status === 206;
+    const head = await fetch(url, { method: 'HEAD', headers, signal: AbortSignal.timeout(12_000) });
+    if (ok(head)) return true;
+    const ranged = await fetch(url, {
+      headers: { ...headers, Range: 'bytes=0-0' },
+      signal: AbortSignal.timeout(12_000),
+    });
+    return ok(ranged);
   } catch {
     return false;
   }
@@ -1030,9 +1036,15 @@ export async function resolveThumbnails(items, { check = urlResolves, concurrenc
       const ladder = [item.thumb, ...(item.thumbFallbacks || [])].filter(
         (url, i, all) => url && all.indexOf(url) === i
       );
+      let referer = '';
+      try {
+        referer = item.url ? `${new URL(item.url).origin}/` : '';
+      } catch {
+        referer = '';
+      }
       let resolved = '';
       for (const candidate of ladder) {
-        if (await check(candidate)) {
+        if (await check(candidate, { referer })) {
           resolved = candidate;
           break;
         }

@@ -728,6 +728,26 @@ test('thumbnails: walks the candidate ladder down to one that resolves', async (
   assert.equal(items[2].thumb, 'https://cdn/good.jpg', 'a working thumbnail is left alone');
 });
 
+test('thumbnails: the check is told which page the image belongs to', async () => {
+  // Hotlink checks expect the image's own site as the referer, not a search
+  // engine's — sending the wrong one is what lost every Danbooru thumbnail.
+  const seen = [];
+  await resolveThumbnails(
+    [
+      { url: 'https://danbooru.donmai.us/posts/7001', thumb: 'https://cdn.donmai.us/180x180/a.jpg', thumbFallbacks: [], image: '' },
+      { url: 'not a url', thumb: 'https://cdn/b.jpg', thumbFallbacks: [], image: '' },
+    ],
+    {
+      check: async (url, options) => {
+        seen.push([url, options?.referer]);
+        return true;
+      },
+    }
+  );
+  assert.deepEqual(seen[0], ['https://cdn.donmai.us/180x180/a.jpg', 'https://danbooru.donmai.us/']);
+  assert.equal(seen[1][1], '', 'an unparseable link just means no referer, not a crash');
+});
+
 test('thumbnails: every item is checked even past the concurrency limit', async () => {
   const items = Array.from({ length: 20 }, (_, i) => ({ thumb: `https://cdn/${i}.jpg`, thumbFallbacks: [], image: '' }));
   const seen = [];
