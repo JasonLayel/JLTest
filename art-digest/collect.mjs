@@ -327,7 +327,7 @@ export const REDDIT_DEFAULTS = {
   // Reddit rate-limits by request count, so the whole list goes out in three
   // multireddit requests rather than many small ones.
   groupSize: 9,
-  budget: 24,
+  budget: 30,
   pause: 5000,
   backoff: 20_000,
   retries: 1,
@@ -370,57 +370,59 @@ export async function harvestSubreddits(subs, run, options = {}) {
     }
   };
 
-  /**
-   * Two failures look alike and want opposite handling. A 404 means a name in
-   * the group is gone, so halve it and find the name. Anything else — 429
-   * above all — usually means Reddit is refusing traffic, where splitting
-   * would only send more of it, so wait and ask for the same group again.
-   * When the retry doesn't clear it either, one subreddit in the group is
-   * refusing rather than the whole of Reddit, and halving is the way to find
-   * that one too.
-   */
-  const harvest = async (group, attemptsLeft = retries) => {
-    if (spent) {
-      drop(group, 'budget spent');
-      return;
-    }
-    const result = await attempt(group);
-    if (result.ok) return;
-    if (result.spent) {
-      drop(group, 'budget spent');
-      return;
-    }
-
-    if (result.status === 404) {
-      if (group.length === 1) {
-        drop(group, 'not found');
-        return;
-      }
-      const mid = Math.ceil(group.length / 2);
-      await harvest(group.slice(0, mid));
-      await sleep(pause);
-      await harvest(group.slice(mid));
-      return;
-    }
-
-    if (attemptsLeft > 0) {
-      await sleep(backoff);
-      await harvest(group, attemptsLeft - 1);
-      return;
-    }
-    if (group.length > 1) {
-      const mid = Math.ceil(group.length / 2);
-      await harvest(group.slice(0, mid));
-      await sleep(pause);
-      await harvest(group.slice(mid));
-      return;
-    }
-    drop(group, `unreachable${result.status ? ` (${result.status})` : ''}`);
+  const halve = (group, tries) => {
+    const mid = Math.ceil(group.length / 2);
+    return [
+      { subs: group.slice(0, mid), tries },
+      { subs: group.slice(mid), tries },
+    ];
   };
 
+  /**
+   * Breadth-first, one pass at a time: every group is asked for once before any
+   * group is asked for twice. Depth-first meant that isolating one bad name
+   * early in the list could spend the whole budget, and the subreddits at the
+   * end were dropped without ever being requested — which is a scheduling
+   * accident, not a judgement about those subreddits.
+   *
+   * Within a pass, a 404 means a name in the group is gone, so halve it and
+   * find the name. Anything else — 429 above all — usually means Reddit is
+   * refusing traffic, where splitting would only send more of it, so the same
+   * group is asked again next pass. When the retries run out it is one
+   * subreddit refusing rather than all of Reddit, and halving finds that too.
+   */
+  let pending = [];
   for (let i = 0; i < subs.length; i += groupSize) {
-    await harvest(subs.slice(i, i + groupSize));
-    await sleep(pause);
+    pending.push({ subs: subs.slice(i, i + groupSize), tries: 0 });
+  }
+
+  while (pending.length) {
+    const next = [];
+    for (const job of pending) {
+      const result = await attempt(job.subs);
+      if (result.ok) continue;
+      if (result.spent) {
+        drop(job.subs, 'budget spent');
+        continue;
+      }
+      if (result.status === 404) {
+        // The one answer that is final: either a name in here is gone, or this
+        // name is.
+        if (job.subs.length > 1) next.push(...halve(job.subs, 0));
+        else drop(job.subs, 'not found');
+      } else if (job.tries < retries) {
+        next.push({ subs: job.subs, tries: job.tries + 1 });
+      } else if (job.subs.length > 1) {
+        next.push(...halve(job.subs, 0));
+      } else {
+        drop(job.subs, `unreachable${result.status ? ` (${result.status})` : ''}`);
+      }
+      await sleep(pause);
+    }
+    pending = next;
+    // Anything left is being retried or hunted down; give Reddit a breather
+    // between passes rather than between every failure.
+    if (pending.length) await sleep(backoff);
   }
 
   return { items, fetched, dropped, errors, requests, budgetSpent: spent, elapsedMs: now() - startedAt };

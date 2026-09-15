@@ -49,10 +49,16 @@ it stays a plain static page with no server, no build and no API keys.
 
 ### Subreddits
 
-Fetched as one multireddit request per group of nine — three requests for the
-whole list. Reddit rate-limits by request count, so the number of requests
-matters more than their size, and the two failure modes are handled
-differently:
+Fetched as one multireddit request per group of nine. Reddit rate-limits by
+request count, so the number of requests matters more than their size.
+
+Groups go out breadth-first: every group is asked for once before any group is
+asked for twice. Depth-first meant that isolating one bad name early in the
+list could spend the whole budget, and the subreddits at the end were dropped
+without ever being requested — a scheduling accident that read as a judgement
+about those subreddits.
+
+The two failure modes are handled differently:
 
 - **404** — a name in the group is gone. The group is halved and each half
   retried until the bad name is alone, then dropped and reported.
@@ -63,7 +69,7 @@ differently:
   group is halved to find it.
 
 Every drop is reported in the digest with its reason, and the run is capped at
-24 requests and four minutes.
+30 requests and four minutes.
 
 r/battlemaps is not in the list: it answers `429` to every anonymous feed
 request, and isolating it costs enough requests to starve the groups behind it.

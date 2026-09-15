@@ -519,6 +519,34 @@ test('subreddits: a dead name is separated from a throttled one', async () => {
   assert.ok(result.items.length >= 6, 'the reachable subreddits still land');
 });
 
+test('subreddits: every group is asked once before any group is asked twice', async () => {
+  // The tail of the list must not be dropped unrequested because an earlier
+  // group spent the budget being hunted down.
+  const order = [];
+  const run = async (group) => {
+    order.push(group.join('+'));
+    if (group.includes('sub0')) {
+      const err = new Error('HTTP 429 Too Many Requests');
+      err.status = 429;
+      throw err;
+    }
+    return { items: group.map((sub) => ({ id: sub })), fetched: group.length };
+  };
+  const result = await harvestSubreddits(SUBS, run, { pause: 0, backoff: 0, groupSize: 9, budget: 6 });
+
+  const firstPass = order.slice(0, 3);
+  assert.equal(new Set(firstPass).size, 3, 'all three groups go out in the first pass');
+  assert.ok(firstPass.some((g) => g.endsWith('sub25')), 'including the last one');
+  assert.ok(
+    result.items.some((i) => i.id === 'sub25'),
+    'so the subreddits at the end of the list actually land'
+  );
+  assert.ok(
+    !result.dropped.some((d) => d.includes('sub25')),
+    'and are never dropped for a budget an earlier group spent'
+  );
+});
+
 test('subreddits: a clean list costs one request per group', async () => {
   const log = [];
   const result = await harvestSubreddits(SUBS, fakeRun([], log), { pause: 0, backoff: 0 });
