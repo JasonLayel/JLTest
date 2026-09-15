@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-09-15T12:11:39.768Z",
+  "generatedAt": "2026-09-15T12:18:01.800Z",
   "windowHours": 48,
-  "totalCollected": 346,
+  "totalCollected": 356,
   "nsfwPolicy": "include",
   "nsfwCount": 6,
   "sourceLabels": {
@@ -29,10 +29,10 @@
       "label": "Reddit",
       "home": "https://www.reddit.com",
       "status": "ok",
-      "fetched": 313,
-      "kept": 196,
-      "note": "via atom feed · 20 requests · dropped r/Pathfinder_RPG (unreachable (429)), r/ImaginaryWesteros (budget spent), r/AnimeSketch (budget spent), r/awwnime (budget spent), r/ImaginaryLandscapes (budget spent), r/ImaginaryCityscapes (budget spent), r/ImaginaryMythology (budget spent), r/ImaginaryWildlands (budget spent), r/rule34 (budget spent), r/hentai (budget spent), r/ecchi (budget spent) · request budget spent",
-      "nsfw": 0,
+      "fetched": 335,
+      "kept": 206,
+      "note": "via atom feed · 24 requests · dropped r/ImaginaryWesteros (budget spent), r/AnimeSketch (budget spent), r/awwnime (budget spent), r/ImaginaryLandscapes (budget spent), r/ImaginaryCityscapes (budget spent), r/ImaginaryMythology (budget spent), r/ImaginaryWildlands (budget spent), r/rule34 (budget spent), r/hentai (budget spent) · request budget spent",
+      "nsfw": 10,
       "error": null
     },
     {
@@ -74,7 +74,7 @@
       "fetched": 50,
       "kept": 50,
       "note": "",
-      "nsfw": 40,
+      "nsfw": 41,
       "error": null
     }
   ],
@@ -130,8 +130,8 @@
         "https://cdn.donmai.us/180x180/eb/ea/ebea64f2797eb7edd73c6edc16820d9f.jpg",
         "https://cdn.donmai.us/original/eb/ea/ebea64f2797eb7edd73c6edc16820d9f.jpg"
       ],
-      "value": 309,
-      "scoreLabel": "score 309 · 285 favourites",
+      "value": 310,
+      "scoreLabel": "score 310 · 285 favourites",
       "postedAt": "2026-09-14T05:04:09.509Z",
       "nsfw": true,
       "context": "re:zero kara hajimeru isekai seikatsu",
@@ -278,8 +278,8 @@
         "https://cdn.donmai.us/180x180/74/92/7492a2aece01614c23f5de3841755396.jpg",
         "https://cdn.donmai.us/original/74/92/7492a2aece01614c23f5de3841755396.jpg"
       ],
-      "value": 296,
-      "scoreLabel": "score 296 · 278 favourites",
+      "value": 297,
+      "scoreLabel": "score 297 · 279 favourites",
       "postedAt": "2026-09-14T09:59:28.385Z",
       "nsfw": true,
       "context": "arknights",
@@ -352,8 +352,8 @@
         "https://cdn.donmai.us/180x180/17/32/1732bd0937c51d5a06b6bc76917db683.jpg",
         "https://cdn.donmai.us/original/17/32/1732bd0937c51d5a06b6bc76917db683.jpg"
       ],
-      "value": 278,
-      "scoreLabel": "score 278 · 257 favourites",
+      "value": 280,
+      "scoreLabel": "score 280 · 259 favourites",
       "postedAt": "2026-09-14T18:27:45.988Z",
       "nsfw": false,
       "context": "blue archive",
