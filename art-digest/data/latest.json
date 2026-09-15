@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-15T12:22:52.746Z",
+  "generatedAt": "2026-09-15T12:28:50.280Z",
   "windowHours": 48,
   "totalCollected": 422,
   "nsfwPolicy": "include",
@@ -204,12 +204,12 @@
         "https://cdn.donmai.us/180x180/74/92/7492a2aece01614c23f5de3841755396.jpg",
         "https://cdn.donmai.us/original/74/92/7492a2aece01614c23f5de3841755396.jpg"
       ],
-      "value": 299,
-      "scoreLabel": "score 299 · 281 favourites",
+      "value": 300,
+      "scoreLabel": "score 300 · 282 favourites",
       "postedAt": "2026-09-14T09:59:28.385Z",
       "nsfw": true,
       "context": "arknights",
-      "heat": 89
+      "heat": 90
     },
     {
       "id": "pixiv:149667269",
@@ -225,7 +225,7 @@
       "nsfw": false,
       "postedAt": "2026-09-14T11:30:01.000Z",
       "context": "Daily ranking #5",
-      "heat": 43
+      "heat": 42
     },
     {
       "id": "reddit:1wg7dss",
@@ -500,8 +500,8 @@
         "https://cdn.donmai.us/180x180/6c/0a/6c0adf0b6dbfee844f5aee9c7976cf5e.jpg",
         "https://cdn.donmai.us/original/6c/0a/6c0adf0b6dbfee844f5aee9c7976cf5e.gif"
       ],
-      "value": 260,
-      "scoreLabel": "score 260 · 251 favourites",
+      "value": 261,
+      "scoreLabel": "score 261 · 252 favourites",
       "postedAt": "2026-09-14T12:54:27.076Z",
       "nsfw": true,
       "context": "umamusume",
