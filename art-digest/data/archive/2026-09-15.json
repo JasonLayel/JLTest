@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-09-15T12:28:50.280Z",
+  "generatedAt": "2026-09-15T12:35:41.651Z",
   "windowHours": 48,
-  "totalCollected": 422,
+  "totalCollected": 342,
   "nsfwPolicy": "include",
-  "nsfwCount": 8,
+  "nsfwCount": 6,
   "sourceLabels": {
     "artstation": "ArtStation",
     "reddit": "Reddit",
@@ -29,10 +29,10 @@
       "label": "Reddit",
       "home": "https://www.reddit.com",
       "status": "ok",
-      "fetched": 314,
-      "kept": 272,
-      "note": "via atom feed · 17 requests · dropped r/ecchi (unreachable (429)), r/ImaginaryLandscapes (unreachable (429)), r/ImaginaryCityscapes (unreachable (429)), r/ImaginaryWesteros (unreachable (429)), r/AnimeSketch (unreachable (429))",
-      "nsfw": 99,
+      "fetched": 235,
+      "kept": 192,
+      "note": "via atom feed · 19 requests · dropped r/ecchi (unreachable (429)), r/ImaginaryCityscapes (unreachable (429)), r/ImaginaryMythology (unreachable (429)), r/ImaginaryWildlands (unreachable (429)), r/rule34 (unreachable (429)), r/hentai (unreachable (429))",
+      "nsfw": 0,
       "error": null
     },
     {
@@ -124,18 +124,19 @@
       "artist": "nbee ya",
       "artistUrl": "https://x.com/NB666012651561/status/2099363454293533126",
       "url": "https://danbooru.donmai.us/posts/12189565",
-      "image": "",
-      "thumb": "",
+      "image": "https://cdn.donmai.us/sample/eb/ea/sample-ebea64f2797eb7edd73c6edc16820d9f.jpg",
+      "thumb": "https://cdn.donmai.us/sample/eb/ea/sample-ebea64f2797eb7edd73c6edc16820d9f.jpg",
       "thumbFallbacks": [
         "https://cdn.donmai.us/180x180/eb/ea/ebea64f2797eb7edd73c6edc16820d9f.jpg",
         "https://cdn.donmai.us/original/eb/ea/ebea64f2797eb7edd73c6edc16820d9f.jpg"
       ],
-      "value": 312,
-      "scoreLabel": "score 312 · 287 favourites",
+      "value": 313,
+      "scoreLabel": "score 313 · 288 favourites",
       "postedAt": "2026-09-14T05:04:09.509Z",
       "nsfw": true,
       "context": "re:zero kara hajimeru isekai seikatsu",
-      "heat": 91
+      "heat": 91,
+      "thumbVerified": false
     },
     {
       "id": "pixiv:149641655",
@@ -151,23 +152,23 @@
       "nsfw": false,
       "postedAt": "2026-09-13T15:30:04.000Z",
       "context": "Daily ranking #30",
-      "heat": 88
+      "heat": 87
     },
     {
-      "id": "reddit:1wg99gi",
+      "id": "reddit:1wg7dss",
       "source": "reddit",
-      "title": "Megumin blowjob (al10_hacc) [Konosuba]",
-      "artist": "u/That-casual-guy",
-      "artistUrl": "https://www.reddit.com/user/That-casual-guy",
-      "url": "https://www.reddit.com/r/hentai/comments/1wg99gi/megumin_blowjob_al10_hacc_konosuba/",
-      "image": "https://external-preview.redd.it/q_GNbH7QBlRhu0xUECguShFI5Sn45XuUVuaRnwUH4Q4.jpeg?width=320&crop=smart&auto=webp&s=9c4af5fb0c8c2949a009a43c675ebadfa1945f2a",
-      "thumb": "https://external-preview.redd.it/q_GNbH7QBlRhu0xUECguShFI5Sn45XuUVuaRnwUH4Q4.jpeg?width=320&crop=smart&auto=webp&s=9c4af5fb0c8c2949a009a43c675ebadfa1945f2a",
+      "title": "Liquid Sunshine, Michael Alfano, sculpture, 2020",
+      "artist": "u/unpaid-pukegreencow",
+      "artistUrl": "https://www.reddit.com/user/unpaid-pukegreencow",
+      "url": "https://www.reddit.com/r/Art/comments/1wg7dss/liquid_sunshine_michael_alfano_sculpture_2020/",
+      "image": "https://preview.redd.it/ez7bor19diph1.jpeg?width=640&crop=smart&auto=webp&s=09505e81b8e21e8b538f0bb876185db505b7ec19",
+      "thumb": "https://preview.redd.it/ez7bor19diph1.jpeg?width=640&crop=smart&auto=webp&s=09505e81b8e21e8b538f0bb876185db505b7ec19",
       "value": 100,
-      "scoreLabel": "#1 top today in r/hentai",
-      "nsfw": true,
-      "postedAt": "2026-09-14T17:04:01.000Z",
-      "context": "r/hentai",
-      "heat": 95
+      "scoreLabel": "#1 top today in r/Art",
+      "nsfw": false,
+      "postedAt": "2026-09-14T15:57:43.000Z",
+      "context": "r/Art",
+      "heat": 94
     },
     {
       "id": "artstation:Xagvry",
@@ -198,8 +199,8 @@
       "artist": "mouma",
       "artistUrl": "https://i.pximg.net/img-original/img/2026/05/15/19/23/59/144803503_p0.jpg",
       "url": "https://danbooru.donmai.us/posts/12190623",
-      "image": "",
-      "thumb": "",
+      "image": "https://cdn.donmai.us/sample/74/92/sample-7492a2aece01614c23f5de3841755396.jpg",
+      "thumb": "https://cdn.donmai.us/sample/74/92/sample-7492a2aece01614c23f5de3841755396.jpg",
       "thumbFallbacks": [
         "https://cdn.donmai.us/180x180/74/92/7492a2aece01614c23f5de3841755396.jpg",
         "https://cdn.donmai.us/original/74/92/7492a2aece01614c23f5de3841755396.jpg"
@@ -209,7 +210,8 @@
       "postedAt": "2026-09-14T09:59:28.385Z",
       "nsfw": true,
       "context": "arknights",
-      "heat": 90
+      "heat": 89,
+      "thumbVerified": false
     },
     {
       "id": "pixiv:149667269",
@@ -228,19 +230,19 @@
       "heat": 42
     },
     {
-      "id": "reddit:1wg7dss",
+      "id": "reddit:1wg4y73",
       "source": "reddit",
-      "title": "Liquid Sunshine, Michael Alfano, sculpture, 2020",
-      "artist": "u/unpaid-pukegreencow",
-      "artistUrl": "https://www.reddit.com/user/unpaid-pukegreencow",
-      "url": "https://www.reddit.com/r/Art/comments/1wg7dss/liquid_sunshine_michael_alfano_sculpture_2020/",
-      "image": "https://preview.redd.it/ez7bor19diph1.jpeg?width=640&crop=smart&auto=webp&s=09505e81b8e21e8b538f0bb876185db505b7ec19",
-      "thumb": "https://preview.redd.it/ez7bor19diph1.jpeg?width=640&crop=smart&auto=webp&s=09505e81b8e21e8b538f0bb876185db505b7ec19",
+      "title": "Unicorn by Hannah Comstock",
+      "artist": "u/Cyborg_Ape",
+      "artistUrl": "https://www.reddit.com/user/Cyborg_Ape",
+      "url": "https://www.reddit.com/r/ImaginaryMonsters/comments/1wg4y73/unicorn_by_hannah_comstock/",
+      "image": "https://preview.redd.it/k3psz400xhph1.gif?width=640&crop=smart&s=68378252f4381c0be39adcac51c583a2c565833d",
+      "thumb": "https://preview.redd.it/k3psz400xhph1.gif?width=640&crop=smart&s=68378252f4381c0be39adcac51c583a2c565833d",
       "value": 100,
-      "scoreLabel": "#1 top today in r/Art",
+      "scoreLabel": "#1 top today in r/ImaginaryMonsters",
       "nsfw": false,
-      "postedAt": "2026-09-14T15:57:43.000Z",
-      "context": "r/Art",
+      "postedAt": "2026-09-14T14:26:47.000Z",
+      "context": "r/ImaginaryMonsters",
       "heat": 94
     },
     {
@@ -272,8 +274,8 @@
       "artist": "ie",
       "artistUrl": "https://i.pximg.net/img-original/img/2026/09/14/22/00/03/149671396_p0.png",
       "url": "https://danbooru.donmai.us/posts/12191448",
-      "image": "",
-      "thumb": "",
+      "image": "https://cdn.donmai.us/sample/0f/ed/sample-0fedef76feae591ee430e19d24f7adfb.jpg",
+      "thumb": "https://cdn.donmai.us/sample/0f/ed/sample-0fedef76feae591ee430e19d24f7adfb.jpg",
       "thumbFallbacks": [
         "https://cdn.donmai.us/180x180/0f/ed/0fedef76feae591ee430e19d24f7adfb.jpg",
         "https://cdn.donmai.us/original/0f/ed/0fedef76feae591ee430e19d24f7adfb.png"
@@ -283,7 +285,8 @@
       "postedAt": "2026-09-14T13:01:35.533Z",
       "nsfw": true,
       "context": "original",
-      "heat": 89
+      "heat": 89,
+      "thumbVerified": false
     },
     {
       "id": "pixiv:149639921",
@@ -302,20 +305,20 @@
       "heat": 36
     },
     {
-      "id": "reddit:1wg4y73",
+      "id": "reddit:1wg2etx",
       "source": "reddit",
-      "title": "Unicorn by Hannah Comstock",
-      "artist": "u/Cyborg_Ape",
-      "artistUrl": "https://www.reddit.com/user/Cyborg_Ape",
-      "url": "https://www.reddit.com/r/ImaginaryMonsters/comments/1wg4y73/unicorn_by_hannah_comstock/",
-      "image": "https://preview.redd.it/k3psz400xhph1.gif?width=640&crop=smart&s=68378252f4381c0be39adcac51c583a2c565833d",
-      "thumb": "https://preview.redd.it/k3psz400xhph1.gif?width=640&crop=smart&s=68378252f4381c0be39adcac51c583a2c565833d",
-      "value": 100,
-      "scoreLabel": "#1 top today in r/ImaginaryMonsters",
+      "title": "«king of beeches» 2024",
+      "artist": "u/Anastasia_Trusova",
+      "artistUrl": "https://www.reddit.com/user/Anastasia_Trusova",
+      "url": "https://www.reddit.com/r/painting/comments/1wg2etx/king_of_beeches_2024/",
+      "image": "https://preview.redd.it/4ch1vjkxehph1.jpeg?width=640&crop=smart&auto=webp&s=c11c589d02463b68447540d444fe22e0216bcc59",
+      "thumb": "https://preview.redd.it/4ch1vjkxehph1.jpeg?width=640&crop=smart&auto=webp&s=c11c589d02463b68447540d444fe22e0216bcc59",
+      "value": 97,
+      "scoreLabel": "#4 top today in r/painting",
       "nsfw": false,
-      "postedAt": "2026-09-14T14:26:47.000Z",
-      "context": "r/ImaginaryMonsters",
-      "heat": 94
+      "postedAt": "2026-09-14T12:45:21.000Z",
+      "context": "r/painting",
+      "heat": 91
     },
     {
       "id": "artstation:eglXnD",
@@ -346,18 +349,19 @@
       "artist": "damobelmont",
       "artistUrl": "https://x.com/DamoBelmont/status/2099475755046449355",
       "url": "https://danbooru.donmai.us/posts/12193213",
-      "image": "",
-      "thumb": "",
+      "image": "https://cdn.donmai.us/sample/17/32/sample-1732bd0937c51d5a06b6bc76917db683.jpg",
+      "thumb": "https://cdn.donmai.us/sample/17/32/sample-1732bd0937c51d5a06b6bc76917db683.jpg",
       "thumbFallbacks": [
         "https://cdn.donmai.us/180x180/17/32/1732bd0937c51d5a06b6bc76917db683.jpg",
         "https://cdn.donmai.us/original/17/32/1732bd0937c51d5a06b6bc76917db683.jpg"
       ],
-      "value": 282,
-      "scoreLabel": "score 282 · 261 favourites",
+      "value": 283,
+      "scoreLabel": "score 283 · 262 favourites",
       "postedAt": "2026-09-14T18:27:45.988Z",
       "nsfw": false,
       "context": "blue archive",
-      "heat": 87
+      "heat": 87,
+      "thumbVerified": false
     },
     {
       "id": "pixiv:149647354",
@@ -376,20 +380,20 @@
       "heat": 29
     },
     {
-      "id": "reddit:1wg60dt",
+      "id": "reddit:1wgblqb",
       "source": "reddit",
-      "title": "Malevola couch sex (Araneesama) [Dispatch]",
-      "artist": "u/noelleworshipper",
-      "artistUrl": "https://www.reddit.com/user/noelleworshipper",
-      "url": "https://www.reddit.com/r/rule34/comments/1wg60dt/malevola_couch_sex_araneesama_dispatch/",
-      "image": "https://preview.redd.it/7glvhcw64iph1.png?width=140&height=140&crop=1:1,smart&auto=webp&s=e0672290b1137efc25300b4510a5bce73c46f936",
-      "thumb": "https://preview.redd.it/7glvhcw64iph1.png?width=140&height=140&crop=1:1,smart&auto=webp&s=e0672290b1137efc25300b4510a5bce73c46f936",
-      "value": 98,
-      "scoreLabel": "#3 top today in r/rule34",
-      "nsfw": true,
-      "postedAt": "2026-09-14T15:07:05.000Z",
-      "context": "r/rule34",
-      "heat": 92
+      "title": "[OC] Vaelis Aerwyn , Art by me",
+      "artist": "u/SauloSouzaArtwork",
+      "artistUrl": "https://www.reddit.com/user/SauloSouzaArtwork",
+      "url": "https://www.reddit.com/r/ImaginaryCharacters/comments/1wgblqb/oc_vaelis_aerwyn_art_by_me/",
+      "image": "https://preview.redd.it/hs6pvet23jph1.png?width=140&height=140&crop=1:1,smart&auto=webp&s=9b0b5944b184529bfa8aa31e6194a138d32781c2",
+      "thumb": "https://preview.redd.it/hs6pvet23jph1.png?width=140&height=140&crop=1:1,smart&auto=webp&s=9b0b5944b184529bfa8aa31e6194a138d32781c2",
+      "value": 92,
+      "scoreLabel": "#9 top today in r/ImaginaryCharacters",
+      "nsfw": false,
+      "postedAt": "2026-09-14T18:24:33.000Z",
+      "context": "r/ImaginaryCharacters",
+      "heat": 89
     },
     {
       "id": "artstation:q0eXxR",
@@ -420,8 +424,8 @@
       "artist": "brikot",
       "artistUrl": "https://x.com/brikotforsberg/status/2099362059892724212",
       "url": "https://danbooru.donmai.us/posts/12189534",
-      "image": "",
-      "thumb": "",
+      "image": "https://cdn.donmai.us/sample/77/d8/sample-77d8b8659bc41bd56162585f0f9bc801.jpg",
+      "thumb": "https://cdn.donmai.us/sample/77/d8/sample-77d8b8659bc41bd56162585f0f9bc801.jpg",
       "thumbFallbacks": [
         "https://cdn.donmai.us/180x180/77/d8/77d8b8659bc41bd56162585f0f9bc801.jpg",
         "https://cdn.donmai.us/original/77/d8/77d8b8659bc41bd56162585f0f9bc801.jpg"
@@ -431,7 +435,8 @@
       "postedAt": "2026-09-14T04:59:02.791Z",
       "nsfw": true,
       "context": "zenless zone zero",
-      "heat": 86
+      "heat": 85,
+      "thumbVerified": false
     },
     {
       "id": "pixiv:149641578",
@@ -450,20 +455,20 @@
       "heat": 27
     },
     {
-      "id": "reddit:1wg2etx",
+      "id": "reddit:1wgessu",
       "source": "reddit",
-      "title": "«king of beeches» 2024",
-      "artist": "u/Anastasia_Trusova",
-      "artistUrl": "https://www.reddit.com/user/Anastasia_Trusova",
-      "url": "https://www.reddit.com/r/painting/comments/1wg2etx/king_of_beeches_2024/",
-      "image": "https://preview.redd.it/4ch1vjkxehph1.jpeg?width=640&crop=smart&auto=webp&s=c11c589d02463b68447540d444fe22e0216bcc59",
-      "thumb": "https://preview.redd.it/4ch1vjkxehph1.jpeg?width=640&crop=smart&auto=webp&s=c11c589d02463b68447540d444fe22e0216bcc59",
-      "value": 97,
-      "scoreLabel": "#4 top today in r/painting",
+      "title": "Which of the 4 versions looks better?",
+      "artist": "u/SwimmingTricky9405",
+      "artistUrl": "https://www.reddit.com/user/SwimmingTricky9405",
+      "url": "https://www.reddit.com/r/DigitalArt/comments/1wgessu/which_of_the_4_versions_looks_better/",
+      "image": "https://preview.redd.it/jep5q3rbnjph1.png?width=140&height=140&crop=1:1,smart&auto=webp&s=1ee52018ca40d1a5b083a859c3924ffca9087aa1",
+      "thumb": "https://preview.redd.it/jep5q3rbnjph1.png?width=140&height=140&crop=1:1,smart&auto=webp&s=1ee52018ca40d1a5b083a859c3924ffca9087aa1",
+      "value": 89,
+      "scoreLabel": "#12 top today in r/DigitalArt",
       "nsfw": false,
-      "postedAt": "2026-09-14T12:45:21.000Z",
-      "context": "r/painting",
-      "heat": 91
+      "postedAt": "2026-09-14T20:17:05.000Z",
+      "context": "r/DigitalArt",
+      "heat": 87
     },
     {
       "id": "artstation:KRewnR",
@@ -494,8 +499,8 @@
       "artist": "bullxon",
       "artistUrl": "https://mega.nz/file/HxQlURpK#wuQh99CPa41RdseN5YNGIerhKwwjUnDhsfXpCakOJ28",
       "url": "https://danbooru.donmai.us/posts/12191407",
-      "image": "",
-      "thumb": "",
+      "image": "https://cdn.donmai.us/original/6c/0a/6c0adf0b6dbfee844f5aee9c7976cf5e.gif",
+      "thumb": "https://cdn.donmai.us/original/6c/0a/6c0adf0b6dbfee844f5aee9c7976cf5e.gif",
       "thumbFallbacks": [
         "https://cdn.donmai.us/180x180/6c/0a/6c0adf0b6dbfee844f5aee9c7976cf5e.jpg",
         "https://cdn.donmai.us/original/6c/0a/6c0adf0b6dbfee844f5aee9c7976cf5e.gif"
@@ -505,7 +510,8 @@
       "postedAt": "2026-09-14T12:54:27.076Z",
       "nsfw": true,
       "context": "umamusume",
-      "heat": 80
+      "heat": 80,
+      "thumbVerified": false
     },
     {
       "id": "pixiv:149640516",
