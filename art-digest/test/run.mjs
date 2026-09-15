@@ -494,6 +494,7 @@ test('subreddits: one subreddit that keeps refusing is found, not blamed on its 
   assert.equal(sizes[0], 9, 'the group is tried whole first');
   assert.equal(sizes[1], 9, 'and retried whole before any splitting');
   assert.ok(sizes.slice(2).every((n) => n < 9), 'only then does it halve');
+  assert.ok(sizes.length <= 9, `isolated in ${sizes.length} requests, without re-retrying every half`);
 });
 
 test('subreddits: a dead name is separated from a throttled one', async () => {

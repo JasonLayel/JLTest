@@ -327,7 +327,7 @@ export const REDDIT_DEFAULTS = {
   // Reddit rate-limits by request count, so the whole list goes out in three
   // multireddit requests rather than many small ones.
   groupSize: 9,
-  budget: 30,
+  budget: 36,
   pause: 5000,
   backoff: 20_000,
   retries: 1,
@@ -413,7 +413,10 @@ export async function harvestSubreddits(subs, run, options = {}) {
       } else if (job.tries < retries) {
         next.push({ subs: job.subs, tries: job.tries + 1 });
       } else if (job.subs.length > 1) {
-        next.push(...halve(job.subs, 0));
+        // Past its retries, so this is isolation rather than throttling: the
+        // halves inherit the spent retries instead of each buying another
+        // round, which roughly halves the cost of finding the bad name.
+        next.push(...halve(job.subs, retries));
       } else {
         drop(job.subs, `unreachable${result.status ? ` (${result.status})` : ''}`);
       }
