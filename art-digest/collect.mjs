@@ -45,7 +45,20 @@ export const DEFAULT_SUBS = {
   'tabletop & character art': ['characterdrawing', 'DnD', 'DungeonsAndDragons', 'Pathfinder_RPG', 'Warhammer40k'],
   fandom: ['FanArt', 'ImaginaryCharacters', 'ImaginaryMonsters', 'ImaginaryWesteros', 'AnimeSketch', 'awwnime'],
   worlds: ['ImaginaryLandscapes', 'ImaginaryCityscapes', 'ImaginaryMythology', 'ImaginaryWildlands'],
+  // Adult art competes on the same terms as everything else: no boost, no
+  // penalty, and the same one-pick-per-subreddit rotation. It reaches the
+  // digest when its top post out-scores the other subreddits' top posts.
+  'adult art': ['rule34', 'hentai', 'ecchi'],
 };
+
+/**
+ * Subreddits whose every post is adult, whatever the feed says. Reddit's Atom
+ * feed does not reliably carry the nsfw category, so a post from one of these
+ * would otherwise be labelled SFW and slip past the widget's SFW filter.
+ */
+export const ADULT_SUBS = new Set(
+  (DEFAULT_SUBS['adult art'] || []).map((sub) => sub.toLowerCase())
+);
 
 const splitList = (value) => (value || '').split(',').map((s) => s.trim()).filter(Boolean);
 
@@ -64,6 +77,10 @@ const CONFIG = {
     ? splitList(process.env.ART_DIGEST_TAGS)
     : ['conceptart', 'characterart', 'dnd', 'fanart', 'digitalart'],
   sources: splitList(process.env.ART_DIGEST_SOURCES),
+  adultSubs: new Set([
+    ...ADULT_SUBS,
+    ...splitList(process.env.ART_DIGEST_NSFW_SUBS).map((sub) => sub.toLowerCase()),
+  ]),
   // include (default) | exclude | only. Adult work is kept and flagged rather
   // than dropped; the widget and the email label it, and can filter on it.
   nsfw: (process.env.ART_DIGEST_NSFW || 'include').trim().toLowerCase(),
@@ -187,7 +204,7 @@ export function applyNsfwPolicy(items, mode = 'include') {
 /* ---------------------------------------------------------------- sources */
 
 /** Reddit: top posts of the day across the art subreddits. */
-export function normalizeReddit(payload, subreddit = '') {
+export function normalizeReddit(payload, subreddit = '', { adultSubs = ADULT_SUBS } = {}) {
   const children = payload?.data?.children ?? [];
   return children
     .map((child) => child?.data)
@@ -214,7 +231,7 @@ export function normalizeReddit(payload, subreddit = '') {
         value: Number(p.score) || 0,
         scoreLabel: `${compact(Number(p.score) || 0)} upvotes`,
         postedAt: iso(p.created_utc),
-        nsfw: Boolean(p.over_18),
+        nsfw: Boolean(p.over_18) || adultSubs.has(String(p.subreddit || subreddit).toLowerCase()),
         context: clean(p.subreddit_name_prefixed || (subreddit && `r/${subreddit}`) || ''),
       };
     })
@@ -226,7 +243,7 @@ export function normalizeReddit(payload, subreddit = '') {
  * does from datacenter IPs like GitHub's runners. The feed is ordered by top
  * of the day but carries no vote counts, so position is the only signal.
  */
-export function normalizeRedditRss(xml, subreddit = '') {
+export function normalizeRedditRss(xml, subreddit = '', { adultSubs = ADULT_SUBS } = {}) {
   const entries = String(xml).split(/<entry>/).slice(1).map((b) => b.split(/<\/entry>/)[0]);
   const tag = (block, name) => {
     const m = block.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`, 'i'));
@@ -260,9 +277,12 @@ export function normalizeRedditRss(xml, subreddit = '') {
         thumb: https(decodeEntities(image)),
         value: Math.max(1, entries.length - index),
         scoreLabel: `#${index + 1} top today${sub ? ` in r/${sub}` : ''}`,
-        // The feed marks adult posts with an nsfw category; without the JSON
-        // API that flag is all there is to go on.
-        nsfw: categories.some((term) => /^nsfw$/i.test(term)) || /\bnsfw\b/i.test(tag(block, 'title')),
+        // The feed's nsfw category is the only per-post signal here and it is
+        // not always present, so an adult subreddit settles it by itself.
+        nsfw:
+          adultSubs.has(sub.toLowerCase()) ||
+          categories.some((term) => /^nsfw$/i.test(term)) ||
+          /\bnsfw\b/i.test(tag(block, 'title')),
         postedAt: (() => {
           const d = new Date(tag(block, 'updated') || tag(block, 'published'));
           return Number.isNaN(d.valueOf()) ? null : d.toISOString();
@@ -418,7 +438,7 @@ async function collectReddit(cfg) {
         get(`https://oauth.reddit.com/r/${subs.join('+')}/top.json?t=day&limit=100&raw_json=1`, {
           headers: { Authorization: `Bearer ${token}` },
         }).then((payload) => ({
-          items: normalizeReddit(payload),
+          items: normalizeReddit(payload, '', { adultSubs: cfg.adultSubs }),
           fetched: payload?.data?.children?.length ?? 0,
         })),
     },
@@ -429,7 +449,7 @@ async function collectReddit(cfg) {
           headers: { 'User-Agent': BROWSER_UA },
           attempts: 2,
         }).then((payload) => ({
-          items: normalizeReddit(payload),
+          items: normalizeReddit(payload, '', { adultSubs: cfg.adultSubs }),
           fetched: payload?.data?.children?.length ?? 0,
         })),
     },
@@ -441,7 +461,7 @@ async function collectReddit(cfg) {
           headers: { 'User-Agent': BROWSER_UA, Accept: 'application/atom+xml,text/xml' },
           attempts: 2,
         }).then((xml) => ({
-          items: normalizeRedditRss(xml),
+          items: normalizeRedditRss(xml, '', { adultSubs: cfg.adultSubs }),
           fetched: (String(xml).match(/<entry>/g) || []).length,
         })),
     },

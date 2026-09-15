@@ -77,6 +77,7 @@ Reddit OAuth credentials may reach it — add it back with
 | Tabletop & character art | r/characterdrawing, r/DnD, r/DungeonsAndDragons, r/Pathfinder_RPG, r/Warhammer40k |
 | Fandom | r/FanArt, r/ImaginaryCharacters, r/ImaginaryMonsters, r/ImaginaryWesteros, r/AnimeSketch, r/awwnime |
 | Worlds | r/ImaginaryLandscapes, r/ImaginaryCityscapes, r/ImaginaryMythology, r/ImaginaryWildlands |
+| Adult art | r/rule34, r/hentai, r/ecchi |
 
 `ART_DIGEST_EXTRA_SUBS=foo,bar` adds to this list; `ART_DIGEST_SUBS=foo,bar`
 replaces it entirely. Within Reddit's share of the digest, each subreddit gets a
@@ -90,6 +91,16 @@ Adult work is **kept and flagged**, not filtered out: every item carries
 Everything / SFW / 18+ filter and an optional blur, and the email labels each
 adult pick. `ART_DIGEST_NSFW=exclude` drops them instead; `only` keeps nothing
 else.
+
+Flagging changes how a piece is *labelled*, never how it is ranked. Adult work
+gets no boost and no penalty: it is scored against its source's top piece like
+everything else, and takes a slot in the same one-pick-per-subreddit rotation.
+r/rule34 reaches the digest on the days its top post out-scores the top posts
+of r/Art, r/DnD and the rest, and doesn't on the days it doesn't.
+
+Reddit's Atom feed does not reliably carry the per-post nsfw category, so posts
+from the adult subreddits are flagged by subreddit as well. `ART_DIGEST_NSFW_SUBS`
+adds more names to that set.
 
 What each source actually returns:
 
@@ -150,6 +161,7 @@ python3 -m http.server 8000     # then open /art-digest/
 | `ART_DIGEST_TAGS` | conceptart, characterart, dnd, fanart, digitalart | Bluesky hashtags to search |
 | `ART_DIGEST_SOURCES` | all | Comma-separated source ids to run (`artstation,reddit,pixiv,deviantart,bluesky,danbooru`) |
 | `ART_DIGEST_NSFW` | `include` | `include`, `exclude` or `only` |
+| `ART_DIGEST_NSFW_SUBS` | unset | Subreddits whose every post should be flagged adult, added to r/rule34, r/hentai and r/ecchi |
 | `PIXIV_SESSION` | unset | A Pixiv `PHPSESSID` cookie, which unlocks the R-18 daily ranking |
 | `BLUESKY_IDENTIFIER` / `BLUESKY_APP_PASSWORD` | unset | A handle and app password, used when the public AppView refuses the request |
 | `ART_DIGEST_PIXIV_PROXY` | `https://i.pixiv.re` | Pixiv blocks hotlinked thumbnails, so they're re-served through a mirror. Set to empty to drop Pixiv thumbnails instead |

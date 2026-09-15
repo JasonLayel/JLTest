@@ -18,6 +18,7 @@ import {
   normalizeDanbooru,
   applyNsfwPolicy,
   harvestSubreddits,
+  ADULT_SUBS,
   rankItems,
   resolveThumbnails,
   renderEmail,
@@ -139,6 +140,30 @@ test('reddit atom: used when the JSON API refuses, ranked by feed position', () 
   assert.equal(item.image, 'https://preview.redd.it/zz9001.jpg?width=640&s=x');
   assert.equal(item.scoreLabel, '#1 top today in r/Art');
   assert.equal(item.postedAt, '2026-09-11T07:30:00.000Z');
+});
+
+test('reddit: a post from an adult subreddit is flagged even when the feed is silent', () => {
+  // The Atom feed often omits the nsfw category, and a rule34 post labelled
+  // SFW would slip straight past the widget's SFW filter.
+  const feed = redditAtom
+    .replace('/r/Art/comments/zz9001/the_lighthouse/', '/r/rule34/comments/zz9001/piece/')
+    .replace('<title>The Lighthouse at Var</title>', '<category term="rule34" label="r/rule34" /><title>A perfectly ordinary title</title>');
+  const [item] = normalizeRedditRss(feed);
+  assert.equal(item.context, 'r/rule34');
+  assert.equal(item.nsfw, true, 'the subreddit settles it');
+
+  const [json] = normalizeReddit({
+    data: { children: [{ data: {
+      id: 'j1', title: 'no flag set', author: 'x', permalink: '/r/rule34/comments/j1/x/', score: 100,
+      created_utc: hoursAgo(2), subreddit: 'rule34', over_18: false,
+      preview: { images: [{ source: { url: 'https://preview.redd.it/j1.jpg' } }] },
+    } }] },
+  });
+  assert.equal(json.nsfw, true, 'even when over_18 is somehow unset');
+});
+
+test('adult subreddits are only the ones declared', () => {
+  assert.deepEqual([...ADULT_SUBS].sort(), ['ecchi', 'hentai', 'rule34']);
 });
 
 /* -------------------------------------------------------------- artstation */
@@ -541,6 +566,27 @@ test('subreddits: a slow day stops at the deadline, not at the budget', async ()
   assert.ok(calls <= 6, `stopped after ${calls} requests rather than 40`);
   assert.ok(result.budgetSpent);
   assert.equal(result.dropped.length, 26);
+});
+
+test('ranking: adult work is neither boosted nor penalised', () => {
+  // Same source, same age: the only thing separating them is the score.
+  const mixed = [
+    { ...makeItems('reddit', 1, 9000)[0], id: 'sfw-top', title: 'sfw top', artist: 'a', context: 'r/Art', nsfw: false, value: 9000 },
+    { ...makeItems('reddit', 1, 9000)[0], id: 'nsfw-mid', title: 'nsfw mid', artist: 'b', context: 'r/rule34', nsfw: true, value: 5000 },
+    { ...makeItems('reddit', 1, 9000)[0], id: 'sfw-low', title: 'sfw low', artist: 'c', context: 'r/painting', nsfw: false, value: 1000 },
+  ];
+  const ranked = rankItems({ reddit: mixed }, { limit: 3, windowHours: 48, now: NOW });
+  assert.deepEqual(ranked.map((i) => i.id), ['sfw-top', 'nsfw-mid', 'sfw-low'], 'score alone decides the order');
+
+  // Flip the scores and the adult piece leads, with nothing else changed.
+  const flipped = mixed.map((item) => ({ ...item, value: item.nsfw ? 9000 : item.value === 9000 ? 5000 : 1000 }));
+  const reranked = rankItems({ reddit: flipped }, { limit: 3, windowHours: 48, now: NOW });
+  assert.equal(reranked[0].id, 'nsfw-mid', 'the most popular piece leads whatever it is');
+  assert.equal(
+    ranked.find((i) => i.id === 'nsfw-mid').heat,
+    reranked.find((i) => i.id === 'sfw-top').heat,
+    'the same score earns the same heat either way'
+  );
 });
 
 /* ------------------------------------------------------------ nsfw policy */
