@@ -1,0 +1,1061 @@
+<title>Compass — Phase 0</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+  /* Layout: one scrolling interview, sticky progress rail on top,
+     sticky section index at left on wide screens. Dark-first — this is
+     an app you open at night, next to a drawing. */
+  :root {
+    --bg: #14110f;
+    --surface: #1d1917;
+    --surface-2: #26211e;
+    --line: #382f2a;
+    --line-soft: #2b2522;
+    --fg: #ece5dd;
+    --fg-dim: #c3b8ae;
+    --muted: #96887c;
+    --ember: #ff7f36;
+    --ember-deep: #d8571c;
+    --glow: rgba(255, 127, 54, 0.13);
+    --ok: #74b98d;
+    --display: "Bricolage Grotesque", "Trebuchet MS", sans-serif;
+    --body: "Literata", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    color-scheme: dark;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #f6f3ef;
+      --surface: #fffdfb;
+      --surface-2: #ece5dd;
+      --line: #d8cdc2;
+      --line-soft: #e6ded5;
+      --fg: #201a16;
+      --fg-dim: #4a4038;
+      --muted: #726659;
+      --ember: #bc4a16;
+      --ember-deep: #93360c;
+      --glow: rgba(188, 74, 22, 0.09);
+      --ok: #3d7d55;
+      color-scheme: light;
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f3ef;
+    --surface: #fffdfb;
+    --surface-2: #ece5dd;
+    --line: #d8cdc2;
+    --line-soft: #e6ded5;
+    --fg: #201a16;
+    --fg-dim: #4a4038;
+    --muted: #726659;
+    --ember: #bc4a16;
+    --ember-deep: #93360c;
+    --glow: rgba(188, 74, 22, 0.09);
+    --ok: #3d7d55;
+    color-scheme: light;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto;
+    height: env(safe-area-inset-top, 0px);
+    z-index: 30;
+    background: var(--bg);
+  }
+
+  /* ---------- sticky rail ---------- */
+  .rail {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    background: color-mix(in srgb, var(--bg) 92%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .rail-in {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .mark {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    white-space: nowrap;
+  }
+  .mark svg { display: block; }
+  .bar {
+    flex: 1 1 140px;
+    min-width: 0;
+    height: 5px;
+    border-radius: 99px;
+    background: var(--surface-2);
+    overflow: hidden;
+  }
+  .bar > i {
+    display: block;
+    height: 100%;
+    width: 0%;
+    border-radius: 99px;
+    background: linear-gradient(90deg, var(--ember-deep), var(--ember));
+    transition: width 0.35s ease;
+  }
+  .count {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .chipsave {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border-radius: 99px;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    background: var(--surface);
+    white-space: nowrap;
+  }
+  .chipsave[data-s="saving"] { color: var(--ember); border-color: var(--ember); }
+  .chipsave[data-s="saved"] { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 50%, var(--line)); }
+  .chipsave[data-s="warn"] { color: var(--ember); border-color: var(--ember); background: var(--glow); }
+
+  /* ---------- shell ---------- */
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-block: 0 72px;
+  }
+  .cols { display: block; }
+  @media (min-width: 940px) {
+    .cols { display: grid; grid-template-columns: 196px minmax(0, 1fr); gap: 48px; align-items: start; }
+  }
+
+  /* ---------- hero ---------- */
+  .hero { padding-block: 40px 30px; max-width: 62ch; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ember);
+    margin-bottom: 14px;
+  }
+  h1 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(30px, 6.4vw, 46px);
+    line-height: 1.04;
+    letter-spacing: -0.025em;
+    margin: 0 0 16px;
+    text-wrap: balance;
+  }
+  .lede { font-size: 17px; color: var(--fg-dim); margin: 0 0 14px; }
+  .hero p { margin: 0 0 12px; }
+  .hero p:last-child { margin-bottom: 0; }
+  .howto {
+    margin-top: 24px;
+    border-left: 2px solid var(--ember);
+    background: var(--glow);
+    padding: 14px 16px;
+    border-radius: 0 8px 8px 0;
+  }
+  .howto ul { margin: 0; padding-left: 18px; }
+  .howto li { margin-bottom: 5px; font-size: 15px; color: var(--fg-dim); }
+  .howto li:last-child { margin-bottom: 0; }
+  .howto b { color: var(--fg); font-weight: 600; }
+
+  /* ---------- section index ---------- */
+  .index { margin-block: 0 26px; }
+  @media (min-width: 940px) {
+    .index { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 74px); margin-top: 40px; }
+  }
+  .index-h {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .index-list { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+  @media (min-width: 940px) { .index-list { flex-direction: column; overflow: visible; gap: 1px; } }
+  .index-list a {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    text-decoration: none;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 5px 9px;
+    border-radius: 7px;
+    border: 1px solid var(--line-soft);
+    white-space: nowrap;
+  }
+  @media (min-width: 940px) { .index-list a { border: 0; padding: 5px 7px; white-space: normal; } }
+  .index-list a:hover { color: var(--fg); background: var(--surface-2); }
+  .index-list a.on { color: var(--fg); background: var(--surface-2); }
+  .index-list a.done span.n { color: var(--ok); }
+  .index-list span.n { font-family: var(--mono); font-size: 11px; color: var(--ember); }
+
+  /* ---------- sections ---------- */
+  section { padding-block: 30px; border-top: 1px solid var(--line-soft); scroll-margin-top: 90px; }
+  section:first-of-type { border-top: 0; }
+  .sec-head { max-width: 62ch; margin-bottom: 26px; }
+  .sec-n {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--ember);
+    display: block;
+    margin-bottom: 8px;
+  }
+  h2 {
+    font-family: var(--display);
+    font-weight: 700;
+    font-size: clamp(22px, 4.2vw, 29px);
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    margin: 0 0 8px;
+    text-wrap: balance;
+  }
+  .sec-why { color: var(--muted); font-size: 15px; margin: 0; }
+
+  .q { max-width: 66ch; margin-bottom: 30px; }
+  .q:last-child { margin-bottom: 0; }
+  .q-label {
+    display: block;
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 17px;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    color: var(--fg);
+  }
+  .q-hint { display: block; font-size: 14px; color: var(--muted); margin-bottom: 11px; font-style: italic; }
+  .q-note {
+    max-width: 66ch;
+    margin-bottom: 30px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 15px 17px;
+    font-size: 15px;
+    color: var(--fg-dim);
+  }
+  .q-note b { color: var(--fg); font-weight: 600; }
+
+  input[type="text"], textarea {
+    width: 100%;
+    font-family: var(--body);
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--fg);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 11px 13px;
+    resize: vertical;
+  }
+  textarea { min-height: 84px; overflow: hidden; }
+  input[type="text"]:focus-visible, textarea:focus-visible {
+    outline: 2px solid var(--ember);
+    outline-offset: 1px;
+    border-color: var(--ember);
+  }
+  input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.75; }
+
+  fieldset { border: 0; padding: 0; margin: 0; }
+  legend { padding: 0; }
+  .opts { display: flex; flex-wrap: wrap; gap: 7px; }
+  .opt {
+    font-family: var(--body);
+    font-size: 15px;
+    color: var(--fg-dim);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 99px;
+    padding: 7px 14px;
+    cursor: pointer;
+    text-align: left;
+    line-height: 1.3;
+  }
+  .opt:hover { border-color: var(--ember); color: var(--fg); }
+  .opt:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+  .opt[aria-pressed="true"] {
+    background: var(--glow);
+    border-color: var(--ember);
+    color: var(--fg);
+    font-weight: 600;
+  }
+
+  .scale { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .scale-btns { display: flex; gap: 5px; }
+  .scale-btns .opt { min-width: 42px; text-align: center; font-family: var(--mono); font-size: 14px; }
+  .scale-end { font-size: 13px; color: var(--muted); max-width: 20ch; }
+
+  .grid-rows { display: flex; flex-direction: column; gap: 3px; }
+  .grow {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  @media (min-width: 620px) { .grow { grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 14px; } }
+  .grow:last-child { border-bottom: 0; }
+  .grow-name { font-size: 15px; min-width: 0; }
+  .grow-name i { display: block; font-size: 13px; color: var(--muted); font-style: normal; }
+  .grow-btns { display: flex; gap: 4px; }
+  .grow-btns .opt { min-width: 34px; padding: 5px 0; text-align: center; font-family: var(--mono); font-size: 13px; }
+  .legend-key {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 13px 15px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: var(--fg-dim);
+  }
+  .legend-key dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 3px 10px; margin: 0; }
+  .legend-key dt { font-family: var(--mono); color: var(--ember); font-size: 13px; }
+  .legend-key dd { margin: 0; min-width: 0; }
+
+  .rank { display: flex; flex-direction: column; gap: 9px; }
+  .rank-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .rank-row label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); min-width: 68px; }
+  select {
+    font-family: var(--body);
+    font-size: 15px;
+    color: var(--fg);
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: 9px 11px;
+    min-width: 0;
+    flex: 1 1 200px;
+  }
+  select:focus-visible { outline: 2px solid var(--ember); outline-offset: 1px; }
+
+  /* ---------- end ---------- */
+  .end {
+    margin-top: 40px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--surface);
+    padding: 24px;
+    max-width: 66ch;
+  }
+  .end h2 { font-size: clamp(20px, 3.6vw, 25px); }
+  .end p { color: var(--fg-dim); margin: 0 0 14px; }
+  .btn-row { display: flex; gap: 9px; flex-wrap: wrap; margin-top: 4px; }
+  .btn {
+    font-family: var(--display);
+    font-weight: 500;
+    font-size: 15px;
+    padding: 10px 16px;
+    border-radius: 9px;
+    border: 1px solid var(--ember);
+    background: var(--ember);
+    color: #1a0f07;
+    cursor: pointer;
+  }
+  .btn.ghost { background: transparent; color: var(--fg); border-color: var(--line); }
+  .btn:hover { filter: brightness(1.08); }
+  .btn.ghost:hover { border-color: var(--ember); }
+  .btn:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+  .toast {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ok);
+    margin-top: 10px;
+    min-height: 1.2em;
+  }
+  .dump {
+    width: 100%;
+    margin-top: 14px;
+    font-family: var(--mono);
+    font-size: 12px;
+    min-height: 200px;
+    overflow: auto;
+    white-space: pre;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="rail">
+  <div class="rail-in">
+    <span class="mark">
+      <svg width="15" height="18" viewBox="0 0 15 18" aria-hidden="true">
+        <path d="M7.5 0C9 4 12.5 5 12.5 9.5a5 5 0 0 1-10 0C2.5 7 4 5.5 4.5 4c.3 2 1.3 2.6 2 2.6C7.8 6.6 6.2 3 7.5 0Z" fill="var(--ember)"/>
+      </svg>
+      Compass
+    </span>
+    <span class="bar" role="progressbar" aria-label="Questions answered" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bar"><i id="barfill"></i></span>
+    <span class="count" id="count">0 / 0</span>
+    <span class="chipsave" id="save" data-s="idle">Connecting</span>
+  </div>
+</div>
+
+<div class="shell">
+  <div class="hero">
+    <div class="eyebrow">Hearth · Phase 0</div>
+    <h1>The interview that teaches it who you are.</h1>
+    <p class="lede">Everything the art companion ever says comes out of this file. Get it right and it sounds like someone who knows you. Get it vague and it sounds like every other app.</p>
+    <p>About 60–90 minutes if you take it seriously, and it does not have to be one sitting. There are no wrong answers and nothing here is a test — but a short answer buys a generic companion, so go long where you have something to say.</p>
+    <div class="howto">
+      <ul>
+        <li><b>It saves as you type.</b> Watch the chip in the top bar. Close the tab whenever; come back to the same link.</li>
+        <li><b>Skip anything that bores you.</b> A blank is information too, and I'd rather have forty honest answers than every box dutifully filled.</li>
+        <li><b>Claude reads this directly.</b> No copying anything back into chat — just tell me you're done.</li>
+        <li><b>Section 02 and section 08 matter most.</b> Where your pieces die, and how you want to be spoken to. If you only do two, do those.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="cols">
+    <nav class="index" aria-label="Sections">
+      <div class="index-h">Sections</div>
+      <div class="index-list" id="nav"></div>
+    </nav>
+    <main id="form"></main>
+  </div>
+
+  <div class="end">
+    <h2>That's it.</h2>
+    <p>Tell Claude you've finished and it will read your answers, write the Compass and the skill ledger, and set up arc #1. If anything looks wrong afterwards, come back to this page and change it — it's a living file, not a form you submit once.</p>
+    <div class="btn-row">
+      <button class="btn ghost" id="copy" type="button">Copy all answers as text</button>
+      <button class="btn ghost" id="showraw" type="button">Show raw</button>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+    <textarea class="dump" id="dump" hidden readonly aria-label="All answers as text"></textarea>
+  </div>
+</div>
+
+<script>
+/* ------------------------------------------------------------------ *
+ * The interview. Each section becomes one document in the `compass`
+ * collection, stored self-describing ({id, q, a}) so it still reads
+ * clearly months from now without this file alongside it.
+ * ------------------------------------------------------------------ */
+
+var SKILLS = [
+  ["gesture", "Gesture", "the line of action, movement, life"],
+  ["proportion", "Proportion", "relative sizes landing right"],
+  ["construction", "Construction", "building form from simple solids"],
+  ["perspective", "Perspective", "space, depth, horizon discipline"],
+  ["value", "Value structure", "the three-value read, squint test"],
+  ["edges", "Edge control", "hard, soft, lost edges"],
+  ["colour", "Colour harmony", "palettes that hold together"],
+  ["composition", "Composition", "where things sit, where the eye goes"],
+  ["anatomy", "Anatomy", "what's under the skin"],
+  ["cloth", "Drapery & cloth", "folds, weight, fabric"],
+  ["organic", "Foliage & organic", "trees, plants, rock, irregular mass"],
+  ["hardsurface", "Architecture & hard surface", "buildings, machines, straight edges"],
+  ["finish", "Rendering & finish", "taking something to done"]
+];
+
+var SECTIONS = [
+  {
+    id: "s1", n: "01", title: "The honest baseline",
+    why: "Where you actually are, not where it would be nice to be. Everything downstream calibrates off this.",
+    qs: [
+      { id: "makes", t: "long", label: "What do you actually make right now?", hint: "Describe a typical recent drawing session and what came out of it." },
+      { id: "finished6mo", t: "one", label: "How many pieces have you finished in the last six months?", hint: "Finished meaning you'd be willing to show it to someone.", opts: ["0", "1–2", "3–5", "6–10", "More than 10"] },
+      { id: "backlog", t: "one", label: "How many unfinished sketches are sitting around?", opts: ["Under 10", "10–30", "30–100", "Over 100", "Genuinely no idea"] },
+      { id: "lastdead", t: "long", label: "The last piece you abandoned — what was it, and at what exact point did you stop?", hint: "Be specific about the moment. This is the single most useful answer in the whole interview." },
+      { id: "best", t: "long", label: "The best thing you've ever made. What was it, and what made it work?", hint: "If you don't know why it worked, say that — it's a real answer." }
+    ]
+  },
+  {
+    id: "s2", n: "02", title: "Where pieces die",
+    why: "You said mostly incomplete sketches. This section is the diagnosis, and the companion is built around whatever it says.",
+    qs: [
+      { id: "whydie", t: "many", label: "Why do your pieces die? Check everything that's true.", hint: "Be unflattering. Nobody else reads this.", opts: [
+        "It got ugly in the middle and I lost faith",
+        "I genuinely didn't know what to do next",
+        "I ran out of time and never came back",
+        "I lost interest in the subject",
+        "I compared it to something better and deflated",
+        "I made a mistake that felt too big to fix",
+        "Something newer and shinier distracted me",
+        "Perfectionism — kept fiddling, never called it done",
+        "Life interrupted and the thread snapped",
+        "I was never really trying to finish it"
+      ]},
+      { id: "diestage", t: "one", label: "Which stage do they usually die at?", opts: ["Thumbnail / idea", "Block-in", "Construction & line", "Value", "Colour", "Detail & rendering", "Almost done", "It varies wildly"] },
+      { id: "comeback", t: "long", label: "When you DO come back to a piece, what brought you back?", hint: "Even one example. Knowing what revives a piece is how the Finish Lane gets built." },
+      { id: "stucksay", t: "long", label: "When you're stuck mid-piece, what do you want someone to say — and what would make it worse?", hint: "Both halves, please. The second half is the one that protects you from a companion you end up muting." }
+    ]
+  },
+  {
+    id: "s3", n: "03", title: "North star",
+    why: "The thing every suggestion gets measured against. Without it the companion optimizes for nothing in particular.",
+    qs: [
+      { id: "threeyear", t: "long", label: "Three years out, what does \"it's working\" look like?", hint: "Describe a specific day or a specific moment rather than a milestone list." },
+      { id: "theartist", t: "short", label: "Finish the sentence: I want to be the artist who…", hint: "One line. Say the ambitious version." },
+      { id: "envy", t: "long", label: "Whose work do you wish you'd made? Name two to five, and say what specifically about each.", hint: "\"The way she handles light on skin\" is useful. \"She's great\" isn't." },
+      { id: "feeling", t: "short", label: "What should someone feel looking at your work?" }
+    ]
+  },
+  {
+    id: "s4", n: "04", title: "Money, concretely",
+    why: "Deferred to a later build phase, but captured now so subject choice quietly bends toward it from day one.",
+    qs: [
+      { id: "rank", t: "rank3", label: "Rank your three monetization targets.", hint: "Which one would you be most pleased to have working in 18 months?", opts: ["Commissions / client work", "Prints, merch, product", "Audience & subscription"] },
+      { id: "commissions", t: "long", label: "Commissions: what would you want to be hired to draw, and by whom?", hint: "Pet portraits and D&D characters are very different businesses. Pick a lane or say you don't know yet." },
+      { id: "prints", t: "long", label: "Prints & merch: what's the actual product, and what's on it?", hint: "A3 prints? Stickers? Enamel pins? Of what subject?" },
+      { id: "audience", t: "many", label: "Audience: what are you actually willing to put out there?", opts: ["Finished pieces only", "Work-in-progress shots", "Timelapse / process video", "My voice", "My face", "Written commentary", "Tutorials / teaching", "Nothing yet — too early"] },
+      { id: "realnumber", t: "short", label: "In 18 months, what result would feel real rather than fantasy?", hint: "A number helps. \"$150/month\" or \"six paid commissions\" or \"500 people who care\"." },
+      { id: "notformoney", t: "long", label: "What would you NOT do for money?", hint: "This becomes a hard constraint the companion respects without asking." }
+    ]
+  },
+  {
+    id: "s5", n: "05", title: "Subjects & style",
+    why: "You named characters, fantasy scenes, and nature. Now make each one specific enough to act on.",
+    qs: [
+      { id: "characters", t: "long", label: "Characters & figures — get specific. Who or what?", hint: "Portraits? Invented characters? Creatures? Full figures or busts? Realistic or stylized?" },
+      { id: "fantasy", t: "long", label: "Fantasy & narrative scenes — what world, what mood?", hint: "High fantasy? Quiet folklore? Ruins? Something with a story already in your head?" },
+      { id: "nature", t: "long", label: "Nature, landscape, botanical — what in particular?", hint: "Vast vistas, or one plant on a table? Wild or cultivated? Weather and light, or structure and detail?" },
+      { id: "gapnote", t: "note", text: "<b>A gap worth naming.</b> Your art-digest taste file currently weights <b>architectural, archviz, cityscape, environment and matte painting</b> most heavily — your browsing leans hard toward built environments. But the subjects you named out loud lead with characters and figures. That's usually not a contradiction: it's the difference between what you love to look at and what you want to be able to make." },
+      { id: "gap", t: "one", label: "So which is it?", opts: [
+        "Environments are the reward; characters are the deliberate practice",
+        "The other way round — characters are the joy, environments are the study",
+        "Both equally; I want them to meet in one picture",
+        "The taste file is stale and doesn't reflect me any more"
+      ]},
+      { id: "never", t: "long", label: "What do you never want to draw?", hint: "Permission for the companion to stop suggesting it." },
+      { id: "mediummix", t: "one", label: "Realistically, how does your time split between digital and traditional?", opts: ["Almost all digital", "Mostly digital", "About even", "Mostly traditional", "Almost all traditional"] }
+    ]
+  },
+  {
+    id: "s6", n: "06", title: "Skill ledger",
+    why: "The seed of the thing that tracks your improvement. Honest numbers here; inflated ones produce a companion that teaches you the wrong lesson.",
+    qs: [
+      { id: "ledger", t: "grid", label: "Rate yourself on each fundamental.", hint: "Go fast and trust your gut. You'll revisit these every six weeks with actual evidence.", rows: SKILLS },
+      { id: "biggestwin", t: "select", label: "If ONE of those jumped two levels, which would improve your work most?", opts: SKILLS.map(function (s) { return s[1]; }) },
+      { id: "avoided", t: "select", label: "And which one do you quietly avoid practicing?", opts: SKILLS.map(function (s) { return s[1]; }) }
+    ]
+  },
+  {
+    id: "s7", n: "07", title: "Time & rhythm",
+    why: "You said 15–30 minutes most days plus 45–90 a few times a week. This section makes that schedulable instead of aspirational.",
+    qs: [
+      { id: "when", t: "many", label: "When does drawing actually happen?", hint: "What's true, not what you'd like to be true.", opts: ["Early morning", "Mid-morning", "Lunch break", "Afternoon", "Early evening", "Late night", "Weekends only", "Totally unpredictable"] },
+      { id: "blockers", t: "long", label: "What reliably stops a session from happening?", hint: "Tiredness, phone, the setup being a hassle, someone else needing you, not knowing what to draw…" },
+      { id: "twentymin", t: "long", label: "On a 20-minute day, what's worth doing? And what do you currently do with those 20 minutes?", hint: "If the honest answer is \"nothing, I don't bother\" — say that." },
+      { id: "sustainable", t: "one", label: "How many days a week do you want to touch art — sustainably, not heroically?", opts: ["2", "3", "4", "5", "6", "7"] }
+    ]
+  },
+  {
+    id: "s8", n: "08", title: "How it should talk to you",
+    why: "The calibration section. A companion pitched wrong gets muted in week two, and then none of the rest matters.",
+    qs: [
+      { id: "bluntness", t: "scale", label: "How blunt should it be by default?", lo: "1 — gentle, always finds something kind first", hi: "5 — brutal, no cushioning at all" },
+      { id: "bluntshift", t: "one", label: "Should that move on command?", hint: "e.g. you say \"go hard on me\" or \"be gentle today\" and it shifts for that session.", opts: ["Yes, both directions", "Only toward blunter", "Only toward gentler", "No — pick one setting and stick to it"] },
+      { id: "humour", t: "scale", label: "How funny should it be?", lo: "1 — dry and sparing", hi: "5 — constantly, relentlessly funny" },
+      { id: "teasing", t: "one", label: "Teasing — where's the line?", opts: [
+        "Tease me about avoidance and procrastination, freely",
+        "Tease, but keep it gentle",
+        "Only once we've got some history together",
+        "No teasing at all"
+      ]},
+      { id: "address", t: "short", label: "What should it call you?", hint: "Jason? Something else? Is a recurring nickname charming or unbearable?" },
+      { id: "goodpraise", t: "long", label: "Write a \"well done\" that would actually land on you.", hint: "In the companion's voice, as if it just said it to you. This is the highest-value answer in the section — it's a direct sample of the register you want." },
+      { id: "badcrit", t: "long", label: "Now write a correction that would make you shut down and close the app.", hint: "So it knows exactly what to never do." },
+      { id: "neversay", t: "long", label: "Three things it must never say.", hint: "Phrases, topics, whole modes of speaking. One per line." },
+      { id: "moneytalk", t: "one", label: "Should it ever bring up money or long-term goals while you're drawing?", opts: ["Never mid-session — only in reviews", "Only if I bring it up", "Yes, that's fine", "Yes, and I want the pressure"] }
+    ]
+  },
+  {
+    id: "s9", n: "09", title: "Stories & fables",
+    why: "Your idea: it writes a small fable, then asks which parts you want to draw from. Worth checking how much you actually want it.",
+    qs: [
+      { id: "fableappeal", t: "one", label: "Honestly, how much do you want the fable feature?", opts: [
+        "A lot — it's the part I'm most excited about",
+        "Yes, sometimes — nice to have on tap",
+        "Only when starting something new",
+        "It sounded good but I probably wouldn't use it"
+      ]},
+      { id: "storyflavour", t: "many", label: "What kind of story actually seeds an image for you?", opts: ["Myth & folktale", "A quiet, melancholy moment", "Humour & absurdity", "Eerie or unsettling", "Heroic & grand", "Small domestic things", "Nature as a character", "Ruins & what's left behind", "Something with a secret in it"] },
+      { id: "lovedstory", t: "long", label: "Name a story you love — book, game, film, myth — and what you'd want to steal from it.", hint: "Tone, imagery, a single scene. Whatever's actually sticky for you." }
+    ]
+  },
+  {
+    id: "s10", n: "10", title: "Logistics",
+    why: "The boring answers that decide what can actually be built, especially for voice.",
+    qs: [
+      { id: "phoneos", t: "one", label: "Phone OS?", hint: "This decides whether voice input works on the phone at all — iOS Safari's speech recognition is unreliable.", opts: ["iPhone / iOS", "Android", "Both"] },
+      { id: "digitaltools", t: "short", label: "What do you draw in, digitally?", hint: "Photoshop, Krita, Procreate, Blender, something else." },
+      { id: "tradtools", t: "long", label: "Traditional tools you actually own and use.", hint: "Not the aspirational drawer of untouched supplies — what you reach for." },
+      { id: "firebase", t: "one", label: "New Firebase project for this, or reuse an existing one?", opts: ["New project (recommended)", "Reuse petulent-princess-productivity", "Whatever's least hassle — you pick"] },
+      { id: "name", t: "short", label: "Name. \"Hearth\" is my suggestion — yours?", hint: "Spark, Ignite, and then this. Leave blank to keep Hearth." },
+      { id: "budget", t: "one", label: "Confirm the monthly ceiling.", hint: "The estimate came to roughly $1.50–$3/month of model usage.", opts: ["$5", "$10", "$20", "Keep it as close to free as possible"] }
+    ]
+  },
+  {
+    id: "s11", n: "11", title: "Arc one",
+    why: "The last four answers set what the first six weeks are actually for. Answer these after the rest.",
+    qs: [
+      { id: "focusskill", t: "select", label: "The ONE focus skill for the next six weeks.", hint: "One. Not three. Three simultaneous improvement targets produce zero improvement.", opts: SKILLS.map(function (s) { return s[1]; }) },
+      { id: "series", t: "long", label: "First series: a name, and the constraint six to eight pieces would share.", hint: "e.g. \"Quiet Architecture — three values, no figures, all interiors.\" Rough is fine; it's a starting shape, not a contract." },
+      { id: "rescue", t: "long", label: "Which unfinished piece do you most want to resurrect first?", hint: "The one that still nags at you." },
+      { id: "anythingelse", t: "long", label: "What didn't I ask that matters?", hint: "Anything. Fears, constraints, a thing you've never told anyone about why this matters to you." }
+    ]
+  }
+];
+
+/* ------------------------------------------------------------------ *
+ * Render
+ * ------------------------------------------------------------------ */
+
+var answers = {};
+var db = null;
+var writable = true;
+var el = function (id) { return document.getElementById(id); };
+var qIndex = {};   /* qid -> {section, q} */
+
+function esc(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function unitsFor(q) { return q.t === "grid" ? q.rows.length : (q.t === "note" ? 0 : 1); }
+
+function totalUnits() {
+  var n = 0;
+  SECTIONS.forEach(function (s) { s.qs.forEach(function (q) { n += unitsFor(q); }); });
+  return n;
+}
+
+function answeredUnits() {
+  var n = 0;
+  SECTIONS.forEach(function (s) {
+    s.qs.forEach(function (q) {
+      if (q.t === "note") return;
+      if (q.t === "grid") {
+        q.rows.forEach(function (r) { if (answers[q.id + "::" + r[0]] !== undefined) n++; });
+      } else if (q.t === "rank3") {
+        var v = answers[q.id];
+        if (v && v.length === 3 && v[0] && v[1] && v[2]) n++;
+      } else {
+        var a = answers[q.id];
+        if (Array.isArray(a) ? a.length > 0 : (a !== undefined && String(a).trim() !== "")) n++;
+      }
+    });
+  });
+  return n;
+}
+
+function sectionAnswered(s) {
+  var n = 0;
+  s.qs.forEach(function (q) {
+    if (q.t === "note") return;
+    if (q.t === "grid") { q.rows.forEach(function (r) { if (answers[q.id + "::" + r[0]] !== undefined) n++; }); }
+    else if (q.t === "rank3") { var v = answers[q.id]; if (v && v[0] && v[1] && v[2]) n++; }
+    else { var a = answers[q.id]; if (Array.isArray(a) ? a.length > 0 : (a !== undefined && String(a).trim() !== "")) n++; }
+  });
+  return n;
+}
+
+function buildQ(sec, q) {
+  var wrap = document.createElement("div");
+  if (q.t === "note") {
+    wrap.className = "q-note";
+    wrap.innerHTML = q.text;
+    return wrap;
+  }
+  wrap.className = "q";
+  wrap.dataset.q = q.id;
+  var uid = sec.id + "_" + q.id;
+
+  var isGroup = (q.t === "one" || q.t === "many" || q.t === "scale" || q.t === "grid");
+  var head = isGroup
+    ? '<fieldset><legend><span class="q-label">' + esc(q.label) + "</span>" + (q.hint ? '<span class="q-hint">' + esc(q.hint) + "</span>" : "") + "</legend>"
+    : '<label class="q-label" for="' + uid + '">' + esc(q.label) + "</label>" + (q.hint ? '<span class="q-hint">' + esc(q.hint) + "</span>" : "");
+
+  var body = "";
+
+  if (q.t === "short") {
+    body = '<input type="text" id="' + uid + '" data-in="' + q.id + '" autocomplete="off">';
+  } else if (q.t === "long") {
+    body = '<textarea id="' + uid + '" data-in="' + q.id + '" rows="3"></textarea>';
+  } else if (q.t === "one" || q.t === "many") {
+    body = '<div class="opts">' + q.opts.map(function (o) {
+      return '<button type="button" class="opt" data-pick="' + q.id + '" data-multi="' + (q.t === "many") + '" data-val="' + esc(o) + '" aria-pressed="false">' + esc(o) + "</button>";
+    }).join("") + "</div>";
+  } else if (q.t === "scale") {
+    body = '<div class="scale"><span class="scale-end">' + esc(q.lo) + '</span><div class="scale-btns">' +
+      [1, 2, 3, 4, 5].map(function (n) {
+        return '<button type="button" class="opt" data-pick="' + q.id + '" data-multi="false" data-val="' + n + '" aria-pressed="false">' + n + "</button>";
+      }).join("") + '</div><span class="scale-end">' + esc(q.hi) + "</span></div>";
+  } else if (q.t === "select") {
+    body = '<select id="' + uid + '" data-sel="' + q.id + '"><option value="">— pick one —</option>' +
+      q.opts.map(function (o) { return '<option value="' + esc(o) + '">' + esc(o) + "</option>"; }).join("") + "</select>";
+  } else if (q.t === "rank3") {
+    body = '<div class="rank">' + ["Most wanted", "Then", "Last"].map(function (lab, i) {
+      return '<div class="rank-row"><label for="' + uid + "_" + i + '">' + lab + '</label><select id="' + uid + "_" + i +
+        '" data-rank="' + q.id + '" data-slot="' + i + '"><option value="">— pick —</option>' +
+        q.opts.map(function (o) { return '<option value="' + esc(o) + '">' + esc(o) + "</option>"; }).join("") + "</select></div>";
+    }).join("") + "</div>";
+  } else if (q.t === "grid") {
+    body = '<div class="legend-key"><dl>' +
+      [["0", "never tried it"], ["1", "aware of it, can't do it"], ["2", "can do it if I concentrate"], ["3", "reliable on easy cases"], ["4", "solid"], ["5", "a real strength"]]
+        .map(function (p) { return "<dt>" + p[0] + "</dt><dd>" + p[1] + "</dd>"; }).join("") +
+      "</dl></div><div class='grid-rows'>" +
+      q.rows.map(function (r) {
+        return '<div class="grow"><div class="grow-name">' + esc(r[1]) + "<i>" + esc(r[2]) + '</i></div><div class="grow-btns">' +
+          [0, 1, 2, 3, 4, 5].map(function (n) {
+            return '<button type="button" class="opt" data-grid="' + q.id + '" data-row="' + r[0] + '" data-val="' + n + '" aria-pressed="false" aria-label="' + esc(r[1]) + ": " + n + '">' + n + "</button>";
+          }).join("") + "</div></div>";
+      }).join("") + "</div>";
+  }
+
+  wrap.innerHTML = head + body + (isGroup ? "</fieldset>" : "");
+  return wrap;
+}
+
+function render() {
+  var form = el("form");
+  var nav = el("nav");
+  SECTIONS.forEach(function (sec) {
+    sec.qs.forEach(function (q) { qIndex[q.id] = { sec: sec, q: q }; });
+
+    var s = document.createElement("section");
+    s.id = sec.id;
+    var h = document.createElement("div");
+    h.className = "sec-head";
+    h.innerHTML = '<span class="sec-n">' + sec.n + '</span><h2>' + esc(sec.title) + '</h2><p class="sec-why">' + esc(sec.why) + "</p>";
+    s.appendChild(h);
+    sec.qs.forEach(function (q) { s.appendChild(buildQ(sec, q)); });
+    form.appendChild(s);
+
+    var a = document.createElement("a");
+    a.href = "#" + sec.id;
+    a.dataset.sec = sec.id;
+    a.innerHTML = '<span class="n">' + sec.n + "</span><span>" + esc(sec.title) + "</span>";
+    nav.appendChild(a);
+  });
+}
+
+function paint() {
+  /* reflect answers into the DOM */
+  document.querySelectorAll("[data-in]").forEach(function (n) {
+    var v = answers[n.dataset.in];
+    if (v !== undefined && n.value !== v) n.value = v;
+    if (n.tagName === "TEXTAREA") grow(n);
+  });
+  document.querySelectorAll("[data-pick]").forEach(function (n) {
+    var v = answers[n.dataset.pick];
+    var on = n.dataset.multi === "true" ? (Array.isArray(v) && v.indexOf(n.dataset.val) > -1) : (v !== undefined && String(v) === n.dataset.val);
+    n.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  document.querySelectorAll("[data-grid]").forEach(function (n) {
+    var v = answers[n.dataset.grid + "::" + n.dataset.row];
+    n.setAttribute("aria-pressed", (v !== undefined && String(v) === n.dataset.val) ? "true" : "false");
+  });
+  document.querySelectorAll("[data-sel]").forEach(function (n) {
+    var v = answers[n.dataset.sel];
+    if (v !== undefined) n.value = v;
+  });
+  document.querySelectorAll("[data-rank]").forEach(function (n) {
+    var v = answers[n.dataset.rank];
+    if (Array.isArray(v)) n.value = v[+n.dataset.slot] || "";
+  });
+  progress();
+}
+
+function progress() {
+  var tot = totalUnits(), got = answeredUnits();
+  var pct = tot ? Math.round((got / tot) * 100) : 0;
+  el("barfill").style.width = pct + "%";
+  el("bar").setAttribute("aria-valuenow", String(pct));
+  el("count").textContent = got + " / " + tot;
+  SECTIONS.forEach(function (sec) {
+    var a = document.querySelector('[data-sec="' + sec.id + '"]');
+    if (a) a.classList.toggle("done", sectionAnswered(sec) > 0);
+  });
+}
+
+function grow(t) {
+  t.style.height = "auto";
+  t.style.height = Math.max(84, t.scrollHeight + 2) + "px";
+}
+
+/* ------------------------------------------------------------------ *
+ * Saving
+ * ------------------------------------------------------------------ */
+
+var saveState = "idle";
+function setSave(s, label) {
+  saveState = s;
+  var c = el("save");
+  c.dataset.s = s;
+  c.textContent = label;
+}
+
+var pending = {};      /* sectionId -> true */
+var inflight = {};     /* sectionId -> true */
+var timer = null;
+
+function sectionBody(sec) {
+  var items = [];
+  sec.qs.forEach(function (q) {
+    if (q.t === "note") return;
+    if (q.t === "grid") {
+      var rows = {};
+      q.rows.forEach(function (r) {
+        var v = answers[q.id + "::" + r[0]];
+        if (v !== undefined) rows[r[1]] = v;
+      });
+      if (Object.keys(rows).length) items.push({ id: q.id, q: q.label, a: rows });
+    } else {
+      var a = answers[q.id];
+      var empty = Array.isArray(a) ? a.filter(Boolean).length === 0 : (a === undefined || String(a).trim() === "");
+      if (!empty) items.push({ id: q.id, q: q.label, a: a });
+    }
+  });
+  return { section: sec.title, n: sec.n, items: items, updatedAt: new Date().toISOString() };
+}
+
+function queue(secId) {
+  if (!db || !writable) return;
+  pending[secId] = true;
+  setSave("saving", "Saving");
+  clearTimeout(timer);
+  timer = setTimeout(flush, 850);
+}
+
+function flush() {
+  if (!db) return;
+  var ids = Object.keys(pending);
+  if (!ids.length) { if (!Object.keys(inflight).length) setSave("saved", "Saved"); return; }
+  ids.forEach(function (secId) {
+    if (inflight[secId]) return;
+    delete pending[secId];
+    inflight[secId] = true;
+    var sec = SECTIONS.filter(function (s) { return s.id === secId; })[0];
+    db.doc("compass/" + secId).set(sectionBody(sec)).then(function () {
+      delete inflight[secId];
+      if (pending[secId]) flush();
+      else if (!Object.keys(inflight).length && !Object.keys(pending).length) setSave("saved", "Saved");
+    }).catch(function (e) {
+      delete inflight[secId];
+      if (e && e.code === "invalid_argument") {
+        writable = false;
+        setSave("warn", "Read-only");
+      } else if (e && (e.code === "not_granted" || e.code === "revoked" || e.code === "capability_disabled")) {
+        db = null;
+        setSave("warn", "Not saving");
+      } else {
+        pending[secId] = true;
+        setSave("warn", "Retrying");
+        clearTimeout(timer);
+        timer = setTimeout(flush, 2500);
+      }
+    });
+  });
+}
+
+function setAnswer(qid, val, secId) {
+  if (val === undefined || val === null || (typeof val === "string" && val === "")) delete answers[qid];
+  else answers[qid] = val;
+  progress();
+  queue(secId);
+}
+
+function secOf(qid) {
+  var base = qid.split("::")[0];
+  return qIndex[base] ? qIndex[base].sec.id : null;
+}
+
+function wire() {
+  var form = el("form");
+
+  form.addEventListener("input", function (e) {
+    var n = e.target;
+    if (n.dataset && n.dataset.in) {
+      if (n.tagName === "TEXTAREA") grow(n);
+      setAnswer(n.dataset.in, n.value, secOf(n.dataset.in));
+    }
+  });
+
+  form.addEventListener("change", function (e) {
+    var n = e.target;
+    if (n.dataset && n.dataset.sel) setAnswer(n.dataset.sel, n.value, secOf(n.dataset.sel));
+    if (n.dataset && n.dataset.rank) {
+      var qid = n.dataset.rank;
+      var slots = Array.prototype.slice.call(document.querySelectorAll('[data-rank="' + qid + '"]'));
+      var vals = slots.map(function (s) { return s.value; });
+      setAnswer(qid, vals.filter(function (v) { return v !== ""; }).length ? vals : undefined, secOf(qid));
+    }
+  });
+
+  form.addEventListener("click", function (e) {
+    var n = e.target.closest("button.opt");
+    if (!n) return;
+
+    if (n.dataset.grid) {
+      var key = n.dataset.grid + "::" + n.dataset.row;
+      var cur = answers[key];
+      var nv = Number(n.dataset.val);
+      setAnswer(key, (cur !== undefined && Number(cur) === nv) ? undefined : nv, secOf(n.dataset.grid));
+      paintGroup('[data-grid="' + n.dataset.grid + '"][data-row="' + n.dataset.row + '"]', key, false);
+      return;
+    }
+
+    var qid = n.dataset.pick;
+    if (!qid) return;
+    var multi = n.dataset.multi === "true";
+    var val = n.dataset.val;
+    if (multi) {
+      var arr = Array.isArray(answers[qid]) ? answers[qid].slice() : [];
+      var i = arr.indexOf(val);
+      if (i > -1) arr.splice(i, 1); else arr.push(val);
+      setAnswer(qid, arr.length ? arr : undefined, secOf(qid));
+    } else {
+      var isNum = /^\d+$/.test(val);
+      var same = answers[qid] !== undefined && String(answers[qid]) === val;
+      setAnswer(qid, same ? undefined : (isNum ? Number(val) : val), secOf(qid));
+    }
+    paintGroup('[data-pick="' + qid + '"]', qid, multi);
+  });
+
+  function paintGroup(sel, key, multi) {
+    document.querySelectorAll(sel).forEach(function (b) {
+      var v = answers[key];
+      var on = multi ? (Array.isArray(v) && v.indexOf(b.dataset.val) > -1) : (v !== undefined && String(v) === b.dataset.val);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+
+  /* nav highlight */
+  var obs = new IntersectionObserver(function (es) {
+    es.forEach(function (en) {
+      if (!en.isIntersecting) return;
+      document.querySelectorAll("#nav a").forEach(function (a) { a.classList.toggle("on", a.dataset.sec === en.target.id); });
+    });
+  }, { rootMargin: "-80px 0px -70% 0px" });
+  document.querySelectorAll("section").forEach(function (s) { obs.observe(s); });
+
+  /* text dump + copy */
+  function asText() {
+    var out = ["HEARTH — COMPASS (Phase 0)", "Exported " + new Date().toISOString(), ""];
+    SECTIONS.forEach(function (sec) {
+      var body = sectionBody(sec);
+      if (!body.items.length) return;
+      out.push("## " + sec.n + " " + sec.title, "");
+      body.items.forEach(function (it) {
+        out.push("Q: " + it.q);
+        if (it.a && typeof it.a === "object" && !Array.isArray(it.a)) {
+          Object.keys(it.a).forEach(function (k) { out.push("   " + k + ": " + it.a[k]); });
+        } else if (Array.isArray(it.a)) {
+          it.a.forEach(function (v) { if (v) out.push("   - " + v); });
+        } else {
+          out.push("A: " + it.a);
+        }
+        out.push("");
+      });
+    });
+    return out.join("\n");
+  }
+
+  el("showraw").addEventListener("click", function () {
+    var d = el("dump");
+    d.value = asText();
+    d.hidden = !d.hidden;
+    el("showraw").textContent = d.hidden ? "Show raw" : "Hide raw";
+  });
+
+  el("copy").addEventListener("click", function () {
+    var text = asText();
+    var done = function () { el("toast").textContent = "Copied " + answeredUnits() + " answers to the clipboard."; };
+    try {
+      navigator.clipboard.writeText(text).then(done).catch(function () {
+        var d = el("dump"); d.value = text; d.hidden = false; d.select();
+        el("showraw").textContent = "Hide raw";
+        el("toast").textContent = "Couldn't reach the clipboard — the text is selected below, copy it manually.";
+      });
+    } catch (err) {
+      var d2 = el("dump"); d2.value = text; d2.hidden = false; d2.select();
+      el("toast").textContent = "Couldn't reach the clipboard — the text is selected below, copy it manually.";
+    }
+  });
+}
+
+/* ------------------------------------------------------------------ *
+ * Boot
+ * ------------------------------------------------------------------ */
+
+render();
+wire();
+paint();
+
+(function start() {
+  if (!window.claude || !window.claude.use) { setSave("warn", "Not saving"); return; }
+  Promise.resolve(window.claude.use("db")).then(function (store) {
+    if (!store) { setSave("warn", "Sign in to save"); return; }
+    db = store;
+    return Promise.resolve(window.claude.use("user")).then(function (u) {
+      if (u && u.can) {
+        return Promise.resolve(u.can("data.write")).then(function (ok) {
+          if (ok === false) writable = false;
+        }).catch(function () {});
+      }
+    }).then(function () {
+      return db.collection("compass").get();
+    }).then(function (snap) {
+      snap.docs.forEach(function (d) {
+        var body = d.data() || {};
+        (body.items || []).forEach(function (it) {
+          if (!it || !it.id) return;
+          if (it.a && typeof it.a === "object" && !Array.isArray(it.a)) {
+            var q = qIndex[it.id] && qIndex[it.id].q;
+            if (q && q.t === "grid") {
+              q.rows.forEach(function (r) { if (it.a[r[1]] !== undefined) answers[q.id + "::" + r[0]] = it.a[r[1]]; });
+            }
+          } else {
+            answers[it.id] = it.a;
+          }
+        });
+      });
+      paint();
+      setSave(writable ? "saved" : "warn", writable ? (answeredUnits() ? "Saved" : "Ready") : "Read-only");
+    });
+  }).catch(function () {
+    setSave("warn", "Not saving");
+  });
+})();
+</script>
