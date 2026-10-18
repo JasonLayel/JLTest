@@ -4,7 +4,11 @@
 > you sit beside while you work. Spark hands you something to look at, Ignite tells
 > you what to do, Hearth stays with you until it's done.
 >
-> Owner: Jason Layel. Drafted 2026-10-17 from an interview (§2 records the answers).
+> Owner: Jason Layel. Drafted 2026-10-17; **revised 2026-10-18 after Phase 0**.
+>
+> **Read `hearth/compass.md` first.** It is written from the full Phase 0 interview
+> and is authoritative wherever it and this plan disagree. Five findings from it
+> overturned parts of this document; each change is marked in place and listed in §16.
 
 ---
 
@@ -19,15 +23,21 @@ palettes, words and constraints. It is not a reference problem — Spark already
 random reference with notan, grayscale, grid and gesture drills. It is not a
 motivation-to-start problem — streaks and fire levels already handle the opening move.
 
-**The leak is the middle of a piece.** Roughly: minute 25 to minute 70, when the
-drawing stops looking like the idea in your head and starts looking worse than the
-sketch it came from. That is where pieces die, and nothing in your current toolkit is
-standing there with you.
+**The leak is block-in — earlier than this plan originally assumed.** Phase 0 located
+it precisely, and the finding is sharper than "the middle of a piece": you work from
+reference, and the drawing dies at the moment the reference runs out and the form has
+to be built from your head. Your own words: *"When I draw without reference I almost
+always give up."* The last piece you abandoned died because the pose you pictured had
+no reference to copy.
+
+Two facts stack on top of that. A mistake that appears at block-in feels too big to
+fix, because fixing it means a redraw you have neither the skill nor the time for. And
+a piece you don't finish in one sitting is, by your own account, finished with.
 
 So Hearth's job, in one line:
 
-> **Be present in the middle of a piece, break what's left into a step you can
-> actually take, and make finishing feel more normal than quitting.**
+> **Scope the piece to one sitting, stand next to you at block-in when the reference
+> runs out, and make finishing feel more normal than quitting.**
 
 Everything else in this plan — the voice, the humor, the fables, the monetization
 awareness — is in service of that. If a feature doesn't help you finish more pieces
@@ -47,8 +57,9 @@ Secondary: sessions per week, median session length, pieces per month, and
 
 ## 2. What the companion knows about you (the interview record)
 
-This section is the seed of the Compass file in §4. It is deliberately written as
-fact, not as a summary, because the companion will read it.
+This section records the first, short interview. **It has been superseded by
+`hearth/compass.md`**, written from the full Phase 0 interview on 2026-10-18 — read
+that first; where the two disagree, the Compass wins. Kept here for the record.
 
 | | |
 |---|---|
@@ -217,10 +228,17 @@ it knows is sitting unfinished:
    can't waste time with isn't a companion, and a low-stakes lane on a low-energy day
    protects the habit better than a skipped day does.
 
-### Beat 3 — Build the ladder
+### Beat 3 — Scope, then build the ladder
 
-The decomposition engine. Given the piece, the time budget, and where it stands, it
-generates **the next one to three steps and no more**. Never the whole plan.
+**Scoping comes first and outranks everything else in this beat.** Phase 0 established
+that a piece not finished in one sitting is effectively abandoned, so the companion's
+first planning act is to size the work to the time actually available: *"what could you
+finish this afternoon?"* before *"what do you want to make?"* If a session won't reach
+done, it says so while there's still time to shrink the idea. A multi-session ladder is
+a plan to produce another abandoned sketch.
+
+Then the decomposition engine. Given the piece, the time budget, and where it stands,
+it generates **the next one to three steps and no more**. Never the whole plan.
 
 Each step has exactly four parts:
 
@@ -302,18 +320,31 @@ something it cannot see.
 problem). The dial is per-session, remembered per lane: the Hang Out lane defaults
 chatty, a Blaze session defaults quiet.
 
-### 6.3 Progress-photo critique format
+### 6.3 Progress photos — and the separation of making from judging
 
-When you send a photo, the response has a fixed four-part shape. Fixed structure is
-what keeps it useful instead of rambling, and makes it skimmable by ear.
+**Revised after Phase 0. There is no critique during a session.** You wrote the rule
+yourself, inside the sample praise you asked for: *"Don't self critique this now.
+We'll analyze it later."* That is a mechanic, not a mood. Making and judging are
+separate activities, and the companion separates them for you because you won't.
 
-1. **Read** — what it actually sees, plainly. This also lets you catch it being wrong
-   before you act on advice built on a misreading.
-2. **One note** — the single highest-leverage change *for the current step's done-when*.
-   Not a critique of the finished piece that doesn't exist yet. Critiquing a block-in
-   for its missing detail is the fastest way to make someone quit.
-3. **An anchor** — one real, specific thing that's working.
-4. **Next** — the concrete next move, or confirmation that the step is done.
+So a photo sent **during** a session gets a three-part response, with no correction in it:
+
+1. **Read** — what it actually sees, plainly. Lets you catch it being wrong before you
+   act on advice built on a misreading.
+2. **An anchor** — one real, specific thing that's working. Warm, not clinical.
+3. **Next** — the concrete next move, or confirmation that the step is done.
+
+Analysis happens **afterwards, in a review you opt into** — never unprompted. There the
+one-note rule applies: a single highest-leverage change, and never a list.
+
+Two hard constraints on that review, both from your own answers:
+
+- **Never nitpick.** *"I don't think I want someone nitpicking all the things wrong
+  because I have a sense for those already."* Listing visible flaws delivers
+  information you already have at the moment it does the most damage.
+- **Never prescribe a redraw** unless you ask for one. You said plainly you usually
+  lack the skill or the time. A fix that costs less than a redraw, or permission to
+  carry the error, are the only two useful moves.
 
 **The one-note rule:** a maximum of one correction per session, two if you explicitly
 ask for more. You are at a level where the limiting factor is not information.
@@ -321,13 +352,15 @@ ask for more. You are at a level where the limiting factor is not information.
 Before commenting on value or composition, it should do what Spark already taught you
 to do — ask for or apply grayscale and flip — rather than guessing in colour.
 
-### 6.4 The Ugly Stage protocol
+### 6.4 The Ugly Stage protocol — relocated to block-in
 
 An explicit, named feature, because it addresses your stated failure mode head on.
+Phase 0 moved **where** it fires: not mid-render, but at **block-in**, where you said
+your pieces actually die, and where a mistake first appears that feels too big to fix.
 
-Every piece has a point where it looks worse than the sketch it came from. That is a
-structural property of making pictures, not a verdict on your talent — but it *feels*
-exactly like a verdict, and that feeling is what's been killing your pieces.
+Every piece passes through a stage where it looks worse than the idea that started it.
+That is a structural property of making pictures, not a verdict on your talent — but it
+*feels* exactly like a verdict, and that feeling is what's been killing your pieces.
 
 So Hearth does three things:
 
@@ -384,9 +417,10 @@ Compass, Ledger, Arc, Session distillation. Local-first, Firestore-synced.
 Browser speech both directions: `SpeechRecognition` for push-to-talk input,
 `speechSynthesis` for output. No audio ever leaves the device — only text reaches the
 API. Barge-in (your speech cancels its speech). Reliable on Chrome/Edge on PC and
-Chrome on Android; **iOS Safari recognition is unreliable**, so the phone client must
-be fully usable as text-in / voice-out. Stated honestly up front rather than
-discovered in week three.
+Chrome on Android — **which Phase 0 confirmed is your phone**, so voice input works
+properly on the traditional-drawing surface and the iOS caveat this plan originally
+carried does not apply to you. (It still applies to anyone else who ever uses this, so
+the phone client stays fully usable as text-in / voice-out.)
 
 ### F4 — Eyes (Phase 3)
 Progress photos from the phone camera or a PC file/clipboard paste. Downscaled
@@ -406,12 +440,16 @@ Mechanically this is Ignite's existing `/api/backstory` function grown up: same
 same-origin rewrite, same server-side secret, bigger prompt, structured output so the
 motifs come back as data rather than prose to be parsed.
 
-### F6 — Finish Lane (Phase 5)
-The sketch-rescue system. You photograph the backlog of incomplete sketches once;
-Hearth ranks them by *closest to finishable × most aligned with current goals* and
-runs Rescue sessions against the top of the list. Tracks resurrections as a first-class
-metric, because turning your existing pile of "ones with potential" into finished work
-is the fastest possible path to having a portfolio at all.
+### F6 — Finish Lane — ~~Phase 5~~ cut after Phase 0
+Originally: a sketch-rescue system ranking your backlog by closest-to-finishable and
+running Rescue sessions against the top of it. **Cut.** Asked which unfinished piece
+you most wanted to resurrect, you answered *"I don't really want to resurrect any."*
+Those thirty-to-a-hundred sketches are studies, not stalled pieces — by your own north
+star, the thing you have too many of already.
+
+What survives is the metric: **finish rate**, measured on pieces started from here,
+not on the backlog. The one-sitting rule (§5, Beat 3) now does the work this feature
+was going to do, earlier and more cheaply.
 
 ### F7 — Encouragement system (Phase 5)
 Non-punitive by construction, because punitive streaks are why people quit apps:
@@ -581,14 +619,12 @@ finish rate says the habit holds.
 Each phase ships something usable. Each has an acceptance test — something you can
 pass or fail, not a feeling.
 
-### Phase 0 — Compass (one 90-minute sitting, no code)
-A deep interview with Claude producing `hearth/compass.md`, a seeded skill ledger with
-honest level-and-evidence rows, and arc #1.
-**Accept when:** the Compass names 3 monetization targets with what each requires, 3
-subject targets, 5 ranked skills with evidence, 3 anti-goals, and one focus skill — and
-reading it back feels accurate rather than flattering.
-**Do this one first regardless of whether the rest gets built.** It has standalone
-value, and it's the input everything else consumes.
+### Phase 0 — Compass ✅ **done, 2026-10-18**
+Delivered: `hearth/compass.html` (the 54-question interview, answers stored in the
+artifact's database), `hearth/compass.md` (the Compass itself), and
+`hearth/compass.json` (the machine seed: compass, 13-row skill ledger, arc one).
+All 11 sections answered; two voice questions left open and listed in compass.md §15.
+Arc one is set: **construction**, series *Expressiveness*, 4 afternoons a week.
 
 ### Phase 1 — Hearth v0, text only (1–2 weeks)
 PWA shell, the five beats, step ladder, step log, close ritual, local persistence,
@@ -673,10 +709,10 @@ an export is data you will eventually lose.
 | Risk | Why it's real | Mitigation |
 |---|---|---|
 | **It talks too much and breaks flow** | The most likely way a real-time companion fails | Silence by default, triggered speech only, dial + "shush" (§6.2) |
-| **Praise inflation destroys trust** | A companion that likes everything is worthless as an advisor | One-note rule, specificity requirement, never praise the unseen, periodic bluntness audit |
-| **It becomes another abandoned productivity app** | You have the receipts on this one | 10-second Beat 1, the Hang Out lane, touches-not-days, no setup screens, no shame mechanics |
+| **Praise inflation destroys trust** | A companion that likes everything is worthless as an advisor | Praise names a real, specific thing — but delivered warmly, per your own sample (§6.3, compass.md §7) |
+| **It becomes another abandoned productivity app** | You have the receipts on this one | 10-second Beat 1, the Hang Out lane, no setup screens, and **no shame mechanics of any kind** — see compass.md §4 |
 | **Over-planning a piece** | A 14-step ladder is procrastination in a trench coat | Hard cap: 3 steps ahead, generated adaptively |
-| **iOS Safari speech gaps** | `SpeechRecognition` is unreliable there | Text-first design; voice is enhancement, never requirement |
+| ~~iOS Safari speech gaps~~ | Not applicable — your phone is Android | Text-first design kept anyway, so the app works for anyone else |
 | **Cost runaway** | One chatty 90-min session could spike a month | Haiku default, image downscale, Firestore spend ledger with hard cap, Console limit |
 | **Memory rot** | A Compass that no longer describes you makes every suggestion subtly wrong | Quarterly Compass review; ledger levels require evidence |
 | **Critique misreads the photo** | Bad lighting, WIP ambiguity | The "Read" beat first, so you catch it before acting on it |
@@ -685,33 +721,70 @@ an export is data you will eventually lose.
 
 ---
 
-## 13. Open questions
+## 13. Open questions — resolved by Phase 0
 
-None block Phase 0 or Phase 1.
+Every question this plan opened was answered on 2026-10-18, except two.
 
-1. **Name.** "Hearth" is my suggestion — fire family, means the place you sit beside
-   while you work. Ember/Kindle/Blaze/Inferno are taken by Ignite's effort tiers.
-2. **Firebase project.** New project for `hearth/` (my recommendation, matching Ignite's
-   intended end-state), or reuse `petulent-princess-productivity`?
-3. **How blunt should critique be?** On a 1–5 from "gentle" to "brutal," where do you
-   want it by default — and should it shift when you say "be honest with me"? I'd
-   default to 3 with a "go hard" command, but this is a taste call and it matters more
-   than most settings here.
-4. **Phone OS** — iOS or Android? Decides whether voice input works on the phone at all
-   (§8.1), and therefore how much Phase 2 can promise for traditional-drawing sessions.
-5. **Should Hearth ever assign tasks itself**, or always hand off to Ignite? I'd keep
-   assignment in Ignite and have Hearth request from it — one source of truth for the
-   task bank.
-6. **Ignite's home.** Its CONTEXT.md says it should move to its own repo and Firebase
-   project. Worth doing before Hearth starts reading its data, so the integration is
-   written against the final shape.
+| Question | Answer |
+|---|---|
+| Name | **Hearth** stands — no alternative offered |
+| Firebase project | **New project** |
+| Bluntness default | **2 of 5**, movable both ways on command. Lower than the 3 I'd have guessed — and §6.3's no-critique-mid-session rule matters more than the number |
+| Phone OS | **Android** — voice input is viable on the phone (§8.1) |
+| Should Hearth assign tasks itself | Unchallenged; it hands off to Ignite |
+| Ignite's home | Still outstanding — worth moving it to its own repo before Hearth reads its data |
+
+**Still open, and worth two minutes whenever you're willing** (compass.md §15):
+a correction that would make you shut down and close the app, and three things it must
+never say. The voice spec currently infers both from your "no nitpicking" answer.
 
 ---
 
 ## 14. What to do next
 
-1. **Run Phase 0.** One sitting, 90 minutes, no code. It's the highest-value hour in
-   this whole plan and it pays off even if nothing else gets built.
-2. Answer the §13 questions that have opinions attached — especially #3.
-3. Then Phase 1, scoped exactly as written: text only, five beats, one piece.
+1. **Read `hearth/compass.md`.** Especially §1 (the reference-dependency finding),
+   §3 (the one-sitting rule) and §4 (on the "laziness"). Tell me where it's wrong —
+   it's the input to everything else, so an inaccurate Compass is expensive.
+2. **Answer the two open voice questions** (compass.md §15). Two minutes.
+3. **Then Phase 1**, re-scoped as §16 describes: text only, five beats, scoping-first,
+   one piece finished in one sitting.
+
+---
+
+## 15. Arc one, at a glance
+
+| | |
+|---|---|
+| Focus skill | **Construction** — the avoided one, and the one that replaces reference at block-in |
+| Series | ***Expressiveness*** — 6–8 pieces (not studies), expressive character look or pose, stylized |
+| Constraint | Each finished in a single sitting |
+| Cadence | 4 afternoons a week |
+| Done means | You'd show it — not that it's correct |
+| Success | 6–8 finished pieces, at least two with no direct pose reference, construction honestly re-rated to 3 |
+| Review due | ~2026-11-29 |
+
+---
+
+## 16. What Phase 0 changed
+
+Five findings overturned parts of the original plan. Each is marked in place.
+
+1. **The death point moved earlier — from mid-render to block-in** (§1, §6.4). The
+   cause is reference dependency: the drawing dies when the reference runs out and the
+   form has to be invented. This is now the plan's central thesis.
+2. **Scoping outranks step-laddering** (§5, Beat 3). A piece not finished in one
+   sitting is abandoned, so the companion's first act is sizing the work to the
+   afternoon — not building a ladder across sessions.
+3. **Critique is banned during a session** (§6.3). Making and judging are separated,
+   analysis is opt-in and afterwards, and nitpicking and redraw-prescriptions are out
+   entirely. This was the single clearest instruction in the interview.
+4. **The Finish Lane is cut** (§7, F6). He doesn't want the backlog resurrected; those
+   are studies, not stalled pieces. Finish rate is measured forward from here.
+5. **The persona is warmer than drafted** (§6.3, compass.md §7). Bluntness 2, a doting
+   and playful register rather than a dry one, teasing confined to avoidance — and a
+   standing rule never to endorse or argue with his belief that he's lazy.
+
+Smaller corrections: Android confirmed, so the iOS voice caveat doesn't apply to him
+(§8.1); fables demoted to new-piece starts only (§7, F5); the daily-touch model
+replaced by four self-contained afternoons (§5, compass.md §10).
 
