@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14110f">
+<title>Hearth</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="rail">
+  <div class="rail-in">
+    <button class="mark" id="home" type="button" aria-label="Home">
+      <svg width="15" height="18" viewBox="0 0 15 18" aria-hidden="true">
+        <path d="M7.5 0C9 4 12.5 5 12.5 9.5a5 5 0 0 1-10 0C2.5 7 4 5.5 4.5 4c.3 2 1.3 2.6 2 2.6C7.8 6.6 6.2 3 7.5 0Z" fill="var(--ember)"/>
+      </svg>
+      Hearth
+    </button>
+    <span class="rail-mid" id="railmid"></span>
+    <button class="icon-btn" id="openArc" type="button" title="Arc &amp; ledger" aria-label="Arc and ledger">◴</button>
+    <button class="icon-btn" id="openSettings" type="button" title="Settings" aria-label="Settings">⚙</button>
+  </div>
+</header>
+
+<main class="shell">
+
+  <!-- ───────────── Beat 1: Arrive ───────────── -->
+  <section class="view" id="view-arrive">
+    <div class="pickup" id="pickup" hidden>
+      <span class="pickup-k">You left this</span>
+      <p class="pickup-t" id="pickupText"></p>
+    </div>
+
+    <h1 class="greet" id="greet">Hello.</h1>
+    <p class="sub" id="greetSub">What have you got today?</p>
+
+    <div class="field">
+      <span class="flabel">How much fire</span>
+      <div class="opts" id="effortOpts"></div>
+    </div>
+
+    <div class="field">
+      <span class="flabel">Where</span>
+      <div class="opts" id="mediumOpts"></div>
+    </div>
+
+    <button class="btn big" id="toLane" type="button">Let's go</button>
+  </section>
+
+  <!-- ───────────── Beat 2: Lane ───────────── -->
+  <section class="view" id="view-lane" hidden>
+    <h2 class="vh">What are we doing?</h2>
+    <p class="vh-sub" id="laneSub"></p>
+    <div class="lanes" id="lanes"></div>
+    <div class="inflight" id="inflight"></div>
+    <button class="btn ghost" data-back="arrive" type="button">Back</button>
+  </section>
+
+  <!-- ───────────── Beat 3: Scope ───────────── -->
+  <section class="view" id="view-scope" hidden>
+    <h2 class="vh">What do you want to make?</h2>
+    <p class="vh-sub">Say it roughly. I'll cut it down to something that fits the time
+      you've actually got — that's the whole trick.</p>
+    <textarea id="scopeIdea" rows="3" placeholder="A girl character sitting in a window of a space station, backlit by a planet…"></textarea>
+    <div class="scope-row">
+      <button class="btn" id="scopeGo" type="button">Scope it</button>
+      <button class="btn ghost" data-back="lane" type="button">Back</button>
+    </div>
+    <div class="scope-out" id="scopeOut" hidden></div>
+  </section>
+
+  <!-- ───────────── Beat 4: Work ───────────── -->
+  <section class="view" id="view-work" hidden>
+    <div class="worktop">
+      <div class="step-card" id="stepCard">
+        <span class="step-k" id="stepK">Step 1</span>
+        <p class="step-goal" id="stepGoal"></p>
+        <p class="step-done"><b>Done when</b> <span id="stepDone"></span></p>
+        <p class="step-cue" id="stepCue"></p>
+        <details class="escape" id="escapeWrap">
+          <summary>If it goes wrong</summary>
+          <p id="stepEscape"></p>
+        </details>
+        <div class="step-acts">
+          <button class="btn sm" id="stepDoneBtn" type="button">Done with this</button>
+          <button class="btn sm ghost" id="stuckBtn" type="button">I'm stuck</button>
+        </div>
+      </div>
+      <div class="timer" id="timer">
+        <span class="t-left" id="tLeft">—</span>
+        <span class="t-sub" id="tSub">not started</span>
+        <button class="icon-btn" id="tToggle" type="button" title="Pause / resume">❚❚</button>
+      </div>
+    </div>
+
+    <div class="log" id="log" aria-live="polite"></div>
+
+    <form class="say" id="sayForm" autocomplete="off">
+      <input type="text" id="sayInput" placeholder="Say something…" aria-label="Message">
+      <button class="btn sm" type="submit" id="sayBtn">Send</button>
+    </form>
+    <div class="quick" id="quick"></div>
+    <button class="btn ghost wide" id="toClose" type="button">Wrap up</button>
+  </section>
+
+  <!-- ───────────── Beat 5: Close ───────────── -->
+  <section class="view" id="view-close" hidden>
+    <h2 class="vh">Let's close it out.</h2>
+    <div class="closing" id="closing"></div>
+    <div class="field">
+      <span class="flabel">Did it reach done?</span>
+      <div class="opts" id="doneOpts"></div>
+    </div>
+    <div class="field">
+      <span class="flabel">Next time, in one sentence</span>
+      <textarea id="nextSentence" rows="2" placeholder="Written for you, edit freely…"></textarea>
+    </div>
+    <button class="btn big" id="saveClose" type="button">Save and rest</button>
+  </section>
+
+  <!-- ───────────── Arc &amp; ledger ───────────── -->
+  <section class="view" id="view-arc" hidden>
+    <h2 class="vh">Arc one</h2>
+    <div class="arcbox" id="arcbox"></div>
+    <h3 class="sh">Pieces</h3>
+    <div class="pieces" id="piecesList"></div>
+    <h3 class="sh">Skill ledger</h3>
+    <div class="ledger" id="ledgerList"></div>
+    <button class="btn ghost" data-back="arrive" type="button">Back</button>
+  </section>
+
+  <!-- ───────────── Settings ───────────── -->
+  <section class="view" id="view-settings" hidden>
+    <h2 class="vh">Settings</h2>
+    <div class="field">
+      <span class="flabel">How chatty</span>
+      <div class="opts" id="chatOpts"></div>
+    </div>
+    <div class="field">
+      <span class="flabel">Theme</span>
+      <div class="opts" id="themeOpts"></div>
+    </div>
+    <div class="field">
+      <span class="flabel">Your data</span>
+      <div class="opts">
+        <button class="opt" id="exportBtn" type="button">Export</button>
+        <button class="opt" id="importBtn" type="button">Import</button>
+        <button class="opt danger" id="clearBtn" type="button">Clear everything</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" hidden>
+    </div>
+    <p class="fine" id="backendNote"></p>
+    <button class="btn ghost" data-back="arrive" type="button">Back</button>
+  </section>
+
+</main>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
