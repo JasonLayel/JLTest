@@ -161,6 +161,19 @@
       <div class="opts" id="themeOpts"></div>
     </div>
     <div class="field">
+      <span class="flabel">Sync across devices</span>
+      <p class="fine" style="margin:0 0 9px">Type the same phrase on your phone and your PC and they share one history. Anyone who knows it can read your sessions, so make it a real phrase.</p>
+      <div class="say">
+        <input type="text" id="syncKeyInput" placeholder="a phrase, 8 characters or more" aria-label="Sync phrase" autocomplete="off">
+        <button class="btn sm" id="syncSaveBtn" type="button">Save</button>
+      </div>
+      <div class="syncrow">
+        <span class="fine" id="syncState">off</span>
+        <button class="btn sm ghost" id="syncNowBtn" type="button">Sync now</button>
+      </div>
+    </div>
+
+    <div class="field">
       <span class="flabel">Your data</span>
       <div class="opts">
         <button class="opt" id="exportBtn" type="button">Export</button>

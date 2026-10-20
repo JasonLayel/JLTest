@@ -810,6 +810,16 @@ The split that makes it work:
 The endpoint takes a `companion` field and falls back to `hearth`. Adding one
 is a JSON file plus whatever domain UI it needs.
 
+**Do they develop personalities?** Partly, as of 2026-10-20. At each close the
+companion may record one durable thing it noticed about him, and those notes
+are fed back into every later prompt, so it accumulates a real history with
+him and refers to it unprompted. What does *not* drift is the character
+itself: the voice, the bluntness and the hard rules stay fixed in the manifest.
+That is deliberate. Hearth's rules exist because of what the Phase 0 interview
+found, and a companion that gradually talked itself out of them would be worse,
+not more alive. Mood, familiarity tiers and earned nicknames are the next
+honest step; a personality that drifts off its own safety rules is not.
+
 What will **not** generalise, and should not be forced to: the session machinery.
 The five beats, the step ladder and the one-sitting rule exist because of a
 specific finding about how Jason's drawings die. A financial companion has no

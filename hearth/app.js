@@ -73,6 +73,7 @@ function blank() {
     sessions: [],
     ledgerDelta: {},   /* skill id -> level, overrides the compass seed */
     talk: [],          /* the between-sessions thread */
+    learned: [],       /* durable notes the companion has picked up */
     prefs: { chattiness: 'normal', theme: 'system' }
   };
 }
@@ -86,12 +87,14 @@ function load() {
   if (!state.sessions) state.sessions = [];
   if (!state.ledgerDelta) state.ledgerDelta = {};
   if (!state.talk) state.talk = [];
+  if (!state.learned) state.learned = [];
   if (!state.prefs) state.prefs = { chattiness: 'normal', theme: 'system' };
 }
 
-function save() {
+function save(skipSync) {
   try { localStorage.setItem(LS, JSON.stringify(state)); }
-  catch (e) { toast('Could not save — storage is full or blocked.'); }
+  catch (e) { toast('Could not save. Storage is full or blocked.'); }
+  if (!skipSync) syncSoon();
 }
 
 function uid(p) { return (p || 'x') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
@@ -153,6 +156,92 @@ function sessionContext() {
 
 function recentMessages(n) {
   return session.messages.filter(function (m) { return m.role !== 'sys'; }).slice(-(n || 12));
+}
+
+/* ---------- cross-device sync ----------
+   Both devices hold a full copy and push it up; the server merges rather
+   than overwriting, so a session drawn on the phone and one on the PC on the
+   same day both survive. The key is a passphrase typed into each device. */
+
+var KKEY = 'hearth.synckey.v1';
+var syncState = 'off';     /* off | idle | syncing | error */
+var syncTimer = null;
+var syncWanted = false;
+
+function syncKey() {
+  try { return localStorage.getItem(KKEY) || ''; } catch (e) { return ''; }
+}
+function setSyncKey(k) {
+  try { k ? localStorage.setItem(KKEY, k) : localStorage.removeItem(KKEY); } catch (e) {}
+  syncState = k ? 'idle' : 'off';
+}
+
+function payload() {
+  return {
+    sessions: state.sessions,
+    pieces: state.pieces,
+    talk: state.talk,
+    learned: state.learned,
+    ledgerDelta: state.ledgerDelta,
+    prefs: state.prefs,
+    updatedAt: new Date().toISOString()
+  };
+}
+
+function adopt(remote) {
+  if (!remote) return;
+  state.sessions = remote.sessions || [];
+  state.pieces = remote.pieces || [];
+  state.talk = remote.talk || [];
+  state.learned = remote.learned || [];
+  state.ledgerDelta = remote.ledgerDelta || {};
+  if (remote.prefs) state.prefs = remote.prefs;
+  save(true);
+}
+
+function setSyncUi(label) {
+  var n = el('syncState');
+  if (n) n.textContent = label;
+}
+
+/** Push, which merges server-side and hands back the merged truth. */
+function syncNow(quiet) {
+  var k = syncKey();
+  if (!k) { syncState = 'off'; return Promise.resolve(); }
+  syncState = 'syncing';
+  setSyncUi('syncing…');
+  return callApi('push', { deviceKey: k, state: payload() }, 25000)
+    .then(function (d) {
+      if (d.error) throw new Error(d.error);
+      adopt(d.state);
+      syncState = 'idle';
+      setSyncUi('synced just now');
+      if (!quiet) toast('Synced.');
+      if (current === 'talk') renderTalk();
+    })
+    .catch(function (e) {
+      syncState = 'error';
+      setSyncUi('could not sync');
+      if (!quiet) toast(String(e.message || 'Sync failed.').slice(0, 90));
+    });
+}
+
+/** Debounced background push after any local change. */
+function syncSoon() {
+  if (!syncKey()) return;
+  syncWanted = true;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(function () {
+    if (!syncWanted) return;
+    syncWanted = false;
+    syncNow(true);
+  }, 4000);
+}
+
+/** On boot: pull, merge locally by pushing our copy, adopt the result. */
+function syncOnBoot() {
+  if (!syncKey()) return Promise.resolve();
+  return syncNow(true);
 }
 
 /* ---------- live session persistence ----------
@@ -367,7 +456,8 @@ function renderScopeResult(data, idea) {
       series: (meta && meta.arc && meta.arc.series) ? meta.arc.series.name : null,
       stage: 'block-in',
       status: 'in-flight',
-      created: today()
+      created: today(),
+      updatedAt: new Date().toISOString()
     };
     state.pieces.unshift(piece);
     save();
@@ -395,6 +485,7 @@ function doScope(idea, smaller) {
     effort: e.name,
     medium: choice.medium,
     smaller: !!smaller,
+    learned: state.learned.slice(-20),
     recent: state.sessions.slice(0, 3).map(function (s) { return s.distilled; }).filter(Boolean)
   }).then(function (data) {
     renderScopeResult(data, idea);
@@ -525,6 +616,7 @@ function say(text) {
   callApi('talk', {
     message: text,
     mode: 'session',
+    learned: state.learned.slice(-20),
     session: sessionContext(),
     messages: recentMessages(12),
     chattiness: state.prefs.chattiness
@@ -650,6 +742,7 @@ function renderClose() {
   ], null, function (v) { closeData.finished = v; });
 
   callApi('close', {
+    learned: state.learned.slice(-20),
     session: sessionContext(),
     messages: recentMessages(20)
   }).then(function (d) {
@@ -687,9 +780,15 @@ function saveClose() {
   state.sessions.unshift(rec);
   if (state.sessions.length > 400) state.sessions.length = 400;
 
+  if (closeData.ai && closeData.ai.learned) {
+    state.learned.push({ ts: Date.now(), note: closeData.ai.learned, from: rec.id });
+    if (state.learned.length > 120) state.learned = state.learned.slice(-120);
+  }
+
   if (session.piece) {
     var p = state.pieces.filter(function (x) { return x.id === session.piece.id; })[0];
     if (p) {
+      p.updatedAt = new Date().toISOString();
       if (closeData.finished === 'finished') { p.status = 'finished'; p.finishedAt = today(); }
       else if (closeData.finished === 'nope') { p.status = 'abandoned'; p.why = 'called it at close'; }
       p.stage = session.steps.length && session.steps[session.steps.length - 1].done ? 'advanced' : p.stage;
@@ -829,6 +928,7 @@ function talkSay(text) {
   callApi('talk', {
     message: text,
     mode: 'talk',
+    learned: state.learned.slice(-20),
     session: null,
     messages: state.talk.slice(-12).map(function (m) { return { role: m.role, content: m.content }; }),
     chattiness: state.prefs.chattiness
@@ -860,6 +960,8 @@ function renderSettings() {
   ], state.prefs.theme, function (v) { state.prefs.theme = v; applyTheme(); save(); });
 
   el('voiceCheckOut').innerHTML = '';
+  el('syncKeyInput').value = syncKey();
+  setSyncUi(syncKey() ? (syncState === 'error' ? 'could not sync' : 'on') : 'off');
   el('backendNote').textContent = backendOk === false
     ? 'The companion endpoint is not answering. The session structure, timer and history all still work — see README for deploying /api/hearth.'
     : 'Your drawing data never leaves this device. Only the text of a session reaches the companion.';
@@ -982,6 +1084,15 @@ function wire() {
   });
   el('voiceCheckBtn').addEventListener('click', runVoiceCheck);
 
+  el('syncSaveBtn').addEventListener('click', function () {
+    var k = el('syncKeyInput').value.trim();
+    if (k && k.length < 8) { toast('Make it at least 8 characters.'); return; }
+    setSyncKey(k);
+    if (k) { toast('Sync on. Pulling…'); syncNow(false); }
+    else { setSyncUi('off'); toast('Sync off. This device keeps its own copy.'); }
+  });
+  el('syncNowBtn').addEventListener('click', function () { syncNow(false); });
+
   el('exportBtn').addEventListener('click', exportData);
   el('importBtn').addEventListener('click', function () { el('importFile').click(); });
   el('importFile').addEventListener('change', function (e) {
@@ -1027,6 +1138,7 @@ if (restoreSession()) {
   renderArrive();
 }
 hello();
+syncOnBoot();
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', function () {

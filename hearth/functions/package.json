@@ -2,10 +2,13 @@
   "name": "hearth-functions",
   "description": "Hearth companion endpoint",
   "main": "index.js",
-  "engines": { "node": "20" },
+  "engines": {
+    "node": "20"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",
-    "firebase-functions": "^6.0.1"
+    "firebase-functions": "^6.0.1",
+    "firebase-admin": "^13.0.1"
   },
   "private": true
 }

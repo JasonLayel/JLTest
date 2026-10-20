@@ -17,13 +17,45 @@
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const Anthropic = require('@anthropic-ai/sdk');
+const crypto = require('crypto');
 const style = require('./style');
+const sync = require('./sync');
 
 const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 
 const MODEL_TALK = 'claude-haiku-5-5';
 const MODEL_THINK = 'claude-sonnet-5-5';
 const DEFAULT_COMPANION = 'hearth';
+
+/* Firestore, for cross-device sync. Loaded lazily so that a project without
+   Firestore enabled still runs everything else. */
+let dbHandle = null;
+let dbBroken = null;
+function store() {
+  if (dbHandle) return dbHandle;
+  if (dbBroken) throw new Error(dbBroken);
+  try {
+    const admin = require('firebase-admin');
+    if (!admin.apps.length) admin.initializeApp();
+    dbHandle = admin.firestore();
+    return dbHandle;
+  } catch (e) {
+    dbBroken = 'Firestore is not available: ' + (e && e.message);
+    throw new Error(dbBroken);
+  }
+}
+
+/* The device key is a shared secret the user types into each device. It is
+   never stored in the clear; only its hash names the document. */
+function keyHash(k) {
+  const key = String(k || '');
+  if (key.length < 8) return null;
+  return crypto.createHash('sha256').update('hearth:' + key).digest('hex').slice(0, 40);
+}
+
+function stateDoc(hash, companionId) {
+  return store().collection('hearth').doc(hash).collection('companions').doc(companionId);
+}
 
 let profile = {};
 try { profile = require('./companions/_profile.json'); }
@@ -76,7 +108,7 @@ const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
  * em dashes, and the output follows.
  * ------------------------------------------------------------------ */
 
-function personaPrompt(c, mode) {
+function personaPrompt(c, mode, learned) {
   const p = profile;
   const talk = p.howToTalkToHim || {};
   const id = p.identity || {};
@@ -117,6 +149,14 @@ function personaPrompt(c, mode) {
     lines.push(`His pieces die at ${d.stage}. ${d.oneSittingNote || ''}`);
     if (d.wantedResponse) lines.push(`When he's stuck he wants, in this order: ${d.wantedResponse.join(', then ')}.`);
     if (d.unwantedResponse) lines.push(`What makes it worse: ${d.unwantedResponse.join(', and ')}.`);
+    lines.push('');
+  }
+
+  const notes = (learned || []).slice(-20).map((x) => (x && x.note) || '').filter(Boolean);
+  if (notes.length) {
+    lines.push('THINGS YOU HAVE PICKED UP ABOUT HIM SINCE YOU MET');
+    lines.push('These came from your own sessions together. Use them like a friend would, in passing, without announcing that you remembered.');
+    notes.forEach((n) => lines.push('- ' + n));
     lines.push('');
   }
 
@@ -223,7 +263,7 @@ async function opScope(client, c, body) {
   const minutes = Math.max(5, Math.min(240, Number(body.minutes) || 25));
   const recent = (body.recent || []).slice(0, 3).map((r) => clip(r, 300));
 
-  const system = personaPrompt(c, 'session') + '\n\n' + [
+  const system = personaPrompt(c, 'session', body.learned) + '\n\n' + [
     `TASK: he's told you what he wants to make and how long he's got. Cut it down to something he can actually FINISH in this one sitting, then give him the first steps.`,
     ``,
     `The cutting is the job. Be ruthless and kind about it. A bust instead of a full figure. One character instead of a scene. A silhouette instead of a rendered thing. Say what you cut in one sentence and don't apologise for it.`,
@@ -270,7 +310,7 @@ async function opTalk(client, c, body) {
   const stepDone = body.message === '__STEP_DONE__';
   const userText = stepDone ? 'I finished that step.' : clip(body.message, 1500);
 
-  const base = personaPrompt(c, mode) + '\n\n' + [
+  const base = personaPrompt(c, mode, body.learned) + '\n\n' + [
     mode === 'session' ? 'CURRENT SESSION\n' + sessionBrief(s) : 'He is not in a session right now.',
     ``,
     `Chattiness: ${chattiness}.`,
@@ -336,15 +376,16 @@ async function opClose(client, c, body) {
   const history = historyOf(body, 20)
     .map((m) => `${m.role === 'user' ? 'Jason' : 'You'}: ${clip(m.content, 600)}`).join('\n');
 
-  const system = personaPrompt(c, 'session') + '\n\n' + [
+  const system = personaPrompt(c, 'session', body.learned) + '\n\n' + [
     `TASK: the session's over. Close it out. Three things and nothing else:`,
     `1. "moved" - one sentence on what actually changed. Plain and factual.`,
     `2. "win" - ONE specific thing he did well, named precisely enough that he knows you were watching. This is the doting one. Warm, pleased, a bit silly if it fits. Never generic. If the session was short or went badly, find the real thing anyway. Showing up counts and you can say so, but still name something concrete.`,
     `3. "nextSentence" - what he should do next time, in HIS voice, as a note to himself. Concrete enough to act on cold. One sentence. If the piece is done this is about the NEXT piece.`,
+    `4. "learned" - one durable thing you noticed about him today that is worth remembering for months: a preference, a habit, something that helps or hurts him, a running joke you want to keep. Not a summary of the session. Null if nothing really stood out, and null is a perfectly normal answer.`,
     ``,
     `Still no critique. Still no money talk. If he didn't finish, that's not a failure. He stopped. That's all.`,
     ``,
-    `Reply with JSON only: {"moved":"...","win":"...","nextSentence":"..."}`
+    `Reply with JSON only: {"moved":"...","win":"...","nextSentence":"...","learned":"..." or null}`
   ].join('\n');
 
   const msg = await create(client, {
@@ -365,6 +406,7 @@ async function opClose(client, c, body) {
     moved: clip(j.moved, 400),
     win,
     nextSentence: clip(j.nextSentence, 300),
+    learned: j.learned ? clip(j.learned, 240) : null,
     styleWarning: winProblem || null
   };
 }
@@ -408,6 +450,36 @@ async function opVoiceCheck(client, c) {
   return { scenarios: out };
 }
 
+async function opPull(c, body) {
+  const hash = keyHash(body.deviceKey);
+  if (!hash) return { error: 'A sync key needs at least 8 characters.' };
+  const snap = await stateDoc(hash, c.id || DEFAULT_COMPANION).get();
+  if (!snap.exists) return { state: null, fresh: true };
+  return { state: snap.data(), fresh: false };
+}
+
+async function opPush(c, body) {
+  const hash = keyHash(body.deviceKey);
+  if (!hash) return { error: 'A sync key needs at least 8 characters.' };
+  const ref = stateDoc(hash, c.id || DEFAULT_COMPANION);
+
+  const snap = await ref.get();
+  const stored = snap.exists ? snap.data() : {};
+  let merged = sync.merge(stored, body.state || {});
+  if (sync.tooBig(merged)) merged = sync.shrink(merged);
+
+  await ref.set(merged);
+  return { state: merged, merged: true };
+}
+
+/* The canonical authored profile, readable by any companion that holds the
+   device key. This is what makes one source of truth possible across
+   projects: another application can GET it rather than keeping its own copy. */
+function opProfile(body) {
+  if (!keyHash(body.deviceKey)) return { error: 'A sync key needs at least 8 characters.' };
+  return { profile: profile, version: profile.version || 1 };
+}
+
 /* ------------------------------------------------------------------ *
  * Entry point
  * ------------------------------------------------------------------ */
@@ -430,6 +502,23 @@ exports.hearth = onRequest(
     const c = companionOf(body.companion);
 
     if (op === 'hello') { res.json(opHello(c)); return; }
+
+    /* Sync and profile reads cost no tokens, so they skip the model guards
+       but keep the rate limit. */
+    if (op === 'pull' || op === 'push' || op === 'profile') {
+      const ipEarly = String(req.ip || req.headers['x-forwarded-for'] || 'unknown');
+      if (rateLimited(ipEarly)) { res.status(429).json({ error: 'Slow down a moment.' }); return; }
+      try {
+        if (op === 'profile') { res.json(opProfile(body)); return; }
+        const out = op === 'pull' ? await opPull(c, body) : await opPush(c, body);
+        if (out.error) { res.status(400).json(out); return; }
+        res.json(out);
+      } catch (e) {
+        console.error('sync failed', op, e);
+        res.status(503).json({ error: 'Sync is unavailable. Is Firestore enabled on this project?' });
+      }
+      return;
+    }
 
     const ip = String(req.ip || req.headers['x-forwarded-for'] || 'unknown');
     if (rateLimited(ip)) { res.status(429).json({ error: 'Slow down a moment.' }); return; }

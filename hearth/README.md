@@ -35,8 +35,12 @@ and it is there. Two surfaces:
   between-sessions channel: ask what to work on, say you do not feel like it,
   tell it how yesterday went.
 
-History is per device for now. Cross-device sync is not built; Export/Import
-in Settings moves it by hand.
+**Sync is on a passphrase.** In Settings, type the same phrase on your phone
+and your PC and they share one history: sessions, pieces, the talk thread, the
+skill ledger and everything the companion has learned about you. It merges
+rather than overwrites, so a session on the phone and one on the PC on the
+same afternoon both survive. Anyone who knows the phrase can read your
+sessions, so make it a real phrase.
 
 ## The rules it runs on
 
@@ -121,11 +125,36 @@ budget.
   fix and is not wired up yet — the same gap Ignite carries.
 - No voice (Phase 2), no progress photos (Phase 3), no fable engine (Phase 4),
   no weekly or arc review (Phase 5).
-- Data is device-local, so the phone and the PC keep separate histories.
-  Sync is **not** built; use Export/Import in Settings for now.
+- Sync needs **Firestore enabled** on the Firebase project (one click in the
+  console, one time). Without it everything else still works and Settings says
+  sync is unavailable.
+- Sync has no accounts. The passphrase is the only credential, and it is a
+  bearer secret.
 - A live session now survives a closed tab or a crash (it is written to
   `hearth.session.v1` as you go, and one left open for more than six hours is
   filed into history rather than resumed).
+
+## One profile, many companions
+
+`companions/_profile.json` is the authored account of who Jason is, and it is
+meant to be the single source of truth across projects, not just this one.
+Any application holding the sync passphrase can read it:
+
+```
+POST /api/hearth   {"op":"profile","deviceKey":"<the passphrase>"}
+->  {"profile": {...}, "version": 1}
+```
+
+That is how a separate companion elsewhere stops keeping its own stale copy of
+the same facts. Two cautions worth keeping:
+
+- **Authored and learned are different things.** This file is written
+  deliberately, from the Phase 0 interview. What a companion works out about
+  him on its own is that companion's own memory and stays there. Do not merge
+  the two directions.
+- **Share the person, not the relationship.** Facts about Jason belong in the
+  shared layer. How a particular companion feels about him, its mood, its
+  running jokes, its state, belong to that companion alone.
 
 ## Files
 
@@ -138,6 +167,7 @@ budget.
 | `companions/_profile.json` | Who Jason is. Shared by every companion |
 | `companions/hearth.json` | The art companion: role, rules, skills, arc |
 | `functions/style.js` | The output filter that holds the voice |
+| `functions/sync.js` | Cross-device merge. Append-biased: when in doubt, keep both |
 | `compass.html` | The Phase 0 interview that produced both |
 | `functions/index.js` | `/api/hearth` — hello, scope, talk, close |
 | `PLAN.md` | The project plan, revised after Phase 0 |

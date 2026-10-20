@@ -9,6 +9,9 @@ One 2nd-gen HTTPS function, four ops, selected by `op` in the POST body.
 | `talk` | `claude-haiku-5-5` | `{reply}`, or `{reply, step}` when a step just finished. |
 | `close` | `claude-sonnet-5-5` | `{moved, win, nextSentence}`. |
 | `voicecheck` | `claude-haiku-5-5` | Five canned scenarios and their replies. Touches no real state. |
+| `pull` | none | The stored state for this sync key. |
+| `push` | none | Merges the sent state into the stored one and returns the merged truth. |
+| `profile` | none | The authored `_profile.json`, so another project can read it instead of keeping a copy. |
 
 ## Setup
 
@@ -24,6 +27,18 @@ there is only one canonical copy.
 `companions/_profile.json` is the shared person. `companions/<id>.json` is one
 companion. The request's `companion` field selects it and falls back to
 `hearth`, so adding another advisor is a new JSON file and nothing else.
+
+## Sync
+
+`pull`, `push` and `profile` need **Firestore enabled** on the project. They
+cost no tokens, so they skip the model guards but keep the rate limit. If
+Firestore is missing the endpoint answers 503 and the app carries on without
+sync rather than breaking.
+
+State lives at `hearth/{sha256(key)}/companions/{companionId}`. The passphrase
+is never stored, only its hash, and it is the only credential: there are no
+accounts. Merging is in `sync.js` and is append-biased on purpose, because
+losing a session is unacceptable and a duplicate is merely annoying.
 
 ## Notes
 
