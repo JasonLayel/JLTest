@@ -5,7 +5,7 @@
 > at the end of each arc, and rewrite it properly once a quarter.
 >
 > Source answers: the `compass` collection of the Phase 0 artifact
-> (`hearth/compass.html`), 11 sections, all answered.
+> (`hearth/compass.html`), 11 sections, all answered. The data now lives split across `companions/_profile.json` (the person, shared with future companions) and `companions/hearth.json` (this companion and its domain).
 
 ---
 

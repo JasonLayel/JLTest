@@ -342,3 +342,32 @@ input::placeholder, textarea::placeholder { color: var(--muted); opacity: .75; }
 @media (prefers-reduced-motion: reduce) {
   *, .view { animation: none !important; transition: none !important; }
 }
+
+/* ---------- talk view ---------- */
+.talklog {
+  max-height: 58vh;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: 14px;
+  align-content: start;
+}
+
+/* ---------- voice check ---------- */
+.vcheck { display: grid; gap: 9px; margin-top: 12px; }
+.vrow {
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: 10px; padding: 12px 14px;
+}
+.vlabel {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .11em;
+  text-transform: uppercase; color: var(--muted);
+}
+.vsaid {
+  margin: 7px 0 0; font-size: 14px; color: var(--fg-dim);
+  border-left: 2px solid var(--line); padding-left: 10px;
+}
+.vreply { margin: 9px 0 0; font-size: 15px; color: var(--fg); }
+.vnote {
+  display: inline-block; margin-top: 8px;
+  font-family: var(--mono); font-size: 10px; color: var(--warn);
+}

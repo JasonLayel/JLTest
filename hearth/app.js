@@ -12,6 +12,9 @@
 /* ---------- constants ---------- */
 
 var LS = 'hearth.v1';
+var SKEY = 'hearth.session.v1';   /* the live session, so a closed tab does not lose it */
+var COMPANION = 'hearth';         /* which companion this build talks to */
+var STALE_SESSION_MS = 6 * 3600 * 1000;
 
 /* Ignite's fire tiers, deliberately — one shared vocabulary across the apps. */
 var EFFORTS = [
@@ -69,6 +72,7 @@ function blank() {
     pieces: [],
     sessions: [],
     ledgerDelta: {},   /* skill id -> level, overrides the compass seed */
+    talk: [],          /* the between-sessions thread */
     prefs: { chattiness: 'normal', theme: 'system' }
   };
 }
@@ -81,6 +85,7 @@ function load() {
   if (!state.pieces) state.pieces = [];
   if (!state.sessions) state.sessions = [];
   if (!state.ledgerDelta) state.ledgerDelta = {};
+  if (!state.talk) state.talk = [];
   if (!state.prefs) state.prefs = { chattiness: 'normal', theme: 'system' };
 }
 
@@ -110,6 +115,7 @@ function callApi(op, payload, timeoutMs) {
   var to = setTimeout(function () { ctrl.abort(); }, timeoutMs || 45000);
   var body = payload || {};
   body.op = op;
+  body.companion = COMPANION;
   return fetch('/api/hearth', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -149,9 +155,60 @@ function recentMessages(n) {
   return session.messages.filter(function (m) { return m.role !== 'sys'; }).slice(-(n || 12));
 }
 
+/* ---------- live session persistence ----------
+   Without this a closed tab, a crash, or the phone backgrounding the page
+   loses the whole session including everything said in it. */
+
+function persistSession() {
+  try {
+    if (!session) { localStorage.removeItem(SKEY); return; }
+    session.lastSeen = Date.now();
+    localStorage.setItem(SKEY, JSON.stringify(session));
+  } catch (e) { /* storage full or blocked; the session still runs */ }
+}
+
+function restoreSession() {
+  var raw;
+  try { raw = localStorage.getItem(SKEY); } catch (e) { return false; }
+  if (!raw) return false;
+  var s;
+  try { s = JSON.parse(raw); } catch (e) { try { localStorage.removeItem(SKEY); } catch (e2) {} return false; }
+  if (!s || !s.id) return false;
+
+  var age = Date.now() - (s.lastSeen || s.startedAt || 0);
+
+  /* Left open too long to resume honestly: fold it into history rather than
+     throwing it away, the way a lull-based consolidation would. */
+  if (age > STALE_SESSION_MS) {
+    state.sessions.unshift({
+      id: s.id, date: s.date, lane: s.lane,
+      pieceId: s.piece ? s.piece.id : null,
+      pieceTitle: s.piece ? s.piece.title : null,
+      minutes: Math.round(((s.lastSeen || Date.now()) - s.startedAt - (s.pausedMs || 0)) / 60000),
+      planned: s.minutes, effort: s.effort, medium: s.medium,
+      stepsDone: (s.steps || []).filter(function (x) { return x.done; }).length,
+      stepsTotal: (s.steps || []).length,
+      outcome: 'parked',
+      distilled: 'Session was left open and recovered automatically.',
+      win: '', nextSentence: '',
+      closedAt: new Date().toISOString()
+    });
+    save();
+    try { localStorage.removeItem(SKEY); } catch (e) {}
+    return false;
+  }
+
+  /* Time away counts as paused, so the timer does not jump by hours. */
+  if (s.lastSeen) s.pausedMs = (s.pausedMs || 0) + (Date.now() - s.lastSeen);
+  session = s;
+  choice.effort = s.effort;
+  choice.medium = s.medium;
+  return true;
+}
+
 /* ---------- router ---------- */
 
-var VIEWS = ['arrive', 'lane', 'scope', 'work', 'close', 'arc', 'settings'];
+var VIEWS = ['arrive', 'lane', 'scope', 'work', 'close', 'talk', 'arc', 'settings'];
 var current = 'arrive';
 
 function show(v) {
@@ -386,6 +443,7 @@ function startSession(lane, piece, steps, forecast) {
       : FALLBACK_STEPS.slice(0, 1);
   }
 
+  persistSession();
   renderWork();
   show('work');
   startTimer();
@@ -452,9 +510,9 @@ function renderLog() {
   host.scrollIntoView({ block: 'end' });
 }
 
-function them(text) { session.messages.push({ role: 'assistant', content: text }); renderLog(); }
-function you(text)  { session.messages.push({ role: 'user', content: text }); renderLog(); }
-function sys(text)  { session.messages.push({ role: 'sys', content: text }); renderLog(); }
+function them(text) { session.messages.push({ role: 'assistant', content: text }); renderLog(); persistSession(); }
+function you(text)  { session.messages.push({ role: 'user', content: text }); renderLog(); persistSession(); }
+function sys(text)  { session.messages.push({ role: 'sys', content: text }); renderLog(); persistSession(); }
 
 function say(text) {
   if (!text.trim()) return;
@@ -466,6 +524,7 @@ function say(text) {
 
   callApi('talk', {
     message: text,
+    mode: 'session',
     session: sessionContext(),
     messages: recentMessages(12),
     chattiness: state.prefs.chattiness
@@ -485,6 +544,7 @@ function nextStep() {
 
   if (session.stepIndex + 1 < session.steps.length) {
     session.stepIndex++;
+    persistSession();
     renderWork();
     them('Good. Next: ' + session.steps[session.stepIndex].goal);
     return;
@@ -494,6 +554,7 @@ function nextStep() {
   sys('Step done.');
   callApi('talk', {
     message: '__STEP_DONE__',
+    mode: 'session',
     session: sessionContext(),
     messages: recentMessages(8),
     wantStep: true,
@@ -503,6 +564,7 @@ function nextStep() {
     if (d.step && d.step.goal) {
       session.steps.push(d.step);
       session.stepIndex = session.steps.length - 1;
+      persistSession();
       renderWork();
     } else {
       offerClose();
@@ -563,6 +625,7 @@ function togglePause() {
     session.pausedAt = Date.now();
     session.paused = true;
   }
+  persistSession();
   tickTimer();
 }
 
@@ -635,6 +698,7 @@ function saveClose() {
 
   save();
   session = null;
+  persistSession();
   toast(rec.outcome === 'finished' ? 'Finished. That is the whole point.' : 'Saved. See you next time.');
   renderArrive();
 }
@@ -700,6 +764,85 @@ function renderArc() {
 }
 
 /* ======================================================================
+   Talk — the between-sessions thread. This is the phone surface: bookmark
+   the site, open it anywhere, text the companion without starting anything.
+   ====================================================================== */
+
+var TALK_QUICKS = ['What should I work on?', 'How did last time go?', 'Tell me something', "I don't feel like it"];
+
+function renderTalk() {
+  var host = el('talkLog');
+  host.innerHTML = '';
+  if (!state.talk.length) {
+    var d = document.createElement('div');
+    d.className = 'msg them';
+    d.innerHTML = '<p>' + escapeHtml(pick([
+      'Hello you. Not drawing, then. What is it?',
+      'Oh good, you. Talk to me.',
+      'Hi. No step cards here, no timer. Just say what you want to say.'
+    ])) + '</p>';
+    host.appendChild(d);
+  } else {
+    state.talk.forEach(function (m) {
+      var d2 = document.createElement('div');
+      d2.className = 'msg ' + (m.role === 'assistant' ? 'them' : 'you');
+      d2.innerHTML = '<p>' + escapeHtml(m.content).replace(/\n/g, '<br>') + '</p>';
+      host.appendChild(d2);
+    });
+  }
+  host.scrollTop = host.scrollHeight;
+
+  var q = el('talkQuick');
+  q.innerHTML = '';
+  TALK_QUICKS.forEach(function (text) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = text;
+    b.addEventListener('click', function () { talkSay(text); });
+    q.appendChild(b);
+  });
+
+  el('talkSub').textContent = backendOk === false
+    ? 'The companion is offline right now.'
+    : 'Not drawing. Just talking.';
+
+  show('talk');
+}
+
+var talkBusy = false;
+
+function talkSay(text) {
+  if (!text.trim() || talkBusy) return;
+  talkBusy = true;
+  state.talk.push({ role: 'user', content: text, ts: Date.now() });
+  if (state.talk.length > 200) state.talk = state.talk.slice(-200);
+  save();
+  renderTalk();
+
+  var host = el('talkLog');
+  var wait = document.createElement('div');
+  wait.className = 'msg them thinking';
+  wait.innerHTML = '<p>…</p>';
+  host.appendChild(wait);
+  host.scrollTop = host.scrollHeight;
+
+  callApi('talk', {
+    message: text,
+    mode: 'talk',
+    session: null,
+    messages: state.talk.slice(-12).map(function (m) { return { role: m.role, content: m.content }; }),
+    chattiness: state.prefs.chattiness
+  }).then(function (d) {
+    state.talk.push({ role: 'assistant', content: d.reply || '…', ts: Date.now() });
+    save();
+    renderTalk();
+  }).catch(function () {
+    wait.remove();
+    toast('Companion offline. Your message is saved.');
+  }).then(function () { talkBusy = false; });
+}
+
+/* ======================================================================
    Settings
    ====================================================================== */
 
@@ -716,11 +859,37 @@ function renderSettings() {
     { val: 'light',  label: 'Light' }
   ], state.prefs.theme, function (v) { state.prefs.theme = v; applyTheme(); save(); });
 
+  el('voiceCheckOut').innerHTML = '';
   el('backendNote').textContent = backendOk === false
     ? 'The companion endpoint is not answering. The session structure, timer and history all still work — see README for deploying /api/hearth.'
     : 'Your drawing data never leaves this device. Only the text of a session reaches the companion.';
 
   show('settings');
+}
+
+function runVoiceCheck() {
+  var btn = el('voiceCheckBtn');
+  var out = el('voiceCheckOut');
+  btn.disabled = true;
+  btn.textContent = 'Asking…';
+  out.innerHTML = '<p class="fine">Running five scenarios. This takes a few seconds.</p>';
+
+  callApi('voicecheck', {}, 120000).then(function (d) {
+    var rows = (d.scenarios || []).map(function (s) {
+      return '<div class="vrow">' +
+        '<span class="vlabel">' + escapeHtml(s.label) + '</span>' +
+        '<p class="vsaid">' + escapeHtml(s.said) + '</p>' +
+        '<p class="vreply">' + (s.reply ? escapeHtml(s.reply) : '<em>' + escapeHtml(s.error || 'no reply') + '</em>') + '</p>' +
+        (s.attempts > 1 ? '<span class="vnote">style filter rejected ' + (s.attempts - 1) + ' attempt' + (s.attempts > 2 ? 's' : '') + '</span>' : '') +
+        '</div>';
+    }).join('');
+    out.innerHTML = rows || '<p class="fine">Nothing came back.</p>';
+  }).catch(function () {
+    out.innerHTML = '<p class="fine">Could not reach the companion. Is the function deployed?</p>';
+  }).then(function () {
+    btn.disabled = false;
+    btn.textContent = 'Run voice check';
+  });
 }
 
 function applyTheme() {
@@ -772,6 +941,7 @@ function wire() {
     if (session && current === 'work') { toast('Session running — wrap up first.'); return; }
     renderArrive();
   });
+  el('openTalk').addEventListener('click', renderTalk);
   el('openArc').addEventListener('click', renderArc);
   el('openSettings').addEventListener('click', renderSettings);
 
@@ -803,6 +973,14 @@ function wire() {
     el('sayInput').value = '';
     say(v);
   });
+
+  el('talkForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = el('talkInput').value;
+    el('talkInput').value = '';
+    talkSay(v);
+  });
+  el('voiceCheckBtn').addEventListener('click', runVoiceCheck);
 
   el('exportBtn').addEventListener('click', exportData);
   el('importBtn').addEventListener('click', function () { el('importFile').click(); });
@@ -839,7 +1017,15 @@ function hello() {
 load();
 applyTheme();
 wire();
-renderArrive();
+
+if (restoreSession()) {
+  renderWork();
+  show('work');
+  startTimer();
+  sys('Picked up where you left off. The clock treated the gap as a pause.');
+} else {
+  renderArrive();
+}
 hello();
 
 if ('serviceWorker' in navigator) {

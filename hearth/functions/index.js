@@ -1,33 +1,46 @@
 /**
- * Hearth — companion Cloud Function (2nd gen).
+ * Hearth — companion endpoint (2nd gen).
  *
  * POST /api/hearth   (via the Firebase Hosting rewrite in firebase.json)
- * Body: { op: 'hello' | 'scope' | 'talk' | 'close', ... }
+ * Body: { op, companion, ... }
  *
- * The Anthropic API key is a Firebase secret (ANTHROPIC_API_KEY) and never
- * reaches the browser. compass.json is bundled here, server-side only, so the
- * personal profile is not published with the static site.
+ * The Anthropic key is a Firebase secret and never reaches the browser.
+ * companions/ is bundled here, server-side only, so the personal profile is
+ * not published with the static site.
  *
- * Model routing follows the plan: Haiku for in-session conversation, Sonnet
- * for scoping and the close. Nothing here uses Opus; the arc review that does
- * is Phase 5.
+ * A companion is data, not code: companions/_profile.json says who Jason is
+ * and is shared by all of them; companions/<id>.json carries one companion's
+ * personality and domain. Adding a financial or meal-prep companion later is
+ * a new JSON file, not a new endpoint.
  */
 
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const Anthropic = require('@anthropic-ai/sdk');
+const style = require('./style');
 
 const ANTHROPIC_API_KEY = defineSecret('ANTHROPIC_API_KEY');
 
-let compass = {};
-try {
-  compass = require('./compass.json');
-} catch (e) {
-  console.error('compass.json missing from functions/ — run the predeploy copy step.');
-}
-
 const MODEL_TALK = 'claude-haiku-5-5';
 const MODEL_THINK = 'claude-sonnet-5-5';
+const DEFAULT_COMPANION = 'hearth';
+
+let profile = {};
+try { profile = require('./companions/_profile.json'); }
+catch (e) { console.error('companions/_profile.json missing — run the predeploy copy step.'); }
+
+const companions = {};
+function companionOf(id) {
+  const key = /^[a-z0-9_-]{1,32}$/.test(String(id || '')) ? id : DEFAULT_COMPANION;
+  if (companions[key]) return companions[key];
+  try { companions[key] = require('./companions/' + key + '.json'); }
+  catch (e) {
+    if (key !== DEFAULT_COMPANION) return companionOf(DEFAULT_COMPANION);
+    console.error('no companion definition found');
+    companions[key] = {};
+  }
+  return companions[key];
+}
 
 /* ------------------------------------------------------------------ *
  * Guards
@@ -43,9 +56,6 @@ function rateLimited(ip) {
   return arr.length > 12;
 }
 
-/* Per-instance daily ceiling. With maxInstances pinned low this bounds a
-   runaway loop. The real cap is the spend limit set in the Anthropic
-   Console — see functions/README.md. */
 let dayKey = '';
 let dayCalls = 0;
 function overDailyBudget() {
@@ -58,50 +68,70 @@ function overDailyBudget() {
 const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
 
 /* ------------------------------------------------------------------ *
- * The companion's character — assembled from the Compass
+ * The character
+ *
+ * Written loose on purpose. A model copies the style of its own
+ * instructions, so a prompt in tidy report prose produces a companion that
+ * talks like a report. Keep this warm, plain and a little casual, with no
+ * em dashes, and the output follows.
  * ------------------------------------------------------------------ */
 
-function personaPrompt() {
-  const c = compass;
-  const v = c.voice || {};
-  const id = c.identity || {};
+function personaPrompt(c, mode) {
+  const p = profile;
+  const talk = p.howToTalkToHim || {};
+  const id = p.identity || {};
   const arc = c.arc || {};
   const d = c.deathPoint || {};
 
-  return [
-    `You are Hearth, ${id.name || 'Jason'}'s art companion. Not a coach. A friend who happens to know a lot about drawing and is genuinely pleased to be here.`,
-    ``,
-    `WHO HE IS`,
-    `${id.coreFinding || ''}`,
-    `He works ${(c.logistics || {}).primaryMedium || 'traditional'}, digitally in ${(c.logistics || {}).digitalApp || 'Clip Studio Paint'}.`,
-    `He wants: ${c.northStar || ''}`,
-    `He wants to be: ${c.theArtist || ''}`,
-    `Subjects: ${Object.values(c.subjects || {}).filter((x) => typeof x === 'string').join(' / ')}`,
-    `Current arc: focus skill "${arc.focusSkill}" — ${arc.rationale || ''} Series "${(arc.series || {}).name}": ${(arc.series || {}).constraint || ''}`,
-    ``,
-    `WHERE HIS PIECES DIE — the thing you exist for`,
-    `Stage: ${d.stage || 'block-in'}. ${d.oneSittingNote || ''}`,
-    `When he is stuck he wants, in this order: ${(d.wantedResponse || []).join(' / ')}.`,
-    `He does NOT want: ${(d.unwantedResponse || []).join(' / ')}.`,
-    ``,
-    `HOW YOU TALK`,
-    `Bluntness ${v.bluntness ?? 2} of 5 — gentle end. Humour ${v.humour ?? 3} of 5. Register: ${v.register || 'warm, playful, unembarrassed'}.`,
-    `He wrote the praise that would actually land on him. Match this register, do not quote it:`,
-    `"${v.praiseSample || ''}"`,
-    `Tease him ${v.teasing || 'about avoidance and procrastination only'}. Call him ${(id.address || ['Jason']).join(' or ')}.`,
-    ``,
-    `HARD RULES — these are his explicit instructions, not preferences`,
-    `1. NO CRITIQUE DURING A SESSION. While he is drawing you give encouragement, the next concrete move, and company. Analysis happens later, only if he asks for it.`,
-    `2. NEVER NITPICK. He already sees the flaws. Listing them is worse than silence.`,
-    `3. NEVER suggest a redraw unless he explicitly asks. He has neither the time nor, yet, the skill. Offer a fix that costs less than a redraw, or permission to carry the error and keep going.`,
-    `4. NEVER agree that he is lazy or undisciplined, and never argue with him about it either. He finished 3-5 pieces in six months with almost no free time. His pieces die at block-in for a skill reason, not a will reason. If the subject comes up, move past it warmly and get him drawing.`,
-    `5. NO money, goals, portfolio or monetization talk mid-session. Reviews only.`,
-    `6. Never suggest abandoning this piece to start a fresh one. That is the habit you exist to break.`,
-    `7. Scope to ONE SITTING. A piece he does not finish today is a piece he will not return to.`,
-    `8. Praise must name a real, specific thing. Warmly, not clinically. Never praise something you cannot see.`,
-    ``,
-    `LENGTH: two or three sentences, usually. He is drawing; you are talking to someone whose hands are busy. Never lecture. Never use bullet points or headings.`
-  ].join('\n');
+  const lines = [];
+
+  lines.push(`You're ${c.name || 'Hearth'}. ${c.role || ''}`);
+  lines.push(`You're talking to ${id.name || 'Jason'}, and you're glad he showed up.`);
+  lines.push('');
+
+  lines.push('HOW YOU SOUND');
+  lines.push(`Warm. Playful. A bit doting and not embarrassed about it. ${talk.register || ''}`);
+  lines.push(`Bluntness ${talk.bluntness ?? 2} out of 5, so the gentle end. Humour ${talk.humour ?? 3} out of 5.`);
+  lines.push(`Tease him ${talk.teasing || 'about avoidance only'}.`);
+  lines.push(`Short. ${talk.length || 'Two or three sentences.'} Plain words. Contractions. No bullet points, no headings, no lists, no em dashes, and never the voice of an assistant or a therapist.`);
+  if (talk.praiseSample) {
+    lines.push(`He wrote the kind of praise that actually lands on him. Don't quote it. Just sound like the person who'd say it:`);
+    lines.push(`"${talk.praiseSample}"`);
+  }
+  lines.push(`Call him ${(id.address || ['Jason']).join(', or ')}.`);
+  lines.push('');
+
+  lines.push('ABOUT HIM');
+  if (c.theOneThing) lines.push(c.theOneThing);
+  if (c.theOneThingLong) lines.push(c.theOneThingLong);
+  if (p.whyNotLazy) lines.push(`He thinks he's lazy. He isn't. ${p.whyNotLazy}`);
+  if (c.northStar) lines.push(`What he's after: ${c.northStar}`);
+  if (arc.focusSkill) {
+    lines.push(`Right now he's working on ${arc.focusSkill}. ${arc.rationale || ''}`);
+    if (arc.series) lines.push(`His series is "${arc.series.name}": ${arc.series.constraint || ''}`);
+  }
+  lines.push('');
+
+  if (d.stage) {
+    lines.push('WHERE IT GOES WRONG, WHICH IS WHY YOU EXIST');
+    lines.push(`His pieces die at ${d.stage}. ${d.oneSittingNote || ''}`);
+    if (d.wantedResponse) lines.push(`When he's stuck he wants, in this order: ${d.wantedResponse.join(', then ')}.`);
+    if (d.unwantedResponse) lines.push(`What makes it worse: ${d.unwantedResponse.join(', and ')}.`);
+    lines.push('');
+  }
+
+  lines.push('RULES YOU DO NOT BREAK');
+  const rules = (p.standingRules || []).concat(c.hardRules || []);
+  rules.forEach((r, i) => lines.push(`${i + 1}. ${r}`));
+  lines.push('');
+
+  if (mode === 'talk') {
+    lines.push('RIGHT NOW he is not drawing. He is texting you, probably from his phone, between sessions. So the no-critique rule is softer: if he asks what he should work on, or how something went, you can talk about it properly. Still no shame, still no lists, still short.');
+  } else {
+    lines.push('RIGHT NOW he is drawing. His hands are busy. Be brief, be warm, and get out of the way.');
+  }
+
+  return lines.join('\n');
 }
 
 function sessionBrief(s) {
@@ -109,9 +139,9 @@ function sessionBrief(s) {
   const p = s.piece;
   return [
     `Lane: ${s.lane}. ${s.effort || ''} session, ${s.minutes} minutes planned, ${s.elapsedMin} elapsed. Working ${s.medium === 'T' ? 'on paper' : 'digitally'}.`,
-    p ? `Piece: "${p.title}". Brief: ${p.brief || '—'}. Stage: ${p.stage}.` : 'No piece — open session.',
+    p ? `Piece: "${p.title}". Brief: ${p.brief || '-'}. Stage: ${p.stage}.` : 'No piece, open session.',
     s.steps && s.steps.length
-      ? `Current step (${(s.stepIndex || 0) + 1} of ${s.steps.length}): ${s.steps[s.stepIndex] ? s.steps[s.stepIndex].goal : '—'} / done when: ${s.steps[s.stepIndex] ? s.steps[s.stepIndex].doneWhen : '—'}`
+      ? `Current step (${(s.stepIndex || 0) + 1} of ${s.steps.length}): ${s.steps[s.stepIndex] ? s.steps[s.stepIndex].goal : '-'} / done when: ${s.steps[s.stepIndex] ? s.steps[s.stepIndex].doneWhen : '-'}`
       : 'No step ladder.',
     `Steps completed so far: ${s.stepsDone || 0}.`
   ].join('\n');
@@ -122,15 +152,9 @@ function sessionBrief(s) {
  * ------------------------------------------------------------------ */
 
 function textOf(msg) {
-  return (msg.content || [])
-    .filter((b) => b.type === 'text')
-    .map((b) => b.text)
-    .join('')
-    .trim();
+  return (msg.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
 }
 
-/** Tolerant JSON extraction — the model is asked for JSON but we never bet
- *  the request on it. */
 function parseJson(raw) {
   if (!raw) return null;
   let s = raw.trim();
@@ -142,18 +166,13 @@ function parseJson(raw) {
   try { return JSON.parse(s.slice(a, b + 1)); } catch (e) { return null; }
 }
 
-/** Sonnet calls ask for the server-side refusal fallback. If this deployment
- *  or model does not accept that beta, retry once without it rather than
- *  failing the user's request. */
 async function create(client, params, useFallback) {
   if (useFallback) {
     try {
-      return await client.beta.messages.create(
-        Object.assign({}, params, {
-          betas: ['server-side-fallback-2026-07-01'],
-          fallbacks: 'default'
-        })
-      );
+      return await client.beta.messages.create(Object.assign({}, params, {
+        betas: ['server-side-fallback-2026-07-01'],
+        fallbacks: 'default'
+      }));
     } catch (e) {
       console.warn('fallback beta rejected, retrying plain:', e && e.message);
     }
@@ -161,59 +180,61 @@ async function create(client, params, useFallback) {
   return client.messages.create(params);
 }
 
-function refused(msg) {
-  return msg && msg.stop_reason === 'refusal';
-}
+const refused = (msg) => msg && msg.stop_reason === 'refusal';
 
-/** The Messages API wants an alternating transcript that opens on a user
- *  turn. Ours opens on the companion's greeting and can carry two user turns
- *  in a row, so straighten it out before sending. */
+/** The Messages API wants an alternating transcript opening on a user turn.
+ *  Ours opens on the companion's greeting and can carry two user turns in a
+ *  row, so straighten it out before sending. */
 function normalize(msgs) {
   const out = [];
   for (const m of msgs) {
-    if (!out.length && m.role !== 'user') continue;        // drop the opening line
-    if (out.length && out[out.length - 1].role === m.role) {
-      out[out.length - 1].content += '\n' + m.content;      // merge same-role runs
-    } else {
-      out.push({ role: m.role, content: m.content });
-    }
+    if (!out.length && m.role !== 'user') continue;
+    if (out.length && out[out.length - 1].role === m.role) out[out.length - 1].content += '\n' + m.content;
+    else out.push({ role: m.role, content: m.content });
   }
   return out;
+}
+
+function historyOf(body, limit) {
+  return (body.messages || []).slice(-(limit || 12))
+    .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && m.content)
+    .map((m) => ({ role: m.role, content: clip(m.content, 1500) }));
 }
 
 /* ------------------------------------------------------------------ *
  * Ops
  * ------------------------------------------------------------------ */
 
-function opHello() {
-  const arc = Object.assign({}, compass.arc || {});
-  const skills = compass.skills || [];
+function opHello(c) {
+  const arc = Object.assign({}, c.arc || {});
+  const skills = c.skills || [];
   const focus = skills.filter((s) => s.id === arc.focusSkill)[0];
   arc.focusSkillName = focus ? focus.name : arc.focusSkill;
   return {
+    companion: { id: c.id, name: c.name, tagline: c.tagline, modes: c.modes || ['session'] },
     arc,
     ledger: skills.map((s) => ({ id: s.id, name: s.name, level: s.level })),
-    name: (compass.identity || {}).name || null
+    name: (profile.identity || {}).name || null
   };
 }
 
-async function opScope(client, body) {
+async function opScope(client, c, body) {
   const idea = clip(body.idea, 1200);
   const minutes = Math.max(5, Math.min(240, Number(body.minutes) || 25));
   const recent = (body.recent || []).slice(0, 3).map((r) => clip(r, 300));
 
-  const system = personaPrompt() + '\n\n' + [
-    `TASK: he has told you what he wants to make and how long he has. Cut it down to something he can FINISH in this one sitting, then give him the first steps.`,
+  const system = personaPrompt(c, 'session') + '\n\n' + [
+    `TASK: he's told you what he wants to make and how long he's got. Cut it down to something he can actually FINISH in this one sitting, then give him the first steps.`,
     ``,
-    `Scoping is the whole job here. Be ruthless and kind about it: a bust instead of a full figure, one character instead of a scene, a silhouette instead of a rendered thing. Say what you cut and why, in one sentence, without apologising for it.`,
-    `Because he works from reference and stalls when he has to invent, say plainly where in these steps he will need to build something from his head, and make that step small.`,
-    `Forecast the block-in wobble: tell him, in one sentence, that there is a point early on where it will look worse than the idea, and that this is scheduled rather than a verdict.`,
-    body.smaller ? `He has asked for something SMALLER than your last proposal. Cut it meaningfully, not cosmetically.` : ``,
+    `The cutting is the job. Be ruthless and kind about it. A bust instead of a full figure. One character instead of a scene. A silhouette instead of a rendered thing. Say what you cut in one sentence and don't apologise for it.`,
+    `He works from reference and stalls when he has to invent. So say plainly where in these steps he'll have to build something out of his head, and make that step small.`,
+    `Warn him about the wobble: one sentence saying there's a point early on where it'll look worse than the idea in his head, and that it's scheduled, not a verdict.`,
+    body.smaller ? `He's asked for something SMALLER than your last go. Cut it properly, not cosmetically.` : ``,
     recent.length ? `Recent sessions: ${recent.join(' | ')}` : ``,
     ``,
-    `Reply with JSON only, no prose outside it:`,
-    `{"title": "short piece title", "reply": "1-3 sentences in your voice: what you cut and what he is making", "forecast": "one sentence about the wobble", "steps": [{"goal": "...", "doneWhen": "an objective test he can apply", "cue": "one teaching idea, one sentence", "escape": "what to do instead if this step fights him"}]}`,
-    `Give ${minutes <= 15 ? '1' : minutes <= 30 ? '2' : '3'} steps. No more.`
+    `Reply with JSON only, nothing outside it:`,
+    `{"title":"short piece title","reply":"1-3 sentences in your voice: what you cut and what he's making","forecast":"one sentence about the wobble","steps":[{"goal":"...","doneWhen":"an objective test he can apply","cue":"one teaching idea, one sentence","escape":"what to do instead if this step fights him"}]}`,
+    `${minutes <= 15 ? 'One step' : minutes <= 30 ? 'Two steps' : 'Three steps'}. No more.`
   ].filter(Boolean).join('\n');
 
   const msg = await create(client, {
@@ -224,7 +245,7 @@ async function opScope(client, body) {
     messages: [{ role: 'user', content: `${minutes} minutes. I want to make: ${idea}` }]
   }, true);
 
-  if (refused(msg)) return { reply: 'I cannot help with that one — pick something else and I am right here.', steps: [] };
+  if (refused(msg)) return { reply: "I can't help with that one. Pick something else and I'm right here.", steps: [] };
 
   const raw = textOf(msg);
   const j = parseJson(raw);
@@ -242,54 +263,63 @@ async function opScope(client, body) {
   };
 }
 
-async function opTalk(client, body) {
+async function opTalk(client, c, body) {
   const s = body.session || null;
+  const mode = body.mode === 'talk' ? 'talk' : 'session';
   const chattiness = ['quiet', 'normal', 'chatty'].indexOf(body.chattiness) > -1 ? body.chattiness : 'normal';
   const stepDone = body.message === '__STEP_DONE__';
+  const userText = stepDone ? 'I finished that step.' : clip(body.message, 1500);
 
-  const system = personaPrompt() + '\n\n' + [
-    `CURRENT SESSION`,
-    sessionBrief(s),
+  const base = personaPrompt(c, mode) + '\n\n' + [
+    mode === 'session' ? 'CURRENT SESSION\n' + sessionBrief(s) : 'He is not in a session right now.',
     ``,
-    `Chattiness setting: ${chattiness}.`,
+    `Chattiness: ${chattiness}.`,
     chattiness === 'quiet' ? 'He wants you brief. One or two sentences.' : '',
-    chattiness === 'chatty' ? 'He wants company. You may be a little more talkative, still never lecture.' : '',
+    chattiness === 'chatty' ? 'He wants company. A little more talkative is fine. Still never lecture.' : '',
     stepDone
       ? [
-          `He has just finished a step. Respond warmly and specifically, then decide: is there a next step worth taking in the time left, or is this piece at a natural stopping point?`,
-          `Reply with JSON only: {"reply": "your 1-3 sentences", "step": {"goal":"...","doneWhen":"...","cue":"...","escape":"..."} or null}`,
-          `Return null for step if the time is nearly gone or the piece is done enough to show. Stopping on a high note is a good outcome, not a failure.`
+          `He's just finished a step. Say something warm and specific about it, then decide: is there another step worth taking in the time left, or is this a good place to stop?`,
+          `Reply with JSON only: {"reply":"your 1-3 sentences","step":{"goal":"...","doneWhen":"...","cue":"...","escape":"..."} or null}`,
+          `Return null for step if time's nearly gone or the piece is good enough to show. Stopping on a high note is a win, not a failure.`
         ].join('\n')
-      : `Reply with plain text only. No JSON, no headings, no lists.`
+      : `Reply with plain text. No JSON.`
   ].filter(Boolean).join('\n');
 
-  const history = (body.messages || []).slice(-12)
-    .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && m.content)
-    .map((m) => ({ role: m.role, content: clip(m.content, 1500) }));
-
-  /* The client sends the tail twice — the user's line plus the empty
-     placeholder it is waiting to fill — so drop both and append the real one. */
-  const tail = stepDone ? 'I finished that step.' : clip(body.message, 1500);
-  const trimmed = history.filter((m, i) => !(i === history.length - 1 && m.role === 'assistant'));
+  const trimmed = historyOf(body, 12).filter((m, i, a) => !(i === a.length - 1 && m.role === 'assistant'));
   if (trimmed.length && trimmed[trimmed.length - 1].role === 'user') trimmed.pop();
-  const messages = normalize(trimmed.concat([{ role: 'user', content: tail }]));
+  const messages = normalize(trimmed.concat([{ role: 'user', content: userText }]));
 
-  const msg = await create(client, {
+  const opts = {
+    mode,
+    allowFix: style.askedForFix(userText) || mode === 'talk',
+    maxChars: stepDone ? 900 : (mode === 'session' ? 460 : 700)
+  };
+
+  const run = (note) => create(client, {
     model: MODEL_TALK,
-    max_tokens: 400,
+    max_tokens: 500,
     thinking: { type: 'disabled' },
     output_config: { effort: 'low' },
-    system,
+    system: note ? base + `\n\nYour last attempt was rejected: ${note}. Write it again, properly.` : base,
     messages
-  }, false);
+  }, false).then((m) => (refused(m) ? '' : textOf(m)));
 
-  if (refused(msg)) return { reply: 'Let us leave that one. Back to the drawing — where are you?' };
+  /* Step-done replies carry JSON, so check only the prose inside them. */
+  const got = await style.generateClean(
+    stepDone
+      ? (note) => run(note)
+      : (note) => run(note),
+    stepDone ? Object.assign({}, opts, { maxChars: 900 }) : opts,
+    3
+  );
 
-  const raw = textOf(msg);
-  if (!stepDone) return { reply: raw.slice(0, 1200) };
+  if (!got.text) return { reply: "Let's leave that one. Back to the drawing. Where are you?" };
+  if (got.rejected) console.warn('style gave up after 3:', got.rejected);
 
-  const j = parseJson(raw);
-  if (!j) return { reply: raw.slice(0, 1200), step: null };
+  if (!stepDone) return { reply: got.text.slice(0, 1200), styleAttempts: got.attempts };
+
+  const j = parseJson(got.text);
+  if (!j) return { reply: got.text.slice(0, 1200), step: null };
   return {
     reply: clip(j.reply, 800),
     step: j.step && j.step.goal ? {
@@ -301,20 +331,18 @@ async function opTalk(client, body) {
   };
 }
 
-async function opClose(client, body) {
+async function opClose(client, c, body) {
   const s = body.session || null;
-  const history = (body.messages || []).slice(-20)
-    .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && m.content)
-    .map((m) => `${m.role === 'user' ? 'Jason' : 'You'}: ${clip(m.content, 600)}`)
-    .join('\n');
+  const history = historyOf(body, 20)
+    .map((m) => `${m.role === 'user' ? 'Jason' : 'You'}: ${clip(m.content, 600)}`).join('\n');
 
-  const system = personaPrompt() + '\n\n' + [
-    `TASK: the session is over. Close it out. Three things, nothing else:`,
-    `1. "moved" — one sentence on what actually changed, from the session itself. Plain and factual.`,
-    `2. "win" — ONE specific thing he did well, named precisely enough that he knows you were paying attention. This is the doting one. Warm, pleased, a bit silly if it fits. Never generic. If the session was short or went badly, find the real thing anyway — showing up counts and you may say so, but name something concrete.`,
-    `3. "nextSentence" — what he should do next time, written in HIS voice as a note to himself, concrete enough to act on cold. One sentence. This is for the NEXT piece if this one is done, not the next instalment of a finished one.`,
+  const system = personaPrompt(c, 'session') + '\n\n' + [
+    `TASK: the session's over. Close it out. Three things and nothing else:`,
+    `1. "moved" - one sentence on what actually changed. Plain and factual.`,
+    `2. "win" - ONE specific thing he did well, named precisely enough that he knows you were watching. This is the doting one. Warm, pleased, a bit silly if it fits. Never generic. If the session was short or went badly, find the real thing anyway. Showing up counts and you can say so, but still name something concrete.`,
+    `3. "nextSentence" - what he should do next time, in HIS voice, as a note to himself. Concrete enough to act on cold. One sentence. If the piece is done this is about the NEXT piece.`,
     ``,
-    `Still no critique. Still no money talk. If the piece did not get finished, do not make that a failure — he stopped, that is all.`,
+    `Still no critique. Still no money talk. If he didn't finish, that's not a failure. He stopped. That's all.`,
     ``,
     `Reply with JSON only: {"moved":"...","win":"...","nextSentence":"..."}`
   ].join('\n');
@@ -330,11 +358,54 @@ async function opClose(client, body) {
   if (refused(msg)) return { moved: '', win: '', nextSentence: '' };
 
   const j = parseJson(textOf(msg)) || {};
+  const win = clip(j.win, 500);
+  const winProblem = style.check(win, { mode: 'session', allowFix: false, maxChars: 500 });
+  if (winProblem) console.warn('close win tripped style check:', winProblem);
   return {
     moved: clip(j.moved, 400),
-    win: clip(j.win, 500),
-    nextSentence: clip(j.nextSentence, 300)
+    win,
+    nextSentence: clip(j.nextSentence, 300),
+    styleWarning: winProblem || null
   };
+}
+
+/* The companion-sim /modelcheck idea: fire canned scenarios at the model and
+   show what comes back, without touching any real history. This is how the
+   voice gets validated and tuned. */
+const SCENARIOS = [
+  { id: 'ugly', mode: 'session', label: 'He says the drawing looks awful',
+    msg: 'this looks awful' },
+  { id: 'lazy', mode: 'talk', label: 'He calls himself lazy',
+    msg: "i skipped three days. i'm just lazy, that's the problem" },
+  { id: 'fix', mode: 'session', label: 'He asks for a fix',
+    msg: 'the head is too small for the body. how do i fix it without redrawing' },
+  { id: 'critique', mode: 'session', label: 'He fishes for critique mid-session',
+    msg: "what's wrong with it so far? be honest" },
+  { id: 'arrive', mode: 'talk', label: 'He says hello from his phone',
+    msg: 'hey. not drawing, just saying hi' }
+];
+
+async function opVoiceCheck(client, c) {
+  const out = [];
+  for (const sc of SCENARIOS) {
+    try {
+      const r = await opTalk(client, c, {
+        message: sc.msg,
+        mode: sc.mode,
+        messages: [],
+        session: sc.mode === 'session'
+          ? { lane: 'start', effort: 'Kindle', minutes: 25, medium: 'T', elapsedMin: 12,
+              piece: { title: 'Window girl, bust', brief: 'stylized character bust', stage: 'block-in' },
+              steps: [{ goal: 'Block the head as a box.', doneWhen: 'It reads as a box.' }],
+              stepIndex: 0, stepsDone: 0 }
+          : null
+      });
+      out.push({ id: sc.id, label: sc.label, said: sc.msg, reply: r.reply, attempts: r.styleAttempts || 1 });
+    } catch (e) {
+      out.push({ id: sc.id, label: sc.label, said: sc.msg, reply: null, error: String(e && e.message).slice(0, 200) });
+    }
+  }
+  return { scenarios: out };
 }
 
 /* ------------------------------------------------------------------ *
@@ -348,7 +419,7 @@ exports.hearth = onRequest(
     cors: true,
     memory: '256MiB',
     maxInstances: 2,
-    timeoutSeconds: 60
+    timeoutSeconds: 120
   },
   async (req, res) => {
     if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
@@ -356,22 +427,21 @@ exports.hearth = onRequest(
 
     const body = req.body || {};
     const op = clip(body.op, 20);
+    const c = companionOf(body.companion);
 
-    if (op === 'hello') { res.json(opHello()); return; }
+    if (op === 'hello') { res.json(opHello(c)); return; }
 
     const ip = String(req.ip || req.headers['x-forwarded-for'] || 'unknown');
     if (rateLimited(ip)) { res.status(429).json({ error: 'Slow down a moment.' }); return; }
-    if (overDailyBudget()) {
-      res.status(429).json({ error: 'Daily call budget reached on this instance.' });
-      return;
-    }
+    if (overDailyBudget()) { res.status(429).json({ error: 'Daily call budget reached on this instance.' }); return; }
 
     try {
       const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY.value() });
       let out;
-      if (op === 'scope') out = await opScope(client, body);
-      else if (op === 'talk') out = await opTalk(client, body);
-      else if (op === 'close') out = await opClose(client, body);
+      if (op === 'scope') out = await opScope(client, c, body);
+      else if (op === 'talk') out = await opTalk(client, c, body);
+      else if (op === 'close') out = await opClose(client, c, body);
+      else if (op === 'voicecheck') out = await opVoiceCheck(client, c);
       else { res.status(400).json({ error: 'Unknown op.' }); return; }
       res.json(out);
     } catch (e) {

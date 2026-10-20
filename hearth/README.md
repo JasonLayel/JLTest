@@ -24,10 +24,25 @@ Phase 1 — text only. Voice is Phase 2, progress photos Phase 3. See `PLAN.md`.
 - **Close** — what moved, one specific win, and the next sentence, written for
   you to edit.
 
+## Where to use it
+
+It is a PWA on a plain URL, so **bookmark the deployed address on your phone**
+and it is there. Two surfaces:
+
+- **Session** - the five beats, for when you are drawing. Works on the phone
+  too, which is the traditional-drawing case: phone beside the paper.
+- **Talk** (the ◎ button) - just texting, no session, no timer. This is the
+  between-sessions channel: ask what to work on, say you do not feel like it,
+  tell it how yesterday went.
+
+History is per device for now. Cross-device sync is not built; Export/Import
+in Settings moves it by hand.
+
 ## The rules it runs on
 
-The companion's character comes from `compass.md` / `compass.json`, written from
-the Phase 0 interview. Some of it is behavioural law rather than flavour:
+The companion's character comes from `companions/`, written from the Phase 0
+interview and explained in prose in `compass.md`. Some of it is behavioural
+law rather than flavour:
 
 - **No critique during a session.** Encouragement and the next move only.
   Analysis happens afterwards, if asked.
@@ -37,7 +52,29 @@ the Phase 0 interview. Some of it is behavioural law rather than flavour:
 - **Scope to one sitting.** A piece not finished today is a piece that won't be
   returned to.
 
-Change the person it's talking to by editing `compass.json`, not the prompt.
+Two layers, and the split is deliberate:
+
+- `companions/_profile.json` - **who Jason is.** Shared by every companion,
+  present and future: how to talk to him, the standing rules, his rhythm.
+- `companions/hearth.json` - **this companion.** Its role, its voice, its
+  domain, the art-specific rules, the skill ledger and the current arc.
+
+So a financial or meal-prep companion later is a new file next to
+`hearth.json`, not a new endpoint. They all inherit the same person.
+
+Change who the companion is by editing those files, not the prompt.
+
+Two safeguards sit behind the prompt, because a prompt alone does not hold a
+voice:
+
+- **`functions/style.js`** checks every reply and regenerates up to three
+  times if it drifts into assistant phrasing, therapist phrasing, discipline
+  or shame language, an unasked critique, a redraw suggestion, money talk
+  mid-session, lists, headings or em dashes. The rules here are nearly all
+  negative, and models follow "do this" far better than "never do that".
+- **Settings → Run voice check** fires five canned situations at the companion
+  and shows what comes back, touching nothing real. Run it after deploying,
+  and again whenever you change the persona.
 
 ## Running it locally
 
@@ -62,9 +99,9 @@ firebase functions:secrets:set ANTHROPIC_API_KEY    # paste a key from console.a
 firebase deploy --only functions,hosting
 ```
 
-`firebase.json` has a predeploy step that copies `compass.json` into
+`firebase.json` has a predeploy step that copies `companions/` into
 `functions/` so the profile ships with the endpoint and **not** with the public
-site — `compass.json` and every `.md` are excluded from hosting.
+site. `companions/**` and every `.md` are excluded from hosting.
 
 ## Cost
 
@@ -84,8 +121,11 @@ budget.
   fix and is not wired up yet — the same gap Ignite carries.
 - No voice (Phase 2), no progress photos (Phase 3), no fable engine (Phase 4),
   no weekly or arc review (Phase 5).
-- Data is device-local. Firestore sync between PC and phone is listed in Phase
-  1 of the plan and is **not** built — use Export/Import in Settings for now.
+- Data is device-local, so the phone and the PC keep separate histories.
+  Sync is **not** built; use Export/Import in Settings for now.
+- A live session now survives a closed tab or a crash (it is written to
+  `hearth.session.v1` as you go, and one left open for more than six hours is
+  filed into history rather than resumed).
 
 ## Files
 
@@ -94,8 +134,10 @@ budget.
 | `index.html` | The five beats, the arc view, settings |
 | `app.js` | The whole app: state, beats, timer, ladder, close, ledger |
 | `styles.css` | Ash-and-ember tokens, dark-first, light supported |
-| `compass.md` | The companion's memory, in prose — the authoritative one |
-| `compass.json` | The same thing as data: profile, skill ledger, arc one |
+| `compass.md` | The companion's memory in prose, the authoritative account |
+| `companions/_profile.json` | Who Jason is. Shared by every companion |
+| `companions/hearth.json` | The art companion: role, rules, skills, arc |
+| `functions/style.js` | The output filter that holds the voice |
 | `compass.html` | The Phase 0 interview that produced both |
 | `functions/index.js` | `/api/hearth` — hello, scope, talk, close |
 | `PLAN.md` | The project plan, revised after Phase 0 |
@@ -106,5 +148,5 @@ budget.
 - Vanilla HTML/CSS/JS. No framework, no build step, no npm dependencies in the
   app itself.
 - The API key stays server-side. Always.
-- `compass.json` is never served from hosting.
+- `companions/` is never served from hosting.
 - `hearth/` stays self-contained, ready to move to its own repo.

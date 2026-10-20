@@ -622,7 +622,7 @@ pass or fail, not a feeling.
 ### Phase 0 — Compass ✅ **done, 2026-10-18**
 Delivered: `hearth/compass.html` (the 54-question interview, answers stored in the
 artifact's database), `hearth/compass.md` (the Compass itself), and
-`hearth/compass.json` (the machine seed: compass, 13-row skill ledger, arc one).
+`hearth/companions/` (the machine seed: shared profile, plus the art companion with its 13-row skill ledger and arc one).
 All 11 sections answered; two voice questions left open and listed in compass.md §15.
 Arc one is set: **construction**, series *Expressiveness*, 4 afternoons a week.
 
@@ -788,3 +788,31 @@ Smaller corrections: Android confirmed, so the iOS voice caveat doesn't apply to
 (§8.1); fables demoted to new-piece starts only (§7, F5); the daily-touch model
 replaced by four self-contained afternoons (§5, compass.md §10).
 
+
+
+---
+
+## 17. Other companions
+
+Jason wants more advisors later: financial, meal prep, career, parenting. Each
+with its own quirks. Not built, but the seam is in as of 2026-10-20, because
+retrofitting it would have been expensive and the prompt layer was open anyway.
+
+The split that makes it work:
+
+- **`companions/_profile.json`** holds the person. How to talk to him, the
+  standing rules, his rhythm, his logistics. Every companion inherits it, so
+  the financial one already knows not to call him lazy and already knows his
+  afternoons are the only time he has.
+- **`companions/<id>.json`** holds one companion: its role, its domain, its
+  own hard rules, its own state.
+
+The endpoint takes a `companion` field and falls back to `hearth`. Adding one
+is a JSON file plus whatever domain UI it needs.
+
+What will **not** generalise, and should not be forced to: the session machinery.
+The five beats, the step ladder and the one-sitting rule exist because of a
+specific finding about how Jason's drawings die. A financial companion has no
+block-in. Expect each companion to bring its own modes, and let `modes` in the
+manifest say which it supports. Shared: the person, the voice, the memory
+shape, the style filter, the endpoint. Not shared: what a session is.

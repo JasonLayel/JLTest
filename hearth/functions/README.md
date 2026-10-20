@@ -4,10 +4,11 @@ One 2nd-gen HTTPS function, four ops, selected by `op` in the POST body.
 
 | op | Model | Returns |
 | --- | --- | --- |
-| `hello` | none | `{arc, ledger, name}` from `compass.json`. No model call, so opening the app is free. |
+| `hello` | none | `{companion, arc, ledger, name}`. No model call, so opening the app is free. |
 | `scope` | `claude-sonnet-5-5` | `{title, reply, forecast, steps[]}` — the piece cut down to one sitting. |
 | `talk` | `claude-haiku-5-5` | `{reply}`, or `{reply, step}` when a step just finished. |
 | `close` | `claude-sonnet-5-5` | `{moved, win, nextSentence}`. |
+| `voicecheck` | `claude-haiku-5-5` | Five canned scenarios and their replies. Touches no real state. |
 
 ## Setup
 
@@ -16,14 +17,24 @@ firebase functions:secrets:set ANTHROPIC_API_KEY
 firebase deploy --only functions
 ```
 
-`compass.json` must be present in this directory. The `predeploy` hook in
+`companions/` must be present in this directory. The `predeploy` hook in
 `../firebase.json` copies it from the project root; it is gitignored here so
 there is only one canonical copy.
 
+`companions/_profile.json` is the shared person. `companions/<id>.json` is one
+companion. The request's `companion` field selects it and falls back to
+`hearth`, so adding another advisor is a new JSON file and nothing else.
+
 ## Notes
 
-- The system prompt is assembled from `compass.json` on every call — edit the
-  Compass, not the prompt text, to change who the companion is talking to.
+- The system prompt is assembled from the companion files on every call. Edit
+  those, not the prompt text.
+- `personaPrompt()` is deliberately written loose, warm and without em dashes.
+  A model copies the style of its own instructions, so tidy report prose in
+  here produces a companion that talks like a report.
+- Every reply goes through `style.js` and is regenerated up to three times if
+  it drifts. The rejection note names the offending phrase as it appeared, so
+  the retry instruction is something the model can act on.
 - Sonnet calls ask for the server-side refusal fallback
   (`server-side-fallback-2026-07-01`). If a deployment rejects that beta the
   call is retried once without it, so the feature can never break a session.

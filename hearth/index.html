@@ -23,6 +23,7 @@
       Hearth
     </button>
     <span class="rail-mid" id="railmid"></span>
+    <button class="icon-btn" id="openTalk" type="button" title="Talk" aria-label="Talk">◎</button>
     <button class="icon-btn" id="openArc" type="button" title="Arc &amp; ledger" aria-label="Arc and ledger">◴</button>
     <button class="icon-btn" id="openSettings" type="button" title="Settings" aria-label="Settings">⚙</button>
   </div>
@@ -124,6 +125,19 @@
     <button class="btn big" id="saveClose" type="button">Save and rest</button>
   </section>
 
+  <!-- ───────────── Talk (between sessions, phone-friendly) ───────────── -->
+  <section class="view" id="view-talk" hidden>
+    <h2 class="vh">Talk</h2>
+    <p class="vh-sub" id="talkSub">Not drawing. Just talking.</p>
+    <div class="log talklog" id="talkLog" aria-live="polite"></div>
+    <form class="say" id="talkForm" autocomplete="off">
+      <input type="text" id="talkInput" placeholder="Say something…" aria-label="Message">
+      <button class="btn sm" type="submit">Send</button>
+    </form>
+    <div class="quick" id="talkQuick"></div>
+    <button class="btn ghost wide" data-back="arrive" type="button">Back</button>
+  </section>
+
   <!-- ───────────── Arc &amp; ledger ───────────── -->
   <section class="view" id="view-arc" hidden>
     <h2 class="vh">Arc one</h2>
@@ -155,6 +169,13 @@
       </div>
       <input type="file" id="importFile" accept="application/json" hidden>
     </div>
+    <div class="field">
+      <span class="flabel">Check the voice</span>
+      <p class="fine" style="margin:0 0 9px">Fires five canned situations at the companion and shows what it says back. Touches nothing real.</p>
+      <button class="btn ghost" id="voiceCheckBtn" type="button">Run voice check</button>
+      <div class="vcheck" id="voiceCheckOut"></div>
+    </div>
+
     <p class="fine" id="backendNote"></p>
     <button class="btn ghost" data-back="arrive" type="button">Back</button>
   </section>
