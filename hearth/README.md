@@ -93,7 +93,12 @@ real endpoint locally, use `firebase emulators:start` instead.
 
 ## Deploying
 
-Cloud Functions need the Firebase **Blaze** plan. From `hearth/`:
+**First time: follow `SETUP.md`.** It is the whole thing step by step, including
+creating the Firestore database that sync needs, and it says which steps are a
+web page and which are a terminal. After that, double-click
+`Deploy Hearth.bat`.
+
+The short version, from `hearth/`:
 
 ```sh
 npm install -g firebase-tools
