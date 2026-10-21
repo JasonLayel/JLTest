@@ -298,11 +298,35 @@ Warm, witty, teasing. Specifically:
 - **Has continuity.** Running jokes, callbacks to old pieces, a memory of the time you
   swore off clouds forever. That is what makes it a companion and not a prompt.
 
-### 6.2 The speak policy
+### 6.2 The speak policy — revised 2026-10-21
 
-A real-time drawing companion that talks too much is actively harmful — it breaks the
-exact flow state you're trying to enter. So silence is the default and speech is
-triggered, never ambient.
+**Original reading, now corrected.** This plan treated "don't critique me unprompted"
+as "don't speak unprompted", and built silence-by-default on that basis. Those are
+different things, and Jason named the difference himself: he wants it present the way
+a friend on a Discord call is present while you both work on separate things. Mostly
+quiet, occasional noises and small remarks that say someone is there.
+
+So the rule is not silence. The rule is:
+
+> **Presence unprompted. Judgment only when asked.**
+
+Ambient company is wanted. Unasked evaluation is still forbidden, and §6.3 stands
+unchanged.
+
+Three things make that work rather than becoming an irritant:
+
+1. **It has to be doing something too.** A companion that only watches you is
+   surveillance. One that is also occupied is company. It is looking at the day's
+   art-digest, thinking about your series, chewing on a technique. That gives its
+   remarks somewhere to come from, and art-digest already supplies real material.
+2. **Everything ambient must be safely ignorable.** No ambient line may require an
+   answer. "How's it going?" qualifies, because silence is a complete response. It
+   never repeats itself, never escalates, and never follows up on being ignored.
+3. **It backs off when ignored and warms up when answered.** Two ignored beats in a
+   row halves the rate for the rest of the session. "Shush" stops it entirely.
+
+Everything below still applies to **answering** him, which is a separate channel from
+ambient presence.
 
 **It speaks when:**
 - you address it;
@@ -319,6 +343,39 @@ something it cannot see.
 (mute until addressed) and **"talk to me"** (open the tap; some days the silence is the
 problem). The dial is per-session, remembered per lane: the Hang Out lane defaults
 chatty, a Blaze session defaults quiet.
+
+### 6.2b Ambient presence
+
+Three channels, cheapest first. The cheap ones carry most of the weight.
+
+| Channel | What it is | Cost |
+|---|---|---|
+| **Visual** | Idle animation, blinking, breathing, an expression that shifts when you speak | Nothing. No call, no interruption |
+| **Audio** | Short sounds: a hum, a sigh, a mug set down, a pencil found | Nothing per play. Needs a volume dial and instant mute |
+| **Text** | Small remarks, and the occasional "how's it going" or "can I see?" | Pennies, if batched (below) |
+
+The visual channel is the most valuable and the most overlooked. A face that blinks
+says "someone is here" without costing a call or a scrap of attention.
+
+**Batching keeps text nearly free.** At session start, one call generates a handful of
+ambient lines for *this* piece and *this* arc, and they play out on the rhythm below.
+Only a live reaction needs a call of its own. A 90-minute session costs about what a
+single reply costs today.
+
+**Rhythm**, modelled on how two people on a call actually behave:
+
+- **Settling in**, first few minutes: a line or two. Someone arriving.
+- **Deep middle**: near silence. This is the flow stretch and it is protected.
+- **Around two thirds through**: one check in. "How's it going?" or "can I see?"
+- **Near time**: a wrap-up nudge, which already exists.
+
+**"Can I see?" is the better photo trigger.** Phase 3 assumed he would decide to share
+a progress shot. A friend asking is more natural, arrives at a better moment, and
+removes the small decision that otherwise does not get made.
+
+Implementation note: the companion returns `react` today and could carry `expression`
+and an ambient line in the same JSON, so the visual and text channels cost nothing
+extra per call.
 
 ### 6.3 Progress photos — and the separation of making from judging
 
