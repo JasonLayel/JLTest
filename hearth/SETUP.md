@@ -154,13 +154,27 @@ settings pages behind a 404 rather than an access-denied message. Sign in as
 log. Send it to Claude. This is the main reason the deploy was moved to
 GitHub: the log is readable without you doing anything.
 
-**The deploy fails with a permissions error.** The service account probably
-needs more roles. Open
-<https://console.cloud.google.com/iam-admin/iam>, pick **hearth-companion**,
-find the account whose name contains `firebase-adminsdk`, click the pencil,
-and **Add another role**. The ones a functions deploy needs are **Cloud
-Functions Developer**, **Service Account User**, and **Secret Manager Admin**.
-Save, then run the workflow again.
+**The deploy fails with "Permission denied to get service" or any other 403.**
+The service account can reach Firebase but not the Google Cloud services a
+functions deploy touches. Grant it three roles, once:
+
+1. Open <https://console.cloud.google.com/iam-admin/iam>
+2. At the top, make sure the project selector says **hearth-companion**.
+3. Find the row whose name contains **firebase-adminsdk**.
+4. Click the **pencil** at the right of that row. The panel is titled
+   **Edit access** or **Edit principal** depending on the console version.
+5. Click **Add another role** and pick **Editor**.
+6. **Add another role** again, pick **Secret Manager Admin**.
+7. **Add another role** again, pick **Service Account User**.
+8. Click **Save**.
+
+Changes take a minute to apply. Then the deploy can be run again.
+
+Editor is broader than strictly needed. It is the pragmatic choice for a
+personal project because hunting the exact minimal permission set costs more
+round trips than it saves. The narrower set is Cloud Functions Developer,
+Service Usage Consumer, Firebase Hosting Admin, Secret Manager Admin and
+Service Account User, if you would rather tighten it later.
 
 **Settings in the app says sync is unavailable.** Firestore is not created, or
 is not the `(default)` database. Go back to step 3.
