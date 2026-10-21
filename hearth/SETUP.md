@@ -110,6 +110,13 @@ When it finishes it prints a **Hosting URL** like
 `https://hearth-companion-4f2a1.web.app`. That is the app. The window stays
 open so you can read it.
 
+**If it sits on "Installing the Firebase tool" with nothing happening:** that
+is normal. It downloads several hundred packages and can take 2 to 10 minutes.
+To confirm it is alive, press **Ctrl + Shift + Esc** for Task Manager and look
+for **Node.js: Server-side JavaScript** in the Processes list with non-zero CPU
+or Network. Past 10 minutes with nothing, close the window and double-click the
+file again. It keeps what it already downloaded, so the retry is faster.
+
 **If the window says Node.js is not installed:** go to <https://nodejs.org>,
 click the big green **LTS** button, install it accepting every default, then
 double-click `First Time Setup.bat` again.

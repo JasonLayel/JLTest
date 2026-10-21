@@ -26,10 +26,16 @@ echo [1/5] Node is installed (%NODEV%). Good.
 echo.
 
 REM ---------- firebase-tools ----------
-echo [2/5] Installing the Firebase tool. This can take a few minutes.
-echo       Lots of text will scroll past. That is normal.
+echo [2/5] Installing the Firebase tool.
 echo.
-call npm install -g firebase-tools
+echo       This downloads several hundred small packages and takes
+echo       anywhere from 2 to 10 minutes.
+echo.
+echo       You will see lines starting with "npm http fetch".
+echo       They may stop for a minute at a time. That is still normal,
+echo       it is unpacking. Do not close the window.
+echo.
+call npm install -g firebase-tools --loglevel=http
 if errorlevel 1 goto FAILNPM
 echo.
 echo       Installed.
