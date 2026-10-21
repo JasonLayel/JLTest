@@ -3,8 +3,8 @@
 One pass, start to finish. You only do this once. Everything after it is
 double-clicking `Deploy Hearth.bat`.
 
-Where the steps say "console", that is a web page in your browser, not a
-terminal. The only terminal work is step 4, and only the first time.
+Steps 1 to 3 are **web pages in a browser**. Step 4 is **a file you
+double-click**. There is no terminal in any of this.
 
 ---
 
@@ -53,42 +53,45 @@ This is the bit sync needs.
 
 You never have to open this page again.
 
-## 4. Connect and deploy, once
+## 4. Connect and deploy
 
-Open a terminal in the `hearth` folder. This is the only terminal step.
+**Double-click `First Time Setup.bat`**, in the same `hearth` folder as this
+file. No terminal, no typing paths.
 
-```sh
-npm install -g firebase-tools
-firebase login
-firebase use --add
-```
+A black window opens and walks through the rest: installing the Firebase tool,
+signing you in to Google, picking your project, taking your Anthropic API key,
+and deploying. It stops and tells you what is about to happen before each part,
+and waits for you to press a key.
 
-`firebase use --add` lists your projects. Pick the one from step 1 and give it
-the alias `default` when it asks.
+Have these ready before you start it:
 
-Now give it your Anthropic key. Get one at
-<https://console.anthropic.com> under API keys.
+- **Your Anthropic API key.** Get it at <https://console.anthropic.com>, under
+  API keys. Copy it to the clipboard.
+- Steps 1 to 3 above finished.
 
-```sh
-firebase functions:secrets:set ANTHROPIC_API_KEY
-```
+Three things it will ask you, so they are not a surprise:
 
-It prompts for the value. Paste the key and press enter. It does not echo as
-you type, which is normal.
+| It says | You do |
+| --- | --- |
+| A browser opens asking you to sign in | Pick the Google account your Firebase project is on, and allow access |
+| A list of projects appears | Arrow keys to yours, Enter. When it asks for an alias, type `default` |
+| It asks for the API key | Paste and press Enter. **Nothing appears on screen while you paste.** That is normal, it hides the key. It has not failed |
 
-**Set a spend limit in the Anthropic console while you are there.** Billing,
-then limits. That is the real cap on cost. Everything in the function is a
-seatbelt, not a budget.
+When it finishes it prints a **Hosting URL** like
+`https://hearth-companion-4f2a1.web.app`. That is the app. The window stays
+open so you can read it.
 
-Then deploy:
+**If the window says Node.js is not installed:** go to <https://nodejs.org>,
+click the big green **LTS** button, install it accepting every default, then
+double-click `First Time Setup.bat` again.
 
-```sh
-firebase deploy --only functions,hosting
-```
+**If a step fails**, the window tells you which one and what usually causes it,
+and stays open. The troubleshooting section at the bottom of this file has the
+rest.
 
-The first deploy takes a few minutes and may ask permission to enable some
-Google APIs. Say yes. When it finishes it prints a **Hosting URL** like
-`https://hearth-companion-4f2a1.web.app`. That is the app.
+**While you are in the Anthropic console, set a spend limit.** Billing, then
+limits. That is the real cap on what this can cost you. Everything in the code
+is a seatbelt, not a budget.
 
 ## 5. Check the voice
 
@@ -115,9 +118,15 @@ sessions, so do not make it `password`.
 
 ## After that
 
-Double-click `Deploy Hearth.bat` whenever you want to push changes. It does
-the same deploy as step 4 and keeps the window open so you can read what
-happened.
+Double-click **`Deploy Hearth.bat`** whenever you want to push changes. Same
+deploy as step 4, keeps the window open so you can read what happened.
+
+Which file is which:
+
+| File | When |
+| --- | --- |
+| `First Time Setup.bat` | Once, ever. Installs and connects everything |
+| `Deploy Hearth.bat` | Every time you want to push a change |
 
 ---
 
@@ -146,3 +155,30 @@ folder.
 **You want to see what it actually sent.** Firebase console, Functions, Logs.
 The style filter writes a line every time it rejects a reply, which tells you
 the companion tried to say something off-key and was caught.
+
+
+---
+
+## Appendix: doing step 4 by hand
+
+You should not need this. `First Time Setup.bat` does all of it. It is here in
+case the launcher fails and you want to run the pieces yourself.
+
+**To get a command prompt open in the `hearth` folder:** open the folder in
+File Explorer, click once in the address bar at the top so the path highlights,
+type `cmd` over it, and press Enter. A black window opens already pointed at
+that folder. (On Windows 11 you can also right-click empty space in the folder
+and choose **Open in Terminal**.)
+
+Then, one line at a time:
+
+```
+npm install -g firebase-tools
+firebase login
+firebase use --add
+firebase functions:secrets:set ANTHROPIC_API_KEY
+firebase deploy --only functions,hosting
+```
+
+`firebase use --add` shows a list: arrow to your project, press Enter, and type
+`default` when it asks for an alias. The secrets command hides what you paste.
