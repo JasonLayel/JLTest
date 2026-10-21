@@ -1,0 +1,3 @@
+# Never commit a key or a local log.
+anthropic-key.txt
+setup-log.txt

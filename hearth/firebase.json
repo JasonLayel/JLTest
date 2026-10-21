@@ -10,7 +10,8 @@
       "companions/**",
       "*.bat",
       "scripts/**",
-      "setup-log.txt"
+      "setup-log.txt",
+      "anthropic-key.txt"
     ],
     "rewrites": [
       {

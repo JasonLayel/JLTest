@@ -65,6 +65,15 @@ call firebase login
 if errorlevel 1 goto FAILGENERIC
 echo.
 
+if not exist ".firebaserc" goto PICKPROJECT
+findstr /c:"projects" ".firebaserc" >nul 2>nul
+if errorlevel 1 goto PICKPROJECT
+findstr /c:"default" ".firebaserc" >nul 2>nul
+if errorlevel 1 goto PICKPROJECT
+echo       A project is already chosen. Skipping.
+goto PROJECTOK
+
+:PICKPROJECT
 echo       Now pick your project from the list.
 echo       Use the arrow keys, press Enter.
 echo       When it asks for an alias, type:  default
@@ -72,18 +81,42 @@ echo.
 pause
 call firebase use --add
 if errorlevel 1 goto FAILGENERIC
+:PROJECTOK
 echo.
 
 REM ---------- secret ----------
 echo [4/5] Your Anthropic API key.
-echo       Copy it from console.anthropic.com first.
-echo       When it asks, paste it and press Enter.
-echo       NOTHING APPEARS ON SCREEN while you paste. That is normal
-echo       and does not mean it failed.
+echo.
+echo       Ctrl+V does not reliably paste into a black console
+echo       window, which is why this failed before. We will use
+echo       Notepad instead, where paste definitely works.
+echo.
+echo       Notepad is about to open on an empty file. Do this:
+echo         1. Paste your key     with Ctrl+V
+echo         2. Save               with Ctrl+S
+echo         3. Close Notepad      with the X
+echo.
+echo       Nothing else. No quotes, no spaces, no extra lines.
+echo       This window carries on by itself once Notepad closes.
 echo.
 pause
-call firebase functions:secrets:set ANTHROPIC_API_KEY
-if errorlevel 1 goto FAILSECRET
+if exist "anthropic-key.txt" del "anthropic-key.txt" >nul 2>nul
+type nul > "anthropic-key.txt"
+start /wait notepad "anthropic-key.txt"
+
+powershell -NoProfile -Command "$k = Get-Content -Raw -ErrorAction SilentlyContinue 'anthropic-key.txt'; if ($k -eq $null) { $k = '' }; [IO.File]::WriteAllText('anthropic-key.txt', $k.Trim())"
+
+for %%A in ("anthropic-key.txt") do set "KEYSIZE=%%~zA"
+if "%KEYSIZE%"=="0" goto NOKEY
+findstr /b /c:"sk-ant-" "anthropic-key.txt" >nul 2>nul
+if errorlevel 1 goto BADKEY
+
+echo       Key read. Saving it to Firebase.
+call firebase functions:secrets:set ANTHROPIC_API_KEY --data-file "anthropic-key.txt"
+set "SECRC=%ERRORLEVEL%"
+del "anthropic-key.txt" >nul 2>nul
+if not "%SECRC%"=="0" goto FAILSECRET
+echo       Saved. The copy on your disk has been deleted.
 echo.
 
 REM ---------- deploy ----------
@@ -122,6 +155,28 @@ echo FAILED while installing the Firebase tool.
 echo.
 echo Most likely fix: close this window, right click this file,
 echo choose "Run as administrator", and try again.
+goto END
+
+:NOKEY
+del "anthropic-key.txt" >nul 2>nul
+echo.
+echo The file was empty, so nothing was saved.
+echo.
+echo You need to paste the key into Notepad, press Ctrl+S to save,
+echo and then close it. Closing without saving leaves it empty.
+echo.
+echo Run this file again when you have the key on your clipboard.
+goto END
+
+:BADKEY
+del "anthropic-key.txt" >nul 2>nul
+echo.
+echo That did not look like an Anthropic key.
+echo.
+echo They begin with  sk-ant-
+echo Check you copied the whole thing, with no quotes around it.
+echo.
+echo Run this file again to try once more.
 goto END
 
 :FAILSECRET

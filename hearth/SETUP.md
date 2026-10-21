@@ -104,7 +104,7 @@ Three things it will ask you, so they are not a surprise:
 | --- | --- |
 | A browser opens asking you to sign in | Pick the Google account your Firebase project is on, and allow access |
 | A list of projects appears | Arrow keys to yours, Enter. When it asks for an alias, type `default` |
-| It asks for the API key | Paste and press Enter. **Nothing appears on screen while you paste.** That is normal, it hides the key. It has not failed |
+| Notepad opens, empty | Paste your key with **Ctrl+V**, save with **Ctrl+S**, close it. The window carries on by itself |
 
 When it finishes it prints a **Hosting URL** like
 `https://hearth-companion-4f2a1.web.app`. That is the app. The window stays
@@ -116,6 +116,17 @@ To confirm it is alive, press **Ctrl + Shift + Esc** for Task Manager and look
 for **Node.js: Server-side JavaScript** in the Processes list with non-zero CPU
 or Network. Past 10 minutes with nothing, close the window and double-click the
 file again. It keeps what it already downloaded, so the retry is faster.
+
+**If the key step says "Secret Payload cannot be empty":** the key never
+arrived. **Ctrl+V does not paste into a black console window** on Windows,
+which is why the setup now uses Notepad for this step instead. Make sure you
+are on the current `First Time Setup.bat`. In Notepad, you must press
+**Ctrl+S** before closing: closing without saving leaves the file empty and
+produces exactly this error.
+
+**If it says "That did not look like an Anthropic key":** Anthropic keys start
+with `sk-ant-`. You probably copied a partial selection, or copied it with
+quotation marks around it.
 
 **If it says "Invalid project id: REPLACE-WITH-YOUR-PROJECT-ID":** you have an
 old copy. Delete the file named `.firebaserc` from the `hearth` folder and run
