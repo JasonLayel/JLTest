@@ -54,11 +54,16 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
           KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          if firebase functions:secrets:describe ANTHROPIC_API_KEY \
+          # "describe" only proves the secret container exists. A container with
+          # no version is exactly what a failed earlier attempt leaves behind,
+          # and the deploy then fails on "no latest version". "access" reads the
+          # latest value, so it is the question actually worth asking.
+          if firebase functions:secrets:access ANTHROPIC_API_KEY \
                --project hearth-companion --non-interactive >/dev/null 2>&1; then
-            echo "Secret already exists. Leaving it alone."
+            echo "Secret already has a value. Leaving it alone."
             exit 0
           fi
+          echo "No usable secret version. Storing the key."
           if [ -z "$KEY" ]; then
             echo "::error::No secret stored yet and the ANTHROPIC_API_KEY repository secret is not set."
             exit 1
