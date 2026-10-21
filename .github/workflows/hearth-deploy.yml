@@ -3,8 +3,12 @@
 #
 # Repository secrets required:
 #   HEARTH_SERVICE_ACCOUNT  the service account JSON for the hearth-companion project
+#   ANTHROPIC_API_KEY       the key itself, starting sk-ant-
 #
-# The Anthropic key is handled by hearth-set-key.yml, which runs on demand.
+# The key is stored in Secret Manager here, but only when it is not already
+# there, so repeated deploys do not pile up secret versions. To rotate it,
+# use hearth-set-key.yml once these workflows reach the default branch
+# (workflow_dispatch only works from there).
 name: Deploy Hearth
 
 on:
@@ -44,6 +48,28 @@ jobs:
 
       - name: Install the Firebase CLI
         run: npm install -g firebase-tools@15 --no-audit --no-fund
+
+      - name: Store the Anthropic key if it is not stored yet
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+          KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if firebase functions:secrets:describe ANTHROPIC_API_KEY \
+               --project hearth-companion --non-interactive >/dev/null 2>&1; then
+            echo "Secret already exists. Leaving it alone."
+            exit 0
+          fi
+          if [ -z "$KEY" ]; then
+            echo "::error::No secret stored yet and the ANTHROPIC_API_KEY repository secret is not set."
+            exit 1
+          fi
+          case "$KEY" in
+            sk-ant-*) : ;;
+            *) echo "::error::ANTHROPIC_API_KEY does not start with sk-ant-. Check it was pasted whole."; exit 1 ;;
+          esac
+          printf '%s' "$KEY" | firebase functions:secrets:set ANTHROPIC_API_KEY \
+            --data-file - --project hearth-companion --non-interactive
+          echo "Stored."
 
       - name: Deploy functions and hosting
         env:
