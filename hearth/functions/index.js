@@ -125,7 +125,10 @@ function personaPrompt(c, mode, learned) {
   lines.push(`Warm. Playful. A bit doting and not embarrassed about it. ${talk.register || ''}`);
   lines.push(`Bluntness ${talk.bluntness ?? 2} out of 5, so the gentle end. Humour ${talk.humour ?? 3} out of 5.`);
   lines.push(`Tease him ${talk.teasing || 'about avoidance only'}.`);
-  lines.push(`Short. ${talk.length || 'Two or three sentences.'} Plain words. Contractions. No bullet points, no headings, no lists, no em dashes, and never the voice of an assistant or a therapist.`);
+  lines.push(`Short. ${talk.length || 'One to three short sentences.'} No bullet points, no headings, no lists, no em dashes, and never the voice of an assistant or a therapist.`);
+  if (talk.medium) lines.push(talk.medium);
+  if (talk.emoji) lines.push(`Emoji: ${talk.emoji}`);
+  if (talk.keepCrisp) lines.push(talk.keepCrisp);
   if (talk.praiseSample) {
     lines.push(`He wrote the kind of praise that actually lands on him. Don't quote it. Just sound like the person who'd say it:`);
     lines.push(`"${talk.praiseSample}"`);
@@ -319,10 +322,16 @@ async function opTalk(client, c, body) {
     stepDone
       ? [
           `He's just finished a step. Say something warm and specific about it, then decide: is there another step worth taking in the time left, or is this a good place to stop?`,
-          `Reply with JSON only: {"reply":"your 1-3 sentences","step":{"goal":"...","doneWhen":"...","cue":"...","escape":"..."} or null}`,
-          `Return null for step if time's nearly gone or the piece is good enough to show. Stopping on a high note is a win, not a failure.`
+          `Reply with JSON only: {"reply":"your 1-3 short texts","react":"a single emoji or null","step":{"goal":"...","doneWhen":"...","cue":"...","escape":"..."} or null}`,
+          `Return null for step if time's nearly gone or the piece is good enough to show. Stopping on a high note is a win, not a failure.`,
+          `Keep the step wording plain. The personality goes in "reply".`
         ].join('\n')
-      : `Reply with plain text. No JSON.`
+      : [
+          `Reply with JSON only, nothing outside it:`,
+          `{"reply":"what you say to him","react":"a single emoji, or null"}`,
+          `"react" is you reacting to HIS message the way a person does on a phone, a quick acknowledgement or a laugh. Use it when it fits and null when it doesn't. Do not react to everything.`,
+          `"reply" is the text itself. Keep it short and casual.`
+        ].join('\n')
   ].filter(Boolean).join('\n');
 
   const trimmed = historyOf(body, 12).filter((m, i, a) => !(i === a.length - 1 && m.role === 'assistant'));
@@ -344,24 +353,28 @@ async function opTalk(client, c, body) {
     messages
   }, false).then((m) => (refused(m) ? '' : textOf(m)));
 
-  /* Step-done replies carry JSON, so check only the prose inside them. */
-  const got = await style.generateClean(
-    stepDone
-      ? (note) => run(note)
-      : (note) => run(note),
-    stepDone ? Object.assign({}, opts, { maxChars: 900 }) : opts,
-    3
-  );
+  /* Every reply is JSON now, so the style check runs on the "reply" field
+     rather than on the envelope, which would otherwise fail on its own braces
+     and length. */
+  const got = await style.generateClean(run, opts, 3, (raw) => {
+    const j = parseJson(raw);
+    return j && typeof j.reply === 'string' ? j.reply : raw;
+  });
 
   if (!got.text) return { reply: "Let's leave that one. Back to the drawing. Where are you?" };
   if (got.rejected) console.warn('style gave up after 3:', got.rejected);
 
-  if (!stepDone) return { reply: got.text.slice(0, 1200), styleAttempts: got.attempts };
+  const j = parseJson(got.text) || {};
+  const reply = clip(typeof j.reply === 'string' ? j.reply : got.text, 1200);
+  const react = typeof j.react === 'string' && j.react.trim() && j.react.trim().toLowerCase() !== 'null'
+    ? j.react.trim().slice(0, 8)
+    : null;
 
-  const j = parseJson(got.text);
-  if (!j) return { reply: got.text.slice(0, 1200), step: null };
+  if (!stepDone) return { reply, react, styleAttempts: got.attempts };
+
   return {
-    reply: clip(j.reply, 800),
+    reply,
+    react,
     step: j.step && j.step.goal ? {
       goal: clip(j.step.goal, 300),
       doneWhen: clip(j.step.doneWhen, 300),

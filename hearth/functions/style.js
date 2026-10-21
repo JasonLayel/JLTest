@@ -9,6 +9,9 @@
  *
  * check() returns null when the text is fine, or a short string naming what
  * went wrong, which is fed back into the retry.
+ *
+ * generateClean takes an optional `extract` so that a model reply wrapped in
+ * JSON is checked on its prose field rather than on the envelope.
  */
 
 /* Phrasing that makes it sound like software instead of a friend. */
@@ -132,13 +135,14 @@ function askedForFix(message) {
  * Generate, check, regenerate. Up to `tries` attempts, then give up and
  * return the last attempt rather than failing the request.
  */
-async function generateClean(runOnce, opts, tries) {
+async function generateClean(runOnce, opts, tries, extract) {
   const n = tries || 3;
+  const pick = typeof extract === 'function' ? extract : (x) => x;
   let last = '';
   let note = null;
   for (let i = 0; i < n; i++) {
     last = await runOnce(note);
-    note = check(last, opts);
+    note = check(pick(last), opts);
     if (!note) return { text: last, attempts: i + 1, rejected: null };
     console.warn('style reject (attempt ' + (i + 1) + '):', note);
   }

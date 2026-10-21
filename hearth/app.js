@@ -595,10 +595,21 @@ function renderLog() {
   session.messages.forEach(function (m) {
     var d = document.createElement('div');
     d.className = 'msg ' + (m.role === 'assistant' ? 'them' : m.role === 'user' ? 'you' : 'sys');
-    d.innerHTML = '<p>' + escapeHtml(m.content).replace(/\n/g, '<br>') + '</p>';
+    d.innerHTML = '<p>' + escapeHtml(m.content).replace(/\n/g, '<br>') + '</p>'
+      + (m.react ? '<span class="react">' + escapeHtml(m.react) + '</span>' : '');
     host.appendChild(d);
   });
   host.scrollIntoView({ block: 'end' });
+}
+
+/* A react belongs to the message it answers, which is the last thing he said
+   before this reply. */
+function reactTo(list, replyMsg, emoji) {
+  var i = list.indexOf(replyMsg);
+  if (i < 0) i = list.length;
+  for (var k = i - 1; k >= 0; k--) {
+    if (list[k].role === 'user') { list[k].react = emoji; return; }
+  }
 }
 
 function them(text) { session.messages.push({ role: 'assistant', content: text }); renderLog(); persistSession(); }
@@ -622,7 +633,9 @@ function say(text) {
     chattiness: state.prefs.chattiness
   }).then(function (d) {
     holder.content = d.reply || '…';
+    if (d.react) reactTo(session.messages, holder, d.react);
     renderLog();
+    persistSession();
   }).catch(function () {
     var i = session.messages.indexOf(holder);
     if (i > -1) session.messages.splice(i, 1);
@@ -885,7 +898,8 @@ function renderTalk() {
     state.talk.forEach(function (m) {
       var d2 = document.createElement('div');
       d2.className = 'msg ' + (m.role === 'assistant' ? 'them' : 'you');
-      d2.innerHTML = '<p>' + escapeHtml(m.content).replace(/\n/g, '<br>') + '</p>';
+      d2.innerHTML = '<p>' + escapeHtml(m.content).replace(/\n/g, '<br>') + '</p>'
+        + (m.react ? '<span class="react">' + escapeHtml(m.react) + '</span>' : '');
       host.appendChild(d2);
     });
   }
@@ -933,6 +947,11 @@ function talkSay(text) {
     messages: state.talk.slice(-12).map(function (m) { return { role: m.role, content: m.content }; }),
     chattiness: state.prefs.chattiness
   }).then(function (d) {
+    if (d.react) {
+      for (var k = state.talk.length - 1; k >= 0; k--) {
+        if (state.talk[k].role === 'user') { state.talk[k].react = d.react; break; }
+      }
+    }
     state.talk.push({ role: 'assistant', content: d.reply || '…', ts: Date.now() });
     save();
     renderTalk();
