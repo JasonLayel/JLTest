@@ -70,18 +70,27 @@ thing you already have set up for the Petulant Princess app.
 
 Now put it into GitHub:
 
-6. Go to <https://github.com/JasonLayel/JLTest/settings/secrets/actions>
-7. Click **New repository secret**.
-8. Name: `HEARTH_SERVICE_ACCOUNT`
-9. Secret: paste the whole JSON.
-10. Click **Add secret**.
+6. Go to <https://github.com/JasonLayel/JLTest> and make sure you are
+   **signed in as JasonLayel**. Look at the top right: if you see a **Sign in**
+   button instead of your avatar, sign in first. Settings pages return a 404
+   when you are signed out, which looks like a broken link but is not.
+7. Click the **Settings** tab, along the top of the repository, to the right of
+   Insights. If the tabs are collapsed into a **...** dropdown because the
+   window is narrow, it is in there.
+8. In the left sidebar, under the **Security** heading, click
+   **Secrets and variables**, then **Actions**.
+9. Make sure you are on the **Secrets** tab, not Variables.
+10. Click **New repository secret**.
+11. Name: `HEARTH_SERVICE_ACCOUNT`
+12. Secret: paste the whole JSON.
+13. Click **Add secret**.
 
 Then add your Anthropic key the same way:
 
-11. Click **New repository secret** again.
-12. Name: `ANTHROPIC_API_KEY`
-13. Secret: paste your key. It starts with `sk-ant-`.
-14. Click **Add secret**.
+14. Click **New repository secret** again.
+15. Name: `ANTHROPIC_API_KEY`
+16. Secret: paste your key. It starts with `sk-ant-`.
+17. Click **Add secret**.
 
 You should now see both names listed. GitHub hides the values, which is
 correct. **Delete the downloaded `.json` file** from your Downloads folder
@@ -135,6 +144,11 @@ data, so do not make it `password`.
 ---
 
 ## If something goes wrong
+
+**The Settings tab is missing, or a settings link gives a 404.** You are not
+signed in to GitHub, or you are signed in as a different account. GitHub hides
+settings pages behind a 404 rather than an access-denied message. Sign in as
+**JasonLayel** and try again.
 
 **A workflow shows a red X.** Click the run, then the failed step, to see the
 log. Send it to Claude. This is the main reason the deploy was moved to
