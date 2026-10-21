@@ -79,7 +79,11 @@ jobs:
       - name: Deploy functions and hosting
         env:
           GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
-        run: firebase deploy --only functions,hosting --project hearth-companion --non-interactive
+        # --force also accepts the artifact cleanup policy. Without it the CLI
+        # deploys successfully and then exits non-zero because it cannot
+        # prompt, which reads as a failed deploy. The policy is wanted anyway:
+        # it stops old container images accumulating and costing money.
+        run: firebase deploy --only functions,hosting --project hearth-companion --non-interactive --force
 
       - name: Where it went
         run: echo "Live at https://hearth-companion.web.app"
