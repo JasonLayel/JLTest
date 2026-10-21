@@ -154,27 +154,29 @@ settings pages behind a 404 rather than an access-denied message. Sign in as
 log. Send it to Claude. This is the main reason the deploy was moved to
 GitHub: the log is readable without you doing anything.
 
-**The deploy fails with "Permission denied to get service" or any other 403.**
-The service account can reach Firebase but not the Google Cloud services a
-functions deploy touches. Grant it three roles, once:
+**The deploy fails with a 403, or names a missing permission.** The
+service account needs roles it does not get by default. The simplest fix, and
+the one that ends this in a single pass:
 
-1. Open <https://console.cloud.google.com/iam-admin/iam>
-2. At the top, make sure the project selector says **hearth-companion**.
-3. Find the row whose name contains **firebase-adminsdk**.
-4. Click the **pencil** at the right of that row. The panel is titled
-   **Edit access** or **Edit principal** depending on the console version.
-5. Click **Add another role** and pick **Editor**.
-6. **Add another role** again, pick **Secret Manager Admin**.
-7. **Add another role** again, pick **Service Account User**.
-8. Click **Save**.
+1. Open <https://console.cloud.google.com/iam-admin/iam?project=hearth-companion>
+   Use that link rather than the project picker, which shows only recent
+   projects and may be on a different Google account.
+2. Find the row whose principal contains **firebase-adminsdk**.
+3. Click the **pencil** at the right of that row.
+4. **Add another role**, choose **Owner**.
+5. **Save**.
 
-Changes take a minute to apply. Then the deploy can be run again.
+Owner is broader than necessary. It is recommended here because granting
+roles one error at a time costs a failed deploy each round, and this is a
+personal project whose credential lives only in this repository's Actions
+secrets, which are not readable by forks.
 
-Editor is broader than strictly needed. It is the pragmatic choice for a
-personal project because hunting the exact minimal permission set costs more
-round trips than it saves. The narrower set is Cloud Functions Developer,
-Service Usage Consumer, Firebase Hosting Admin, Secret Manager Admin and
-Service Account User, if you would rather tighten it later.
+If you would rather keep it tight, the roles actually required are **Editor**,
+**Secret Manager Admin**, **Service Account User**, **Cloud Functions Admin**
+and, for second generation functions, **Cloud Run Admin**. Expect to discover
+any you miss one deploy at a time.
+
+Grants take a minute to apply.
 
 **Settings in the app says sync is unavailable.** Firestore is not created, or
 is not the `(default)` database. Go back to step 3.
