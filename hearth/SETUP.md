@@ -1,39 +1,13 @@
 # Setting up Hearth
 
-One pass, start to finish. You only do this once. Everything after it is
-double-clicking `Deploy Hearth.bat`.
+Everything here happens in a **web browser**. Nothing is installed on your PC,
+nothing is downloaded, and there is no terminal.
 
-Step 0 is **a file you save**. Steps 1 to 3 are **web pages in a browser**.
-Step 4 is **a file you double-click**. There is no terminal in any of this.
+Deploys run on GitHub's computers, not yours. That also means when something
+breaks, Claude can read the failure log directly and fix it, instead of you
+running an installer again and reporting back.
 
----
-
-## 0. Get the files onto your PC
-
-The code does not live on your computer yet. It lives on GitHub. You need a
-copy on your PC before anything else works.
-
-1. Save the `hearth.zip` file Claude sent you. It lands in your **Downloads**
-   folder.
-2. Open your Downloads folder, **right-click `hearth.zip`**, choose
-   **Extract All...**, then click **Extract**.
-3. You now have a folder called `hearth`. Drag it somewhere you will find it
-   again, for example `C:\Users\jason\hearth`.
-4. Open it. You should see `First Time Setup.bat`, `app.js`, `index.html` and
-   about a dozen others. That folder is what every later step means by "the
-   `hearth` folder".
-
-If you did not get a zip, ask for one. The alternative is downloading it from
-GitHub yourself: go to
-<https://github.com/JasonLayel/JLTest/archive/refs/heads/ccr-52eee7cf-dyvxb5.zip>,
-which downloads the whole repo, and the `hearth` folder is inside it.
-
-**Getting later updates.** A zip is a snapshot. When changes are made, you
-need a fresh copy. Easiest long-term fix is **GitHub Desktop**
-(<https://desktop.github.com>), a normal Windows program: install it once,
-sign in, clone `JasonLayel/JLTest`, and after that getting updates is clicking
-**Fetch origin** then **Pull**. No terminal. Worth doing if this project keeps
-moving, but not required today.
+If you already did steps 1 to 3 on a previous attempt, skip to step 4.
 
 ---
 
@@ -82,156 +56,114 @@ This is the bit sync needs.
 
 You never have to open this page again.
 
-## 4. Connect and deploy
+## 4. Give GitHub permission to deploy
 
-**Double-click `First Time Setup.bat`**, in the same `hearth` folder as this
-file. No terminal, no typing paths.
+GitHub needs a credential for your Firebase project. This is the same kind of
+thing you already have set up for the Petulant Princess app.
 
-A black window opens and walks through the rest: installing the Firebase tool,
-signing you in to Google, picking your project, taking your Anthropic API key,
-and deploying. It stops and tells you what is about to happen before each part,
-and waits for you to press a key.
+1. Open <https://console.firebase.google.com> and pick **hearth-companion**.
+2. Click the **gear icon** next to Project Overview, then **Project settings**.
+3. Open the **Service accounts** tab.
+4. Click **Generate new private key**, then **Generate key** to confirm.
+5. A `.json` file downloads. Open it in Notepad and **select all, copy**. You
+   want the whole contents, braces included.
 
-Have these ready before you start it:
+Now put it into GitHub:
 
-- **Your Anthropic API key.** Get it at <https://console.anthropic.com>, under
-  API keys. Copy it to the clipboard.
-- Steps 1 to 3 above finished.
+6. Go to <https://github.com/JasonLayel/JLTest/settings/secrets/actions>
+7. Click **New repository secret**.
+8. Name: `HEARTH_SERVICE_ACCOUNT`
+9. Secret: paste the whole JSON.
+10. Click **Add secret**.
 
-Three things it will ask you, so they are not a surprise:
+Then add your Anthropic key the same way:
 
-| It says | You do |
-| --- | --- |
-| A browser opens asking you to sign in | Pick the Google account your Firebase project is on, and allow access |
-| A list of projects appears | Arrow keys to yours, Enter. When it asks for an alias, type `default` |
-| Notepad opens, empty | Paste your key with **Ctrl+V**, save with **Ctrl+S**, close it. The window carries on by itself |
+11. Click **New repository secret** again.
+12. Name: `ANTHROPIC_API_KEY`
+13. Secret: paste your key. It starts with `sk-ant-`.
+14. Click **Add secret**.
 
-When it finishes it prints a **Hosting URL** like
-`https://hearth-companion-4f2a1.web.app`. That is the app. The window stays
-open so you can read it.
+You should now see both names listed. GitHub hides the values, which is
+correct. **Delete the downloaded `.json` file** from your Downloads folder
+once it is pasted.
 
-**If it sits on "Installing the Firebase tool" with nothing happening:** that
-is normal. It downloads several hundred packages and can take 2 to 10 minutes.
-To confirm it is alive, press **Ctrl + Shift + Esc** for Task Manager and look
-for **Node.js: Server-side JavaScript** in the Processes list with non-zero CPU
-or Network. Past 10 minutes with nothing, close the window and double-click the
-file again. It keeps what it already downloaded, so the retry is faster.
+## 5. Store the key and deploy
 
-**If the key step says "Secret Payload cannot be empty":** the key never
-arrived. **Ctrl+V does not paste into a black console window** on Windows,
-which is why the setup now uses Notepad for this step instead. Make sure you
-are on the current `First Time Setup.bat`. In Notepad, you must press
-**Ctrl+S** before closing: closing without saving leaves the file empty and
-produces exactly this error.
+Two buttons, both on GitHub.
 
-**If it says "That did not look like an Anthropic key":** Anthropic keys start
-with `sk-ant-`. You probably copied a partial selection, or copied it with
-quotation marks around it.
+1. Go to <https://github.com/JasonLayel/JLTest/actions/workflows/hearth-set-key.yml>
+2. Click **Run workflow**, pick the branch `ccr-52eee7cf-dyvxb5`, click the
+   green **Run workflow** button.
+3. Wait about a minute. Refresh. A **green tick** means the key is stored. A
+   **red X** means something is wrong: click into it, and send Claude what it
+   says.
 
-**If it says "Invalid project id: REPLACE-WITH-YOUR-PROJECT-ID":** you have an
-old copy. Delete the file named `.firebaserc` from the `hearth` folder and run
-the setup again. That file ships as a placeholder, and the Firebase tool reads
-it before running any command, so an unfilled placeholder blocks everything
-including signing in. Current versions clear it automatically.
+Then:
 
-**If the window says Node.js is not installed:** go to <https://nodejs.org>,
-click the big green **LTS** button, install it accepting every default, then
-double-click `First Time Setup.bat` again.
+4. Go to <https://github.com/JasonLayel/JLTest/actions/workflows/hearth-deploy.yml>
+5. **Run workflow** the same way, same branch.
+6. This one takes a few minutes. Green tick means it is live.
 
-**If a step fails**, the window tells you which one and what usually causes it,
-and stays open. The troubleshooting section at the bottom of this file has the
-rest.
+From now on this runs automatically whenever the Hearth code changes. You do
+not have to come back here.
 
-**While you are in the Anthropic console, set a spend limit.** Billing, then
-limits. That is the real cap on what this can cost you. Everything in the code
-is a seatbelt, not a budget.
+## 6. Open it
 
-## 5. Check the voice
+Your app is at **<https://hearth-companion.web.app>**
 
-Open the Hosting URL. Go to **Settings**, then **Run voice check**.
+On your phone, open that address in Chrome, then use the menu and **Add to
+Home screen** so it behaves like an app.
+
+## 7. Check the voice
+
+In the app, go to **Settings**, then **Run voice check**.
 
 It fires five situations at the companion and shows what comes back, including
 you saying a drawing looks awful and you calling yourself lazy. Read the
-replies. If the voice is wrong, that is fixable in `companions/hearth.json`
-and `functions/index.js`, and it is much easier to fix now than after a month
-of sessions.
+replies. If the voice is wrong, that is worth fixing now rather than after a
+month of sessions.
 
-## 6. Turn on sync
+## 8. Turn on sync
 
-On the PC, in **Settings**, type a phrase into the sync box. Make it a real
-phrase, eight characters or more, something like `drawing-afternoons`. Click
-**Save**. It should say synced.
+1. On the PC, in **Settings**, type a phrase into the sync box. Eight
+   characters or more, something like `drawing-afternoons`. Click **Save**.
+2. On the phone, same app, Settings, type the **same phrase**, Save.
 
-On the phone, open the same Hosting URL, bookmark it or use Chrome's **Add to
-Home screen**, then Settings, then type the **same phrase** and save. The
-phone should pull down whatever the PC already has.
-
-That phrase is the only key to your data. Anyone who has it can read your
-sessions, so do not make it `password`.
-
-## After that
-
-Double-click **`Deploy Hearth.bat`** whenever you want to push changes. Same
-deploy as step 4, keeps the window open so you can read what happened.
-
-Which file is which:
-
-| File | When |
-| --- | --- |
-| `First Time Setup.bat` | Once, ever. Installs and connects everything |
-| `Deploy Hearth.bat` | Every time you want to push a change |
+The phone pulls down whatever the PC has. That phrase is the only key to your
+data, so do not make it `password`.
 
 ---
 
 ## If something goes wrong
 
-**Settings says sync is unavailable.** Firestore is not created, or it is not
-the `(default)` database. Go back to step 3.
+**A workflow shows a red X.** Click the run, then the failed step, to see the
+log. Send it to Claude. This is the main reason the deploy was moved to
+GitHub: the log is readable without you doing anything.
 
-**Sync fails with a permissions error in the function logs.** Second
-generation functions run as the Compute Engine default service account, and on
-some newer projects that account does not get Firestore access automatically.
-Open <https://console.cloud.google.com/iam-admin/iam>, pick your project, find
-the account ending in `-compute@developer.gserviceaccount.com`, edit it, and
-add the role **Cloud Datastore User**. Redeploy.
+**The deploy fails with a permissions error.** The service account probably
+needs more roles. Open
+<https://console.cloud.google.com/iam-admin/iam>, pick **hearth-companion**,
+find the account whose name contains `firebase-adminsdk`, click the pencil,
+and **Add another role**. The ones a functions deploy needs are **Cloud
+Functions Developer**, **Service Account User**, and **Secret Manager Admin**.
+Save, then run the workflow again.
 
-**The companion never answers but the app works.** The function is not
-deployed, or the secret is not set. Run `firebase deploy --only functions`
-again and watch for errors. Logs are at
-<https://console.firebase.google.com> under Functions.
+**Settings in the app says sync is unavailable.** Firestore is not created, or
+is not the `(default)` database. Go back to step 3.
 
-**The deploy fails on the predeploy step.** It runs
-`node scripts/prepare-functions.js`, which copies `companions/` into
-`functions/`. Make sure you are running the deploy from inside the `hearth`
-folder.
+**The companion never answers but the app works.** The key is not stored.
+Re-run the **Set Hearth API key** workflow and check it goes green.
 
-**You want to see what it actually sent.** Firebase console, Functions, Logs.
-The style filter writes a line every time it rejects a reply, which tells you
-the companion tried to say something off-key and was caught.
-
+**The voice check says it could not reach the companion.** The deploy has not
+finished, or it failed. Check the Actions tab.
 
 ---
 
-## Appendix: doing step 4 by hand
+## Appendix: deploying from your own PC
 
-You should not need this. `First Time Setup.bat` does all of it. It is here in
-case the launcher fails and you want to run the pieces yourself.
+You do not need this. It is here only if GitHub is unavailable.
 
-**To get a command prompt open in the `hearth` folder:** open the folder in
-File Explorer, click once in the address bar at the top so the path highlights,
-type `cmd` over it, and press Enter. A black window opens already pointed at
-that folder. (On Windows 11 you can also right-click empty space in the folder
-and choose **Open in Terminal**.)
-
-Then, one line at a time:
-
-```
-npm install -g firebase-tools
-firebase login
-firebase use --add
-firebase functions:secrets:set ANTHROPIC_API_KEY
-firebase deploy --only functions,hosting
-```
-
-`firebase use --add` shows a list: arrow to your project, press Enter, and type
-`default` when it asks for an alias. The secrets command hides what you paste.
+`First Time Setup.bat` and `Deploy Hearth.bat` in the `hearth` folder do the
+same job locally. They need Node.js installed and they will ask you to sign in
+to Google. They have been the source of most of the friction in this project,
+because they cannot be tested anywhere except on your machine.

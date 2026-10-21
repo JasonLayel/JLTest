@@ -42,6 +42,15 @@ Other rules for any instructions:
   say why. Do not soften it into mush.
 - Do not pad with apology or preamble.
 
+## Do not make him your test environment
+
+Batch files, PowerShell and anything else Windows-only cannot be run or tested
+from this container. Every one shipped untested, and each round trip costs him
+real time. **Prefer approaches that run somewhere testable**: GitHub Actions
+over local scripts, since the workflow logs are readable from here and the
+debug loop belongs to Claude rather than to him. Hearth deploys this way, via
+`.github/workflows/hearth-deploy.yml`. Local launchers are a fallback only.
+
 ## Verify, do not recall
 
 Product UI moves faster than training data. Before writing steps for the

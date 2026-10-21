@@ -1,0 +1,54 @@
+# Deploys Hearth to Firebase from GitHub, so nothing has to be installed or
+# run on a local machine.
+#
+# Repository secrets required:
+#   HEARTH_SERVICE_ACCOUNT  the service account JSON for the hearth-companion project
+#
+# The Anthropic key is handled by hearth-set-key.yml, which runs on demand.
+name: Deploy Hearth
+
+on:
+  push:
+    branches: [master, ccr-52eee7cf-dyvxb5]
+    paths:
+      - 'hearth/**'
+      - '.github/workflows/hearth-deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hearth
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Write service account credentials
+        env:
+          SA: ${{ secrets.HEARTH_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SA" ]; then
+            echo "::error::The HEARTH_SERVICE_ACCOUNT repository secret is not set. See hearth/SETUP.md."
+            exit 1
+          fi
+          printf '%s' "$SA" > "$RUNNER_TEMP/sa.json"
+          node -e "JSON.parse(require('fs').readFileSync(process.env.RUNNER_TEMP + '/sa.json', 'utf8')); console.log('service account JSON is valid')"
+
+      - name: Install function dependencies
+        run: npm install --prefix functions --no-audit --no-fund
+
+      - name: Install the Firebase CLI
+        run: npm install -g firebase-tools@15 --no-audit --no-fund
+
+      - name: Deploy functions and hosting
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ${{ runner.temp }}/sa.json
+        run: firebase deploy --only functions,hosting --project hearth-companion --non-interactive
+
+      - name: Where it went
+        run: echo "Live at https://hearth-companion.web.app"
