@@ -9,7 +9,8 @@
       "*.md",
       "companions/**",
       "*.bat",
-      "scripts/**"
+      "scripts/**",
+      "setup-log.txt"
     ],
     "rewrites": [
       {
