@@ -26,7 +26,12 @@ echo [1/5] Node is installed (%NODEV%). Good.
 echo.
 
 REM ---------- firebase-tools ----------
-echo [2/5] Installing the Firebase tool.
+echo [2/5] The Firebase tool.
+where firebase >nul 2>nul
+if not errorlevel 1 (
+  echo       Already installed. Skipping.
+  goto FIREBASERC
+)
 echo.
 echo       This downloads several hundred small packages and takes
 echo       anywhere from 2 to 10 minutes.
@@ -42,6 +47,15 @@ echo       Installed.
 echo.
 
 REM ---------- login ----------
+:FIREBASERC
+if not exist ".firebaserc" goto FBRCOK
+findstr /i /c:"REPLACE-WITH" ".firebaserc" >nul 2>nul
+if errorlevel 1 goto FBRCOK
+echo       Clearing a leftover placeholder project id.
+del ".firebaserc" >nul 2>nul
+:FBRCOK
+echo.
+
 echo [3/5] Signing in to Google.
 echo       A browser window will open. Pick the account your
 echo       Firebase project is on, and allow access.
@@ -132,6 +146,12 @@ goto END
 :FAILGENERIC
 echo.
 echo That step did not finish. The reason is in the text above.
+echo.
+echo If it said "Invalid project id", delete the file named
+echo   .firebaserc
+echo from this folder and run this again. It is a leftover
+echo placeholder and it blocks every firebase command.
+echo.
 echo SETUP.md has a troubleshooting section at the bottom.
 goto END
 

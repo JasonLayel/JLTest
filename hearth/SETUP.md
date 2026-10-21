@@ -117,6 +117,12 @@ for **Node.js: Server-side JavaScript** in the Processes list with non-zero CPU
 or Network. Past 10 minutes with nothing, close the window and double-click the
 file again. It keeps what it already downloaded, so the retry is faster.
 
+**If it says "Invalid project id: REPLACE-WITH-YOUR-PROJECT-ID":** you have an
+old copy. Delete the file named `.firebaserc` from the `hearth` folder and run
+the setup again. That file ships as a placeholder, and the Firebase tool reads
+it before running any command, so an unfilled placeholder blocks everything
+including signing in. Current versions clear it automatically.
+
 **If the window says Node.js is not installed:** go to <https://nodejs.org>,
 click the big green **LTS** button, install it accepting every default, then
 double-click `First Time Setup.bat` again.
