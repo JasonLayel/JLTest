@@ -3,8 +3,37 @@
 One pass, start to finish. You only do this once. Everything after it is
 double-clicking `Deploy Hearth.bat`.
 
-Steps 1 to 3 are **web pages in a browser**. Step 4 is **a file you
-double-click**. There is no terminal in any of this.
+Step 0 is **a file you save**. Steps 1 to 3 are **web pages in a browser**.
+Step 4 is **a file you double-click**. There is no terminal in any of this.
+
+---
+
+## 0. Get the files onto your PC
+
+The code does not live on your computer yet. It lives on GitHub. You need a
+copy on your PC before anything else works.
+
+1. Save the `hearth.zip` file Claude sent you. It lands in your **Downloads**
+   folder.
+2. Open your Downloads folder, **right-click `hearth.zip`**, choose
+   **Extract All...**, then click **Extract**.
+3. You now have a folder called `hearth`. Drag it somewhere you will find it
+   again, for example `C:\Users\jason\hearth`.
+4. Open it. You should see `First Time Setup.bat`, `app.js`, `index.html` and
+   about a dozen others. That folder is what every later step means by "the
+   `hearth` folder".
+
+If you did not get a zip, ask for one. The alternative is downloading it from
+GitHub yourself: go to
+<https://github.com/JasonLayel/JLTest/archive/refs/heads/ccr-52eee7cf-dyvxb5.zip>,
+which downloads the whole repo, and the `hearth` folder is inside it.
+
+**Getting later updates.** A zip is a snapshot. When changes are made, you
+need a fresh copy. Easiest long-term fix is **GitHub Desktop**
+(<https://desktop.github.com>), a normal Windows program: install it once,
+sign in, clone `JasonLayel/JLTest`, and after that getting updates is clicking
+**Fetch origin** then **Pull**. No terminal. Worth doing if this project keeps
+moving, but not required today.
 
 ---
 

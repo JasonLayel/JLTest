@@ -29,6 +29,11 @@ Other rules for any instructions:
 - Put the likely failures in a troubleshooting section with the exact fix, not
   a description of the problem.
 - One step per step. Do not fold three actions into a sentence.
+- **His PC does not have these files.** This repo lives in a cloud container
+  and on GitHub. Never tell him to open, run or double-click something without
+  first getting it onto his machine: send the file or a zip of the folder
+  directly, and say where it lands and how to extract it. "The `hearth`
+  folder" means nothing until he has one.
 
 ## Tone
 
