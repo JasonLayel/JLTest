@@ -3,7 +3,7 @@
   "description": "Hearth companion endpoint",
   "main": "index.js",
   "engines": {
-    "node": "20"
+    "node": "22"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.70.0",
