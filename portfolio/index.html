@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jason Layel — 3D Artist</title>
+<meta name="description" content="Portfolio of 3D renderings and motion work.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="mark" id="site-name">JASON LAYEL</div>
+  <nav>
+    <a href="#work">Work</a>
+    <a href="#about">About</a>
+    <a href="#contact" id="contact-link">Contact</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <h1 id="site-tagline">3D Artist — Renders, Motion, Worldbuilding</h1>
+  <div class="hero-rule"><span></span></div>
+</section>
+
+<main id="work" class="grid" aria-label="Portfolio"></main>
+
+<section id="about" class="about">
+  <p>Selected work — computer-generated imagery, motion studies, and
+  worldbuilding experiments. Every frame rendered in-house.</p>
+</section>
+
+<footer class="site-footer">
+  <span id="footer-text"></span>
+</footer>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" hidden>
+  <button class="lb-close" id="lb-close" aria-label="Close">✕</button>
+  <button class="lb-nav lb-prev" id="lb-prev" aria-label="Previous">←</button>
+  <figure class="lb-stage" id="lb-stage"></figure>
+  <button class="lb-nav lb-next" id="lb-next" aria-label="Next">→</button>
+  <figcaption class="lb-caption" id="lb-caption"></figcaption>
+</div>
+
+<script src="works.js"></script>
+<script src="site.js"></script>
+</body>
+</html>
