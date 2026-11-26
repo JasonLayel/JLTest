@@ -1031,5 +1031,175 @@ window.COMPANION = (() => {
     for (const [r, c, key] of MOODS[mood] || MOODS.neutral) put(r, c, key);
   }
 
-  return { TIERS, tierOf, line, draw, SCENES, POSES, sceneForDate, randomPose };
+  // ---------------- Mood of the day ----------------
+  // She wakes in a mood that colors her greeting and which chats she'll start.
+  const DAY_MOODS = {
+    cheerful: { emoji: "😊", label: "in a good mood" },
+    grumpy: { emoji: "😤", label: "in a MOOD" },
+    lazy: { emoji: "😪", label: "feeling lazy" },
+    clingy: { emoji: "🥺", label: "feeling clingy" },
+    motivated: { emoji: "🔥", label: "feeling motivated" },
+  };
+  const DAY_MOOD_IDS = Object.keys(DAY_MOODS);
+
+  // Deterministic per day, with a tilt: the fonder she is, the more often she
+  // wakes cheerful or clingy rather than grumpy.
+  function moodForDate(dateStr, tier) {
+    let h = 0;
+    for (let i = 0; i < dateStr.length; i++) h = (h * 31 + dateStr.charCodeAt(i)) >>> 0;
+    const weighted = ["cheerful", "grumpy", "lazy", "clingy", "motivated"];
+    if (tier >= 2) weighted.push("cheerful", "motivated");
+    if (tier >= 3) weighted.push("clingy", "cheerful");
+    if (tier <= 0) weighted.push("grumpy", "lazy");
+    return weighted[h % weighted.length];
+  }
+
+  // ---------------- Two-way micro-conversations ----------------
+  // Authored branching chats: she opens, you pick a one-tap reply, she answers.
+  // option = { text, say, aff?, remember?{}, then?[options] }. A `then` nests one
+  // more level. minTier gates by affection; moods limits when she'll bring it up;
+  // once means she'll only ever start it a single time. {pet} and remembered
+  // values ({drink}, {color}, ...) are substituted at render time.
+  const CONVERSATIONS = [
+    {
+      id: "day_check",
+      minTier: 0,
+      prompt: "Before you get to work — how's the day actually treating you?",
+      options: [
+        { text: "Pretty good!", say: "Good. Ride that wave straight into a task before it fades. 🌊", aff: 1, remember: { day: "good" } },
+        { text: "Kind of rough.", say: "...Okay. Come here. One tiny task, then you may rest. I'll even be nice about it. 💗", aff: 2, remember: { day: "rough" },
+          then: [ { text: "Thanks, Elara.", say: "Don't tell the court I have a soft side. It's classified." } ] },
+        { text: "Same as always.", say: "Boring. Let's fix that. Do something and I'll react dramatically. Promise.", aff: 1, remember: { day: "meh" } },
+      ],
+    },
+    {
+      id: "fav_drink",
+      minTier: 1,
+      once: true,
+      prompt: "The royal kitchen is brewing. If I had them make you something — tea or coffee?",
+      options: [
+        { text: "Tea ☕", say: "A refined choice. We can be civilized together. I'll remember that.", aff: 2, remember: { drink: "tea" } },
+        { text: "Coffee ☕", say: "Chaos fuel. Respect. I'll have them keep a pot warm for you.", aff: 2, remember: { drink: "coffee" } },
+        { text: "Neither, really.", say: "A water person. Mysterious. Hydrated. I'll allow it.", aff: 1, remember: { drink: "water" } },
+      ],
+    },
+    {
+      id: "fav_color",
+      minTier: 2,
+      once: true,
+      prompt: "I'm redecorating a wing of the castle. What's your color? And no, you can't say 'pink,' that's MINE.",
+      options: [
+        { text: "Blue", say: "Calm. Steady. Like you'd actually finish a to-do list. I'll paint a room for you. 💙", aff: 2, remember: { color: "blue" } },
+        { text: "Green", say: "Growing things. Fitting — you've grown on me. Don't let it go to your head. 💚", aff: 2, remember: { color: "green" } },
+        { text: "Fine... pink.", say: "I KNEW it. You have taste after all. We match now. Deal with it. 💗", aff: 3, remember: { color: "pink" } },
+      ],
+    },
+    {
+      id: "nudge_mood",
+      minTier: 1,
+      moods: ["motivated"],
+      prompt: "I'm feeling fired up today, so YOU'RE feeling fired up today. What are we conquering first?",
+      options: [
+        { text: "Something hard.", say: "THAT'S the energy. Go. I'll be insufferably proud. 🔥", aff: 2 },
+        { text: "Something easy...", say: "Ease in, then. But I'm watching for a second one. Don't think I'm not.", aff: 1 },
+      ],
+    },
+    {
+      id: "lazy_day",
+      minTier: 1,
+      moods: ["lazy"],
+      prompt: "Ngh. I barely want to hold up my own crown today. Can we just... do one thing and call it heroic?",
+      options: [
+        { text: "One thing. Deal.", say: "Deal. We'll be lazy legends together. One task, then horizontal.", aff: 2, remember: { vibe: "cozy" } },
+        { text: "Let's actually push.", say: "Ugh, an overachiever. ...Fine, you're lucky you're cute. Carry me. 💤", aff: 1 },
+      ],
+    },
+    {
+      id: "clingy_day",
+      minTier: 2,
+      moods: ["clingy"],
+      prompt: "You were gone a while, you know. I may have... checked the door. Twice. Don't make it weird.",
+      options: [
+        { text: "I missed you too.", say: "*hides face* O-obviously. I mean — good. Stay a while. Do a task so you have an excuse to. 💗", aff: 3, remember: { close: true } },
+        { text: "Aww, you missed me?", say: "I said DON'T make it weird. ...Yes. A little. A royal little. Now sit with me.", aff: 2 },
+      ],
+    },
+    {
+      id: "grumpy_day",
+      minTier: 0,
+      moods: ["grumpy"],
+      prompt: "Fair warning: I'm in A Mood today. Nothing you did. Probably. Just... bring me a finished task as a peace offering?",
+      options: [
+        { text: "On it, your Highness.", say: "...See, that's why you're my favorite. Go. The mood is already lifting. Barely.", aff: 2 },
+        { text: "Who hurt you?", say: "The royal accountant. And a squeaky hinge. And Tuesday. Just do a task, it helps.", aff: 1 },
+      ],
+    },
+    {
+      id: "about_you",
+      minTier: 3,
+      once: true,
+      prompt: "Real question, no bit: what are you actually working toward? I want to know what I'm cheering for.",
+      options: [
+        { text: "Just trying to keep it together.", say: "Then that's what we defend. Day by day, task by task. I've got you. 💗", aff: 3, remember: { goal: "steady" } },
+        { text: "Building toward something big.", say: "Of course you are. I'll be here for every unglamorous step that gets you there. 👑", aff: 3, remember: { goal: "big" } },
+        { text: "Honestly? Not sure yet.", say: "Then we figure it out together. No rush. I'm not going anywhere, {pet}. 💗", aff: 3, remember: { goal: "searching" } },
+      ],
+    },
+    {
+      id: "compliment",
+      minTier: 2,
+      prompt: "Hold still. I'm going to say something nice and I need you to not make it awkward. Ready?",
+      options: [
+        { text: "Ready.", say: "You keep showing up. For me, for your list, for yourself. That's not small. I see it. 💗", aff: 2 },
+        { text: "...Do I have to be?", say: "Yes. There: you're steadier than you give yourself credit for. Absorb it. Moving on.", aff: 2 },
+      ],
+    },
+    {
+      id: "check_in_low",
+      minTier: 0,
+      moods: ["cheerful"],
+      prompt: "Okay, I'm in a generous mood. Ask me for ONE thing and I might grant it. Royally.",
+      options: [
+        { text: "Go easy on me today?", say: "Hmph. Granted. Soft decree: one task and I won't even heckle. Much.", aff: 1, remember: { day: "good" } },
+        { text: "Hype me up!", say: "YOU. ARE. THAT. PERSON. Now go prove me right immediately. 🔥", aff: 2 },
+      ],
+    },
+  ];
+
+  // Pick a conversation she could start now. ctx: {tier, mood, seen[], recent[]}.
+  function pickConversation(ctx) {
+    const seen = ctx.seen || [];
+    const recent = ctx.recent || [];
+    const eligible = CONVERSATIONS.filter((c) => {
+      if (ctx.tier < c.minTier) return false;
+      if (c.once && seen.includes(c.id)) return false;
+      if (recent.includes(c.id)) return false;
+      if (c.moods && !c.moods.includes(ctx.mood)) return false;
+      return true;
+    });
+    if (eligible.length === 0) return null;
+    // Prefer mood-specific chats so the day's mood actually shows up.
+    const moodFit = eligible.filter((c) => c.moods);
+    const pool = moodFit.length && Math.random() < 0.6 ? moodFit : eligible;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  // A callback line that references something she remembers about you, or null.
+  function recall(memory, tier) {
+    if (!memory) return null;
+    const bits = [];
+    if (memory.drink) bits.push(`Still team ${memory.drink}? I had a cup sent up. Don't say I never spoil you. 💗`);
+    if (memory.color) bits.push(`That ${memory.color} wing I'm painting for you? Coming along. Unlike your task list. Chop chop.`);
+    if (memory.day === "rough") bits.push(`Yesterday looked heavy on you. Today we go gentle. One thing at a time, {pet}.`);
+    if (memory.goal === "big") bits.push(`Still building toward that big thing? Good. Today's tiny step counts. They all count.`);
+    if (memory.goal === "steady") bits.push(`Keeping it together, one task at a time. That's the whole game. I'm proud of you. 💗`);
+    if (memory.close) bits.push(`Don't disappear on me again, okay? The castle's too quiet without you. 🥺`);
+    if (bits.length === 0) return null;
+    return bits[Math.floor(Math.random() * bits.length)];
+  }
+
+  return {
+    TIERS, tierOf, line, draw, SCENES, POSES, sceneForDate, randomPose,
+    DAY_MOODS, moodForDate, CONVERSATIONS, pickConversation, recall,
+  };
 })();
