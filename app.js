@@ -38,7 +38,7 @@
   };
 
   const DEFAULT_STATE = {
-    version: 5,
+    version: 6,
     categories: DEFAULT_CATEGORIES,
     tasks: [], // {id, title, categoryId, mode, estimateMin, recurring, done, createdAt, completedAt}
     history: [], // picks: {id, taskId, title, categoryId, at, source, status}
@@ -79,6 +79,11 @@
       metOn: null, // first day together (for "together since")
       maxedEver: false, // has she ever reached Devoted (gates her one-time confession)
       petName: null, // the nickname she assigns you once she's Devoted
+      memory: {}, // small facts she learns about you in conversation (drink, color, goal…)
+      moodDay: { date: null, mood: null }, // her mood for the current day
+      convoSeen: [], // ids of once-only conversations already shown
+      recentConvos: [], // recently shown conversation ids (dedup window)
+      lastConvoAt: 0, // timestamp of her last initiated conversation (cooldown)
     },
     currentPick: null, // history entry id of the active pick
   };
@@ -160,6 +165,16 @@
       if (c.metOn == null) c.metOn = days[0] || c.lastOpenDate || todayStr();
       if (c.maxedEver == null) c.maxedEver = (c.affection || 0) >= 320;
       s.version = 5;
+    }
+    // v5 → v6: conversation/memory/mood fields (defaults already merged in load()).
+    if (s.version < 6) {
+      const c = s.companion || (s.companion = {});
+      if (!c.memory) c.memory = {};
+      if (!c.moodDay) c.moodDay = { date: null, mood: null };
+      if (!Array.isArray(c.convoSeen)) c.convoSeen = [];
+      if (!Array.isArray(c.recentConvos)) c.recentConvos = [];
+      if (c.lastConvoAt == null) c.lastConvoAt = 0;
+      s.version = 6;
     }
     return s;
   }
@@ -807,6 +822,35 @@
   let bubbleTimer = null;
   let miniBubbleTimer = null;
   let lastSpokeAt = 0; // for "you did that while I was watching" reactions
+  let convoActive = false;
+
+  // Low-level: show a line in whichever bubble is visible (main tab or mini).
+  // Clears any pending conversation UI unless this call is part of one.
+  function showBubble(text, opts = {}) {
+    if (!opts.keepConvo) endConversation();
+    sfxSpeak(text.length);
+    const onPrincessTab = !$("#tab-princess").classList.contains("hidden");
+    if (onPrincessTab) {
+      const bubble = $("#speech-bubble");
+      bubble.textContent = text;
+      bubble.classList.remove("hidden");
+      renderPrincess(opts.excited ? "proud" : null);
+      clearTimeout(bubbleTimer);
+      if (!opts.persist) bubbleTimer = setTimeout(() => renderPrincess(), opts.ms || 6000);
+      return true;
+    }
+    const bubble = $("#mini-bubble");
+    bubble.textContent = text;
+    bubble.classList.remove("hidden");
+    renderMiniPrincess(opts.excited ? "proud" : null);
+    clearTimeout(miniBubbleTimer);
+    miniBubbleTimer = setTimeout(() => {
+      bubble.classList.add("hidden");
+      renderMiniPrincess();
+    }, opts.ms || 8000);
+    return false;
+  }
+
   function speak(kind, vars, force) {
     const c = state.companion;
     // Scene/pose context lets her comment on where she is / what she's doing.
@@ -817,26 +861,107 @@
     if (!text) return;
     lastSpokeAt = Date.now();
     save();
-    sfxSpeak(text.length);
     const excited = kind === "goal" || kind === "streak";
-    const onPrincessTab = !$("#tab-princess").classList.contains("hidden");
-    if (onPrincessTab) {
-      const bubble = $("#speech-bubble");
-      bubble.textContent = text;
-      bubble.classList.remove("hidden");
-      renderPrincess(excited ? "proud" : null);
-      clearTimeout(bubbleTimer);
-      bubbleTimer = setTimeout(() => renderPrincess(), 6000);
+    showBubble(text, { excited });
+  }
+
+  // ---------- Mood of the day & two-way conversations ----------
+
+  function dayMood() {
+    const c = state.companion;
+    const today = todayStr();
+    if (!c.moodDay || c.moodDay.date !== today) {
+      c.moodDay = { date: today, mood: COMPANION.moodForDate(today, c.tier) };
+      save();
+    }
+    return c.moodDay.mood;
+  }
+
+  // Substitute {pet} and remembered facts ({drink}, {color}, {goal}…) in a line.
+  function fillVars(text) {
+    const c = state.companion;
+    const vars = Object.assign({ pet: c.petName || "you" }, c.memory || {});
+    return String(text).replace(/\{(\w+)\}/g, (m, k) => (vars[k] != null ? vars[k] : m));
+  }
+
+  function endConversation() {
+    convoActive = false;
+    const box = $("#convo-options");
+    if (box) {
+      box.innerHTML = "";
+      box.classList.add("hidden");
+    }
+  }
+
+  function renderConvoOptions(options) {
+    const box = $("#convo-options");
+    if (!box) return;
+    box.innerHTML = "";
+    for (const opt of options) {
+      const b = document.createElement("button");
+      b.className = "btn convo-option";
+      b.textContent = fillVars(opt.text);
+      b.addEventListener("click", () => chooseOption(opt));
+      box.appendChild(b);
+    }
+    box.classList.remove("hidden");
+  }
+
+  function chooseOption(opt) {
+    const c = state.companion;
+    if (opt.remember) Object.assign((c.memory = c.memory || {}), opt.remember);
+    if (opt.aff) addAffection(opt.aff);
+    sfxClick("check");
+    noteAttention();
+    const box = $("#convo-options");
+    if (box) box.classList.add("hidden");
+    const more = opt.then && opt.then.length;
+    showBubble(fillVars(opt.say), { excited: (opt.aff || 0) >= 2, persist: !!more, keepConvo: !!more, ms: 7000 });
+    if (more) {
+      setTimeout(() => renderConvoOptions(opt.then), 900);
     } else {
-      const bubble = $("#mini-bubble");
-      bubble.textContent = text;
-      bubble.classList.remove("hidden");
-      renderMiniPrincess(excited ? "proud" : null);
-      clearTimeout(miniBubbleTimer);
-      miniBubbleTimer = setTimeout(() => {
-        bubble.classList.add("hidden");
-        renderMiniPrincess();
-      }, 8000);
+      endConversation();
+      save();
+    }
+  }
+
+  // Start a chat. Only on the Princess tab (needs the reply buttons). Returns
+  // true if one began. Honors once/dedup bookkeeping and the mood of the day.
+  function startConversation() {
+    if (convoActive) return false;
+    if ($("#tab-princess").classList.contains("hidden")) return false;
+    const c = state.companion;
+    const convo = COMPANION.pickConversation({
+      tier: c.tier,
+      mood: dayMood(),
+      seen: c.convoSeen || [],
+      recent: c.recentConvos || [],
+    });
+    if (!convo) return false;
+    convoActive = true;
+    c.lastConvoAt = Date.now();
+    if (convo.once && !c.convoSeen.includes(convo.id)) c.convoSeen.push(convo.id);
+    c.recentConvos = [convo.id, ...(c.recentConvos || [])].slice(0, 5);
+    save();
+    showBubble(fillVars(convo.prompt), { persist: true, keepConvo: true });
+    setTimeout(() => renderConvoOptions(convo.options), 650);
+    return true;
+  }
+
+  // She occasionally initiates when you open her tab: a chat or a memory callback.
+  function maybeInitiate() {
+    const c = state.companion;
+    if (convoActive) return;
+    if (Date.now() - (c.lastConvoAt || 0) < 60000) return; // 1-min cooldown
+    const roll = Math.random();
+    if (roll < 0.4) {
+      setTimeout(() => startConversation(), 700);
+    } else if (roll < 0.62) {
+      const line = COMPANION.recall(c.memory, c.tier);
+      if (line) {
+        c.lastConvoAt = Date.now();
+        setTimeout(() => showBubble(fillVars(line)), 700);
+      }
     }
   }
 
@@ -844,6 +969,7 @@
   const PROD_INTERVAL = 180000; // check every 3 min
   setInterval(() => {
     if (document.hidden) return;
+    if (convoActive) return;
     if (!$("#mini-bubble").classList.contains("hidden")) return;
     if (Math.random() < 0.45) speak("ambient");
   }, PROD_INTERVAL);
@@ -2233,8 +2359,10 @@
   });
 
   $("#talk-btn").addEventListener("click", () => {
-    princessTapped();
     if (state.companion.tier >= 3) floatHearts(3);
+    // Sometimes she strikes up a real (branching) conversation; otherwise a quip.
+    if (!convoActive && Math.random() < 0.55 && startConversation()) return;
+    princessTapped();
   });
 
   $("#princess-canvas").addEventListener("click", () => {
@@ -2355,8 +2483,10 @@
       }
       if (tab === "princess") {
         $("#speech-bubble").classList.add("hidden");
+        endConversation();
         renderPrincess();
         noteAttention(); // visiting her counts
+        maybeInitiate(); // she sometimes greets or starts a chat on her own
       }
       if (tab === "history") {
         // Chronicles reflect completions made since the last full render.

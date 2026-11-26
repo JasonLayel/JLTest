@@ -1014,6 +1014,37 @@ select, input[type="time"] {
   font-size: 0.8rem;
 }
 
+/* Two-way conversation reply buttons */
+.convo-options {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-width: 320px;
+  margin: 0.35rem auto 0.1rem;
+  animation: convo-rise 0.25s ease;
+}
+.convo-options.hidden {
+  display: none;
+}
+.convo-option {
+  width: 100%;
+  text-align: center;
+  background: var(--card);
+  border: 1.5px solid var(--primary);
+  color: var(--text);
+  font-size: 0.92rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: 14px;
+}
+.convo-option:hover {
+  background: var(--primary);
+  color: #fff;
+}
+@keyframes convo-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .affection-bar {
   height: 0.55rem;
   border-radius: 999px;
